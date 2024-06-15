@@ -1,0 +1,348 @@
+.wrapper {
+  height: 100dvh;
+  padding: 1%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(7, 1fr);
+}
+
+.chairs-container {
+  position: relative;
+  grid-column: span 2;
+  grid-row: span 7;
+  border-radius: 15px;
+  border: 1px solid #414140;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.chairs-container.show-off :where(.stage, .dance-floor, .chair) {
+  opacity: 0.4;
+}
+
+.chairs-container.show-off .active-seat {
+  opacity: 2 !important;
+}
+
+.zoom-box,
+.back-btn {
+  position: absolute;
+  top: 10px;
+  height: 32px;
+  padding: 0.5% 1%;
+  border: 1px solid #414140;
+  background: #212121;
+  border-radius: 5px;
+  color: #aaa;
+  z-index: 999;
+}
+
+.zoom-box {
+  left: 10px;
+}
+
+.back-btn {
+  width: 34px;
+  right: 10px;
+}
+
+.zoom-box > button,
+.back-btn > button {
+  background: none;
+  border: none;
+  color: #f8f5ec6e;
+}
+
+.bottom-back-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 50%;
+  transform: translateX(50%);
+  padding: 0.5% 2%;
+  border: 1px solid #414140;
+  background: #212121;
+  border-radius: 8px;
+  color: #f8f5ec6e;
+  z-index: 999;
+}
+
+.zoom-box > button :where(:active, :hover),
+.back-btn > button :where(:active, :hover),
+.bottom-back-btn:hover {
+  color: #f8f5ec;
+}
+
+.chairs-body {
+  width: 465px;
+  height: auto;
+  transition: all 0.3s linear;
+}
+
+.stage {
+  padding: 1.3% 0 1%;
+  color: #aaa;
+  background: #2c2c2b;
+  border-radius: 5px;
+}
+
+.dance-floor {
+  width: 100%;
+  height: 200px;
+  background: #53bc6b;
+  border-radius: 5px;
+}
+
+.dance-floor.passive {
+  background: #57534e;
+}
+
+.counter {
+  width: 77px;
+  height: 20px;
+  background: #343433;
+  border-radius: 16px;
+  overflow: hidden;
+  color: #f8f5ec;
+  box-shadow: 0 1px 5px #212121;
+}
+
+.counter > :where(:first-child, :last-child) {
+  width: 27px;
+  height: 100%;
+  color: #f8f5ec99;
+}
+
+.counter > :where(:first-child, :last-child):hover {
+  color: #53bc6b;
+}
+
+.counter > :nth-child(2) {
+  width: 21px;
+  height: 100%;
+  border-left: 1px solid #f8f5ec4d;
+  border-right: 1px solid #f8f5ec4d;
+}
+
+.seats-box {
+  padding: 1% 2%;
+  background: #2c2c2b;
+  border-radius: 5px;
+}
+
+.seat-row {
+  line-height: 0.6;
+}
+
+:where(.sidebar-filter, .basket-box) {
+  width: auto;
+  background: #2c2c2b;
+  border-radius: 15px;
+  grid-column: span 1;
+}
+
+.sidebar-filter {
+  padding: 4% 5%;
+  grid-row: span 1;
+}
+
+.basket-box {
+  padding: 3% 5%;
+  grid-row: span 6;
+  overflow: hidden;
+}
+
+.sidebar-filter > :first-child {
+  padding: 0 12% 1% 2%;
+}
+
+.price {
+  margin-left: 5px;
+}
+
+.sidebar-filter > :first-child > p,
+.price {
+  white-space: nowrap;
+  text-align: end;
+}
+
+.early-birds {
+  margin: auto;
+}
+
+.basket-box > :first-child {
+  padding-bottom: 1%;
+  border-bottom: 1px solid #4141403d;
+}
+
+.basket-body {
+  height: 75%;
+  padding: 1% 1% 0;
+  line-height: 1.5;
+  overflow: hidden;
+  overflow-y: auto;
+}
+
+.basket-body :where(.basket-header, .basket-item) {
+  padding: 0 2%;
+}
+
+.basket-footer > p {
+  padding: 0 3%;
+}
+
+.basket-footer {
+  padding-top: 1.3%;
+  margin-top: 1%;
+  border-top: 1px solid #4141403d;
+}
+
+.basket-btn {
+  height: 35px;
+  border: 1px solid #f8f5ec;
+  background: #2c2c2b;
+  color: #f8f5ec;
+  transition: all 0.3s ease;
+  border-radius: 18px;
+}
+
+.basket-btn.passive {
+  color: #f8f5ec4d;
+  border-color: #f8f5ec4d;
+}
+
+.basket-btn:hover {
+  background: #53bc6b;
+  border-color: #53bc6b;
+  color: #2c2c2b;
+}
+
+.basket-btn.passive:hover {
+  background: #2c2c2b;
+  border-color: #f8f5ec4d;
+  color: #f8f5ec4d;
+}
+
+.basket-btn > svg {
+  font-size: 18px;
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+#buy-ticket {
+  margin-top: 18px;
+}
+
+.delete-btn {
+  color: #f8f5ec;
+}
+
+.delete-btn svg {
+  color: #f8f5ec80;
+}
+
+.delete-btn svg:hover {
+  color: #f8f5ec;
+}
+
+.icon {
+  width: 12px;
+  height: 12px;
+  object-fit: cover;
+}
+
+.icon.large {
+  width: 18px;
+  height: 18px;
+}
+
+.icon.small {
+  margin-top: 1px;
+  width: 10px;
+  height: 10px;
+}
+
+@media (max-width: 1650px) {
+  :where(.sidebar-filter, .basket-box) {
+    width: 530px;
+  }
+}
+
+@media (max-width: 1220px) {
+  :where(.sidebar-filter, .basket-box) {
+    width: 500px;
+  }
+}
+
+@media (max-width: 1100px) {
+  :where(.sidebar-filter, .basket-box) {
+    width: 450px;
+  }
+}
+
+@media (max-width: 970px) {
+  .wrapper {
+    grid-template-columns: 1fr;
+    padding: 0;
+    gap: 0;
+  }
+
+  .chairs-container {
+    grid-column: span 1;
+    grid-row: span 3;
+    order: 2;
+    border-radius: 0;
+  }
+
+  .sidebar-filter {
+    order: 1;
+    grid-row: span 1;
+  }
+
+  .basket-box {
+    padding: 3% 0%;
+    order: 3;
+    grid-row: span 3;
+  }
+
+  .basket-box > :first-child {
+    padding: 0 5% 1%;
+  }
+
+  .basket-body {
+    padding: 1% 5%;
+  }
+
+  .basket-footer {
+    padding: 1.3% 5% 0;
+  }
+
+  .sidebar-filter,
+  .basket-box {
+    width: 100%;
+    grid-column: span 1;
+    border-radius: 0;
+  }
+
+  .zoom-box > button:hover,
+  .back-btn > button:hover {
+    color: #f8f5ec6e;
+  }
+}
+
+@media (max-width: 600px) {
+  .basket-box > :first-child {
+    border-bottom: 1px solid #414140;
+  }
+  .basket-body {
+    padding: 1% 5% 0;
+  }
+}

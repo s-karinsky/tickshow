@@ -1,0 +1,160 @@
+@font-face {
+  font-family: "articulatcf";
+  src: url("../font/ArticulatCF-Normal.otf") format("opentype");
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  letter-spacing: 0.05rem;
+  font-family: articulatcf, sans-serif;
+}
+
+html,
+body {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Old versions of Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none;
+}
+
+body {
+  background-color: #212121;
+  color: #fff;
+}
+
+#root {
+  width: 100%;
+  height: 100dvh;
+}
+
+a {
+  text-decoration: none;
+}
+
+button,
+select {
+  cursor: pointer;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #52524f67;
+  border-left: 1px solid #2c2c2b;
+  border-right: 1px solid #2c2c2b;
+}
+::-webkit-scrollbar-thumb {
+  background: #52524f;
+  border-radius: 10px;
+}
+
+.w100 {
+  width: 100%;
+}
+
+.df {
+  display: flex;
+}
+
+.aic {
+  align-items: center;
+}
+
+.aife {
+  align-items: flex-end;
+}
+
+.jcc {
+  justify-content: center;
+}
+
+.fdc {
+  flex-direction: column;
+}
+
+.fww {
+  flex-wrap: wrap;
+}
+
+.jcsb {
+  justify-content: space-between;
+}
+
+.pd1_2 {
+  padding: 1% 2%;
+}
+
+.gap25 {
+  gap: 25px;
+}
+
+.gap20 {
+  gap: 20px;
+}
+
+.gap15 {
+  gap: 15px;
+}
+
+.gap10 {
+  gap: 10px;
+}
+
+.gap8 {
+  gap: 8px;
+}
+
+.gap5 {
+  gap: 5px;
+}
+
+.cp {
+  cursor: pointer;
+  user-select: none;
+}
+
+.fs22 {
+  font-size: 22px;
+}
+
+.fs18 {
+  font-size: 18px;
+}
+
+.fs16 {
+  font-size: 16px;
+}
+
+.fs14 {
+  font-size: 14px;
+}
+
+.fs12 {
+  font-size: 12px;
+}
+
+.fs10 {
+  font-size: 10px;
+}
+
+.fs9 {
+  font-size: 9px;
+}
+
+@media (max-width: 970px) {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+}

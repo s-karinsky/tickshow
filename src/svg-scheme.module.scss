@@ -1,0 +1,80 @@
+.svgContainer {
+  svg {
+    width: 100%;
+    height: auto;
+
+    * {
+      font-family: 'Courier New', Courier, monospace;
+    }
+  }
+}
+
+.svg-scheme-hover {
+  stroke-width: 3px;
+}
+
+.preview {
+  background-color: #343433;
+  border-radius: 6px;
+  padding: 8px;
+  color: #fff;
+  box-shadow: 0px 4px 4px 0px #0000000D;
+  width: 100%;
+
+  .block {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .desc{
+    display: inline-block;
+    align-items: center;
+    .text{
+      font-size: 12px;
+      color: #fff;
+      margin-top: 5px;
+    }
+  }
+
+  .price {
+    font-size: 18px;
+    margin-bottom: 5px;
+  }
+
+  .icon {
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .row, .seat {
+    span {
+      font-size: 12px;
+      color: #999;
+    }
+    font-size: 16px;
+  }
+  .row:last-child ,.seat:last-child {
+    margin-left: 50px;
+  }
+
+  .footer {
+    margin: 6px -8px 0;
+    border-top: 1px solid #666;
+    padding-top: 6px;
+  }
+}
+
+.svgSchemeTooltip {
+  position: absolute;
+  transform: translate(-45%, -100%);
+  opacity: 0;
+  left: -500px;
+  top: -500px;
+  transition: ease .01s opacity;
+}
+
+.scheme {
+  position: relative;
+}
