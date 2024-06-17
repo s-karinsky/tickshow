@@ -15,7 +15,7 @@ async function make_async_request(url,data,method="POST") {
     }
     return response.data
 }
-async function AuthUser(email="",phone="",auth_type="e-mail"){
+export async function AuthUser(email="", phone="", auth_type="e-mail"){
     if (email === null || email === undefined){
         auth_type = "phone"
     }
@@ -30,7 +30,7 @@ async function AuthUser(email="",phone="",auth_type="e-mail"){
     var req = await make_async_request("token",{"auth_hash":auth_hash})
     return {"token":req.data.token,"u_hash":req.data.u_hash}
 }
-async function RegisterUser(email="",phone="",name){
+export async function RegisterUser(email="", phone="", name){
     var data = {
         "u_name":name,
         "u_role":"1",
@@ -52,7 +52,7 @@ async function RegisterUser(email="",phone="",name){
     }
     return data
 }
-async function RegisterPhantomUser(){
+export async function RegisterPhantomUser(){
     while (true){
         var now = new Date();
         var day = ("0" + now.getDate()).slice(-2);
@@ -81,12 +81,12 @@ async function RegisterPhantomUser(){
         return email
     }
 }
-async function CreateOrder(seats,token,u_hash){
+export async function CreateOrder(seats, token, u_hash){
     var data = {
         "token":token,
         "u_hash":u_hash,
         "data":JSON.stringify({
-            "b_payment_way":"2",
+            "b_payment_way":2,
             "b_options":{
                 "tickets":{
                     "seats":seats
@@ -94,14 +94,15 @@ async function CreateOrder(seats,token,u_hash){
             }
         })
     }
+    return await make_async_request("drive",data,"POST")
 }
-async function GetTrip(id_trip){
+export async function GetTrip(id_trip){
     return (await make_async_request("trip/get/"+id_trip))["data"]["trip"][id_trip]
 }
 async function GetTrips(config){
     return (await make_async_request("trip/get",config))["data"]
 }
-async function GetStadium(sc_id){
+export async function GetStadium(sc_id){
     var data = {
         "sc_id":sc_id
     }
@@ -109,7 +110,7 @@ async function GetStadium(sc_id){
     var stadium_id = data["data"]["data"]["schedule"][sc_id]["stadium"]
     return data["data"]["data"]["stadiums"][stadium_id]
 }
-async function GetStadiumScheme(link){
+export async function GetStadiumScheme(link){
     const headers = {
         "Content-Type": "application/x-www-form-urlencoded",
         "Accept": "application/json"
@@ -117,7 +118,7 @@ async function GetStadiumScheme(link){
     var response = await axios.post(link,{},{headers:headers})
     return response.data
 }
-async function CartSeat(token,u_hash,seat,trip_id,count=1){
+export async function CartSeat(token, u_hash, seat, trip_id, count=1){
     var data = {
         "token":token,
         "u_hash":u_hash
@@ -125,7 +126,7 @@ async function CartSeat(token,u_hash,seat,trip_id,count=1){
     var url = "cart?prod=" + trip_id + "&prop=" + seat + "&count=" + count
     return await make_async_request(url,data,"POST")
 }
-async function GetCart(token,u_hash){
+export async function GetCart(token, u_hash){
     var data = {
         "token":token,
         "u_hash":u_hash
@@ -144,17 +145,4 @@ async function ChangeUser(token,u_hash,name,email,phone){
     }
     return await make_async_request("user",data,"POST")
 
-}
-export {
-    AuthUser,
-    RegisterUser,
-    CreateOrder,
-    RegisterPhantomUser,
-    GetTrip,
-    GetStadium,
-    GetStadiumScheme,
-    GetTrips,
-    CartSeat,
-    GetCart,
-    ChangeUser
 }

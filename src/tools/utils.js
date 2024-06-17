@@ -14,16 +14,16 @@ export function getFormData(data, formData = new FormData(), parentKey) {
 }
 
 export const renameKeys = (keysMap, obj, skipOtherKeys) =>
-  Object.keys(obj).reduce(
-    (acc, key) => {
-      if (skipOtherKeys && !keysMap[key]) return acc
-      return {
-        ...acc,
-        ...{ [keysMap[key] || key]: obj[key] }
-      }
-    },
-    {}
-  )
+    Object.keys(obj).reduce(
+        (acc, key) => {
+          if (skipOtherKeys && !keysMap[key]) return acc
+          return {
+            ...acc,
+            ...{ [keysMap[key] || key]: obj[key] }
+          }
+        },
+        {}
+    )
 
 export const pipe = (...fns) => x => fns.filter(f => typeof f === 'function').reduce((v, f) => typeof f === 'function' ? f(v) : v, x)
 

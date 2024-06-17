@@ -407,30 +407,40 @@ export const App = () => {
         console.log("Cart Seat", seat);
         console.log(GetSeat(seat?.row, seat?.seat))
         if(!tickets || tickets===[]){
+          console.log("No Tickets,alarm!!!!!!!")
           refetch({ event_id: 0, skip: 0, limit: 30 }, {}).then(tickets1 => {
             tickets = tickets1.data
+            setTickets(tickets1.data)
             var ticket_Data = {
               t_id: GetSeat(seat?.row, seat?.seat).t_id,
               hall_id: GetSeat(seat?.row, seat?.seat).hall_id,
               event_id: GetSeat(seat?.row, seat?.seat).event_id,
               section: GetSeat(seat?.row, seat?.seat).section,
             }
+            console.log("ticket_Data",ticket_Data)
             seat.t_id = ticket_Data.t_id
             seat.hall_id = ticket_Data.hall_id
             seat.event_id = ticket_Data.event_id
             seat.section = ticket_Data.section
+            console.log("seat after merging data ", seat)
             CartSeat(localStorage.getItem("phantom_user_token"),localStorage.getItem("phantom_user_u_hash"), ticket_Data.hall_id+";"+ticket_Data.section+";"+seat.row+";"+seat.seat+"", ticket_Data.t_id,1).then((data) => {
               console.log("Cart Seat", data);
             })
+            cart?.push(seat);
+            localStorage.setItem("cart", JSON.stringify(cart));
+            refresh_cart()
+            reloadCart()
           })
         }
         else{
+          console.log("Tickets Exist go on")
           var ticket_Data = {
             t_id: GetSeat(seat?.row, seat?.seat).t_id,
             hall_id: GetSeat(seat?.row, seat?.seat).hall_id,
             event_id: GetSeat(seat?.row, seat?.seat).event_id,
             section: GetSeat(seat?.row, seat?.seat).section,
           }
+          console.log("ticket_Data",ticket_Data)
           seat.t_id = ticket_Data.t_id
           seat.hall_id = ticket_Data.hall_id
           seat.event_id = ticket_Data.event_id
@@ -438,9 +448,10 @@ export const App = () => {
           CartSeat(localStorage.getItem("phantom_user_token"),localStorage.getItem("phantom_user_u_hash"), ticket_Data.hall_id+";"+ticket_Data.section+";"+seat.row+";"+seat.seat+"", ticket_Data.t_id,1).then((data) => {
             console.log("Cart Seat", data);
           })
+          cart?.push(seat);
+          localStorage.setItem("cart", JSON.stringify(cart));
         }
-        cart?.push(seat);
-        localStorage.setItem("cart", JSON.stringify(cart));
+
       }
       reloadCart()
     },[tickets]

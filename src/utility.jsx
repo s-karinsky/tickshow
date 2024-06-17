@@ -1,10 +1,10 @@
-import React, {useState, useEffect, useMemo} from "react";
+import React, {useState, useEffect} from "react";
 import { generateIcon } from "./generate-fileld";
 import { Checkbox, ConfigProvider } from "antd";
 import { MdOutlineAccessTime } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
 import { BiLoaderCircle } from "react-icons/bi";
-import {AuthUser, RegisterUser, CreateOrder, GetCart} from "./tools/Ibronevik_API.jsx";
+import {CreateOrder, GetCart} from "./tools/Ibronevik_API.jsx";
 
 const CartModal = ({ setOpen, open }) => {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
@@ -25,10 +25,29 @@ const CartModal = ({ setOpen, open }) => {
     var phantom_user_u_hash = localStorage.getItem("phantom_user_u_hash");
 
     GetCart(phantom_user_token,phantom_user_u_hash).then((cart_res)=>{
-      console.log(cart_res)
+     //console.log(cart_res)
     })
 
+    // group seats by trip_id (t_id)
+    var seats = JSON.parse(localStorage?.getItem("cart")) || []
+    seats = seats.reduce((acc, seat) => {
+      if (!acc[seat.t_id]) {
+        acc[seat.t_id] = {};
+      }
+      var seatFormat = seat.hall_id + ";" + seat.section + ";" + seat.row + ";" + seat.seat
+      acc[seat.t_id][seatFormat] = 1;
+      return acc;
+    }, {});
+    console.log("seatsNew",seats)
+    CreateOrder(seats, phantom_user_token, phantom_user_u_hash).then((data)=>{
+      console.log(data)
+      var payment_link = data.data.payment
 
+      var b_id = data.data.b_id
+      localStorage?.setItem("active_order",b_id)
+      window.location.href = payment_link
+
+    })
 
     setLoad(true);
     window.parent.postMessage(
