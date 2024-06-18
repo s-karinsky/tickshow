@@ -85,6 +85,7 @@ export async function CreateOrder(seats, token, u_hash){
     var data = {
         "token":token,
         "u_hash":u_hash,
+        "appUrl":window.location.origin,
         "data":JSON.stringify({
             "b_payment_way":2,
             "b_options":{
