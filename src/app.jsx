@@ -618,15 +618,19 @@ export const App = () => {
         tmp.id = "ct_" + tmp.name
         tmp.currency = cat_tickets[0]?.currency
 
-        const parser = new DOMParser();
-        const parsedDocument = parser.parseFromString(tmp.img, "text/html");
-        //const svg_seats = parsedDocument.getElementsByTagName("path")
-        const svg_seats = parsedDocument.getElementsByTagName("path")
-        svg_seats[0].setAttribute("fill",tmp.color)
-        var SvgToInsert = parsedDocument.getElementsByTagName("svg")[0];
-        var s = new XMLSerializer();
-        var str_svg = s.serializeToString(SvgToInsert);
-        tmp.img = str_svg
+        console.log(tmp)
+        if(tmp.img){
+          const parser = new DOMParser();
+          const parsedDocument = parser.parseFromString(tmp.img, "text/html");
+          //const svg_seats = parsedDocument.getElementsByTagName("path")
+          const svg_seats = parsedDocument.getElementsByTagName("path")
+          svg_seats[0].setAttribute("fill",tmp.color)
+          var SvgToInsert = parsedDocument.getElementsByTagName("svg")[0];
+          var s = new XMLSerializer();
+          var str_svg = s.serializeToString(SvgToInsert);
+          tmp.img = str_svg
+        }
+
         out.push(tmp)
 
       }
