@@ -24,10 +24,6 @@ const CartModal = ({ setOpen, open }) => {
     var phantom_user_token = localStorage.getItem("phantom_user_token");
     var phantom_user_u_hash = localStorage.getItem("phantom_user_u_hash");
 
-    GetCart(phantom_user_token,phantom_user_u_hash).then((cart_res)=>{
-     //console.log(cart_res)
-    })
-
     // group seats by trip_id (t_id)
     var seats = JSON.parse(localStorage?.getItem("cart")) || []
     seats = seats.reduce((acc, seat) => {
@@ -43,8 +39,7 @@ const CartModal = ({ setOpen, open }) => {
       console.log(data)
       var payment_link = data.data.payment
 
-      var b_id = data.data.b_id
-      localStorage?.setItem("active_order",b_id)
+      localStorage?.setItem("cart", JSON.stringify([]))
       window.location.href = payment_link
 
     })
