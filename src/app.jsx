@@ -546,7 +546,7 @@ export const App = () => {
       out.push({
         id: "ct_all",
         name: "ALL CATEGORIES",
-        seats: -1,
+        seats: totalC_V.totalLeft,
         price: 199.5,
         old_price: 76.5,
         currency: "€",
