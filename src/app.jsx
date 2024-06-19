@@ -74,22 +74,12 @@ const SvgScheme = forwardRef(({
 
   const [ tooltipSeat, setTooltipSeat ] = useState()
   const [refresh, setRefresh] = useState(false);
-  const [localCategories, setLocalCategories] = useState(categories);
   
   const  handleClick = useCallback(async e => {
     const { target: el } = e
     if (!el.matches(seatSelector)) return;
     if(el.getAttribute("data-disabled") === "true"){
       return
-    }
-
-    if(!categories || categories.length === 0){
-      var stadium = await GetStadium("383")
-      if(!stadium){console.log("no stadium"); return}
-      var scheme = await GetStadiumScheme(stadium.scheme_blob)
-      if(!scheme){console.log("no scheme"); return}
-      categories = scheme.categories
-      console.log("categories",categories)
     }
 
     const seatDataTransformer = {
@@ -101,49 +91,24 @@ const SvgScheme = forwardRef(({
       color: undefined,
       icon: undefined,
     }
-    if(!tickets){
-      console.log("no tickets");
-      refetch({ event_id: 0, skip: 0, limit: 30 }, {}).then(tickets1 => {
-          tickets = tickets1.data
-        if(!tickets){ console.log("no tickets,return",tickets); return}
-        for(const ticket of tickets){
-          if(ticket.row.toString() === seatDataTransformer.row.toString() && ticket.seat.toString() === seatDataTransformer.seat.toString()){
-            seatDataTransformer.price = ticket.price
-          }
-        }
-        for(const category of categories){
-          if(category.value === seatDataTransformer.category){
-            seatDataTransformer.color = category.color
-            seatDataTransformer.img = category.icon
-            break
-          }
-        }
-
-        setRefresh(!refresh);
-        onSeatClick &&
-        onSeatClick(seatDataTransformer)
-      })
+    if(!tickets){ console.log("no tickets,return",tickets); return}
+    for(const ticket of tickets){
+      if(ticket.row.toString() === seatDataTransformer.row.toString() && ticket.seat.toString() === seatDataTransformer.seat.toString()){
+        seatDataTransformer.price = ticket.price
+      }
     }
-    else{
-      if(!tickets){ console.log("no tickets,return",tickets); return}
-      for(const ticket of tickets){
-        if(ticket.row.toString() === seatDataTransformer.row.toString() && ticket.seat.toString() === seatDataTransformer.seat.toString()){
-          seatDataTransformer.price = ticket.price
-        }
+    for(const category of categories){
+      if(category.value === seatDataTransformer.category){
+        seatDataTransformer.color = category.color
+        seatDataTransformer.img = category.icon
       }
-      for(const category of categories){
-        if(category.value === seatDataTransformer.category){
-          seatDataTransformer.color = category.color
-          seatDataTransformer.img = category.icon
-        }
-      }
-
-      setRefresh(!refresh);
-      onSeatClick &&
-      onSeatClick(seatDataTransformer)
     }
 
-  }, [])
+    setRefresh(!refresh);
+    onSeatClick &&
+    onSeatClick(seatDataTransformer)
+
+  }, [tickets,categories])
 
   const handleMouseOver = useCallback(e => {
     const { target: el } = e
@@ -201,7 +166,6 @@ const SvgScheme = forwardRef(({
   if(!SvgToInsert){return <div>Loading</div>} else{}
   var s = new XMLSerializer();
   var str_svg = s.serializeToString(SvgToInsert);
-
   return (
       <div className={s.scheme}>
         {!!tooltip && <SvgSchemeTooltop for={tooltipSeat}>
@@ -308,6 +272,7 @@ export const App = () => {
   const dragStartY = useRef(0);
   const initialDistance = useRef(0);
   var { data, isLoading, error, refetch } = useTickets({ event_id: 0, skip: 0, limit: 30 }, {})
+
   let [tickets, setTickets] = useState()
   useEffect(() => {
     const updateZoom = () => {
@@ -330,14 +295,15 @@ export const App = () => {
         event_id: 0,
         skip: 0,
         limit: 30}).then(
-        (data) => {
+          (data) => {
 
-          setTickets(data.data.concat(JSON.parse(localStorage?.getItem("cart")) || []))
-        }
+            setTickets(data.data.concat(JSON.parse(localStorage?.getItem("cart")) || []))
+          }
       )
     }
     LoadStadiumData();
     makeUpCategoriesF()
+
     //
     return () => window.removeEventListener("resize", updateZoom);
   }, []);
@@ -404,53 +370,22 @@ export const App = () => {
         }
 
         // Cart Seat
-        console.log("Cart Seat", seat);
-        console.log(GetSeat(seat?.row, seat?.seat))
-        if(!tickets || tickets===[]){
-          console.log("No Tickets,alarm!!!!!!!")
-          refetch({ event_id: 0, skip: 0, limit: 30 }, {}).then(tickets1 => {
-            tickets = tickets1.data
-            setTickets(tickets1.data)
-            var ticket_Data = {
-              t_id: GetSeat(seat?.row, seat?.seat).t_id,
-              hall_id: GetSeat(seat?.row, seat?.seat).hall_id,
-              event_id: GetSeat(seat?.row, seat?.seat).event_id,
-              section: GetSeat(seat?.row, seat?.seat).section,
-            }
-            console.log("ticket_Data",ticket_Data)
-            seat.t_id = ticket_Data.t_id
-            seat.hall_id = ticket_Data.hall_id
-            seat.event_id = ticket_Data.event_id
-            seat.section = ticket_Data.section
-            console.log("seat after merging data ", seat)
-            CartSeat(localStorage.getItem("phantom_user_token"),localStorage.getItem("phantom_user_u_hash"), ticket_Data.hall_id+";"+ticket_Data.section+";"+seat.row+";"+seat.seat+"", ticket_Data.t_id,1).then((data) => {
-              console.log("Cart Seat", data);
-            })
-            cart?.push(seat);
-            localStorage.setItem("cart", JSON.stringify(cart));
-            refresh_cart()
-            reloadCart()
-          })
+        var ticket_Data = {
+          t_id: GetSeat(seat?.row, seat?.seat).t_id,
+          hall_id: GetSeat(seat?.row, seat?.seat).hall_id,
+          event_id: GetSeat(seat?.row, seat?.seat).event_id,
+          section: GetSeat(seat?.row, seat?.seat).section,
         }
-        else{
-          console.log("Tickets Exist go on")
-          var ticket_Data = {
-            t_id: GetSeat(seat?.row, seat?.seat).t_id,
-            hall_id: GetSeat(seat?.row, seat?.seat).hall_id,
-            event_id: GetSeat(seat?.row, seat?.seat).event_id,
-            section: GetSeat(seat?.row, seat?.seat).section,
-          }
-          console.log("ticket_Data",ticket_Data)
-          seat.t_id = ticket_Data.t_id
-          seat.hall_id = ticket_Data.hall_id
-          seat.event_id = ticket_Data.event_id
-          seat.section = ticket_Data.section
-          CartSeat(localStorage.getItem("phantom_user_token"),localStorage.getItem("phantom_user_u_hash"), ticket_Data.hall_id+";"+ticket_Data.section+";"+seat.row+";"+seat.seat+"", ticket_Data.t_id,1).then((data) => {
-            console.log("Cart Seat", data);
-          })
-          cart?.push(seat);
-          localStorage.setItem("cart", JSON.stringify(cart));
-        }
+        console.log("ticket_Data",ticket_Data)
+        seat.t_id = ticket_Data.t_id
+        seat.hall_id = ticket_Data.hall_id
+        seat.event_id = ticket_Data.event_id
+        seat.section = ticket_Data.section
+        CartSeat(localStorage.getItem("phantom_user_token"),localStorage.getItem("phantom_user_u_hash"), ticket_Data.hall_id+";"+ticket_Data.section+";"+seat.row+";"+seat.seat+"", ticket_Data.t_id,1).then((data) => {
+          console.log("Cart Seat", data);
+        })
+        cart?.push(seat);
+        localStorage.setItem("cart", JSON.stringify(cart));
 
       }
       reloadCart()
@@ -617,8 +552,6 @@ export const App = () => {
         tmp.price = cat_tickets[0]?.price
         tmp.id = "ct_" + tmp.name
         tmp.currency = cat_tickets[0]?.currency
-
-        console.log(tmp)
         if(tmp.img){
           const parser = new DOMParser();
           const parsedDocument = parser.parseFromString(tmp.img, "text/html");
@@ -646,11 +579,8 @@ export const App = () => {
     [tickets, stadiumDataReceived]
   )
 
-
-
-
+  
   //
-
   return (
       <div className="w100 gap15 wrapper" onClick={passiveSeat}>
         <div
