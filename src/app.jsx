@@ -64,7 +64,7 @@ const SvgScheme = forwardRef(({
                                 seatSelector = '.svg-seat',
                                 src,
                                 tickets,
-    refetch,
+    currentCategory = "all",
                                 tooltip,
                                 onSeatClick,
                                 onSeatOver,
@@ -142,25 +142,47 @@ const SvgScheme = forwardRef(({
   const parsedDocument = parser.parseFromString(src, "text/html");
   //const svg_seats = parsedDocument.getElementsByTagName("path")
   const svg_seats = parsedDocument.getElementsByClassName("svg-seat")
-
-  for(var i=0;i<svg_seats.length;i++){
-    var el = svg_seats[i];
-    var el_data = {
-      seat: el.getAttribute("data-seat"),
-      row: el.getAttribute("data-row"),
-      category: el.getAttribute("data-category"),
-      disabled: el.getAttribute("data-disabled")
-    }
-    var suitableTicket = false
-    for (var j = 0; j < tickets.length; j++) {
-      if (tickets[j].row.toString() === el_data.row && tickets[j].seat.toString() === el_data.seat) {
-        suitableTicket = true
+  if(currentCategory === "all"){
+    for(var i=0;i<svg_seats.length;i++){
+      var el = svg_seats[i];
+      var el_data = {
+        seat: el.getAttribute("data-seat"),
+        row: el.getAttribute("data-row"),
+        category: el.getAttribute("data-category"),
+        disabled: el.getAttribute("data-disabled")
+      }
+      var suitableTicket = false
+      for (var j = 0; j < tickets.length; j++) {
+        if (tickets[j].row.toString() === el_data.row && tickets[j].seat.toString() === el_data.seat) {
+          suitableTicket = true
+        }
+      }
+      if(!suitableTicket){
+        el.setAttribute("data-disabled",true)
       }
     }
-    if(!suitableTicket){
-      el.setAttribute("data-disabled",true)
+  }
+  else{
+    for(var i=0;i<svg_seats.length;i++){
+      var el = svg_seats[i];
+      var el_data = {
+        seat: el.getAttribute("data-seat"),
+        row: el.getAttribute("data-row"),
+        category: el.getAttribute("data-category"),
+        disabled: el.getAttribute("data-disabled")
+      }
+      var suitableTicket = false
+      for (var j = 0; j < tickets.length; j++) {
+        if (tickets[j].row.toString() === el_data.row && tickets[j].seat.toString() === el_data.seat) {
+          suitableTicket = true
+        }
+      }
+      if(!suitableTicket || el_data.category !== currentCategory){
+        el.setAttribute("data-disabled",true)
+      }
     }
   }
+
 
   var SvgToInsert = parsedDocument.getElementsByTagName("svg")[0];
   if(!SvgToInsert){return <div>Loading</div>} else{}
@@ -261,7 +283,7 @@ export const App = () => {
   let [cart, setCart] = useState(JSON.parse(localStorage?.getItem("cart")) || []);
   const [selected, setSelected] = useState(0);
   const [active, setActive] = useState(0);
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [cartModal, setCartModal] = useState(false);
   const [mobile, setMobile] = useState(false);
   const [carry, setCarry] = useState(false);
@@ -273,7 +295,8 @@ export const App = () => {
   const initialDistance = useRef(0);
   var { data, isLoading, error, refetch } = useTickets({ event_id: 0, skip: 0, limit: 30 }, {})
 
-  let [tickets, setTickets] = useState()
+  const [tickets, setTickets] = useState()
+  const [currentCategory, setCurrentCategory] = useState("all");
   useEffect(() => {
     const updateZoom = () => {
       if (window.innerWidth <= 768) {
@@ -527,7 +550,7 @@ export const App = () => {
         price: 199.5,
         old_price: 76.5,
         currency: "€",
-        type: "stand",
+        type: "all",
         early_bird: false,
         color: "#80ed99",
       })
@@ -579,7 +602,7 @@ export const App = () => {
     [tickets, stadiumDataReceived]
   )
 
-  
+  if(categoriesF.length === 0) return null
   //
   return (
       <div className="w100 gap15 wrapper" onClick={passiveSeat}>
@@ -609,7 +632,7 @@ export const App = () => {
               <RiZoomInLine />
             </button>
           </div>
-          {(categories[selected].type !== "all" ||
+          {(categoriesF[selected].type !== "all" ||
               zoom > (mobile ? 0.8 : 1) ||
               zoom < (mobile ? 0.8 : 1)) && (
               <div className="df aic jcc back-btn">
@@ -625,7 +648,7 @@ export const App = () => {
                 </button>
               </div>
           )}
-          {categories[selected].type !== "all" && (
+          {categoriesF[selected].type !== "all" && (
               <span
                   className="df aic jcc fs12 cp bottom-back-btn"
                   onClick={() => {
@@ -665,7 +688,7 @@ export const App = () => {
             <SvgScheme src={stadiumData["scheme"]}
                        categories={stadiumData["categories"]}
                        tickets={tickets}
-                       refetch={refetch}
+                       currentCategory={currentCategory}
                        onSeatClick={addToCart}
                        tooltip={data => <SvgSchemeSeatPreview className={s.preview} categories={stadiumData["categories"]} price='16$' tickets={tickets} {...data} />}
             />
@@ -681,8 +704,9 @@ export const App = () => {
         <div className="df fdc gap15 sidebar-filter">
           <div className="w100 df aic jcsb">
             <p className="fs22">CATEGORIES:</p>
-            {(categories[selected].type === "all" ||
-                categories[selected]?.old_price) && (
+            {
+              (categoriesF[selected].type === "all" ||
+                categoriesF[selected]?.old_price) && (
                 <p className="df aic gap5 fs12">
                   <span style={{ color: "#aaa" }}>old price:</span>
                   <span style={{ color: "#ddd", width: "47px" }}>new price:</span>
@@ -728,14 +752,14 @@ export const App = () => {
                         fontWeight: "bold",
                         width: "auto",
                       }}>
-                    {categories[selected]?.early_bird && (
+                    {categoriesF[selected]?.early_bird && (
                         <img src={birds} alt="birds" className="early-birds" />
                     )}
-                    {categories[selected]?.old_price && (
-                        <del className="fs12">{categories[selected].old_price} €</del>
+                    {categoriesF[selected]?.old_price && (
+                        <del className="fs12">{categoriesF[selected].old_price} €</del>
                     )}
                     <b style={{ color: "#f8f5ec80" }} className="fs14 price">
-                      {categories[selected].price} €
+                      {categoriesF[selected].price} €
                     </b>
                   </p>
               )}
@@ -757,6 +781,11 @@ export const App = () => {
                                   category?.type === "all" && "all"
                               }`}
                               onClick={() => {
+                                if(categoriesF[ind].id === "ct_all"){
+                                    setCurrentCategory("all")
+                                }else {
+                                  setCurrentCategory(categoriesF[ind].name)
+                                }
                                 setSelected(ind);
                                 setActive(ind);
                               }}
