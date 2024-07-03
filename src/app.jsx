@@ -11,12 +11,12 @@ import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import { RiArrowGoBackLine } from "react-icons/ri";
 import { RxPlus, RxMinus, RxCross2 } from "react-icons/rx";
 import birds from "./images/EARLY BIRDS.svg";
+import "./progress-bar.css"
 import {
   AuthUser,
-  CartSeat,
+  CartSeat, GetCart,
   GetStadium,
   GetStadiumScheme,
-  GetTrip,
   RegisterPhantomUser
 } from "./tools/Ibronevik_API.jsx";
 import { forwardRef, useCallback} from 'react'
@@ -29,6 +29,21 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ReactDOM from 'react-dom';
 import tickets from "./tools/tickets";
 
+const schedule_id = "383"
+const currenciesSymbols = {
+  "EUR": "€",
+  "USD": "$",
+  "GBP": "£",
+  "RUB": "₽",
+  "UAH": "₴",
+  "BYR": "p",
+  "KZT": "₸",
+  "KGS": "₸",
+  "CNY": "¥",
+  "INR": "₹",
+  "JPY": "¥",
+  "TRY": "₺",
+}
 const CartModal = lazy(() => import("./utility"));
 
 const addStyles = (el, styles) => Object.assign(el.style, styles)
@@ -69,19 +84,23 @@ const SvgScheme = forwardRef(({
                                 onSeatClick,
                                 onSeatOver,
                                 onSeatOut,
+    categoriesF = [],
                               }, ref) => {
 
 
   const [ tooltipSeat, setTooltipSeat ] = useState()
   const [refresh, setRefresh] = useState(false);
-  
+  //console.log(tickets.filter((ticket) => ticket.row.toString() === "-1" || ticket.row.toString() === "0"),
+  //    tickets.filter((ticket) => ticket.category === "Dancefloor").length)
+  const dancefloor_category_name = categoriesF.find(cat => cat.code_type === "Dancefloor")?.value
+  //console.log("DCNAME",dancefloor_category_name)
   const  handleClick = useCallback(async e => {
     const { target: el } = e
     if (!el.matches(seatSelector)) return;
+    if(!tickets){ console.log("no tickets,return",tickets); return}
     if(el.getAttribute("data-disabled") === "true"){
       return
     }
-
     const seatDataTransformer = {
       seat: el.getAttribute("data-seat"),
       row: el.getAttribute("data-row"),
@@ -90,20 +109,29 @@ const SvgScheme = forwardRef(({
       category: el.getAttribute("data-category"),
       color: undefined,
       icon: undefined,
+      el: el
     }
-    if(!tickets){ console.log("no tickets,return",tickets); return}
-    for(const ticket of tickets){
-      if(ticket.row.toString() === seatDataTransformer.row.toString() && ticket.seat.toString() === seatDataTransformer.seat.toString()){
-        seatDataTransformer.price = ticket.price
+    if(seatDataTransformer.category === dancefloor_category_name){
+      var dancefloor_tickets = tickets.filter(ticket => ticket.section === dancefloor_category_name)
+      dancefloor_tickets.sort((a,b) => b.seat - a.seat)
+      seatDataTransformer.price = dancefloor_tickets[0].price
+      seatDataTransformer.currency = dancefloor_tickets[0].currency
+      seatDataTransformer.seat = dancefloor_tickets[0].seat
+      seatDataTransformer.row = dancefloor_tickets[0].row
+    }
+    else{
+      for(const ticket of tickets){
+        if(ticket.row.toString() === seatDataTransformer.row.toString() && ticket.seat.toString() === seatDataTransformer.seat.toString()){
+          seatDataTransformer.price = ticket.price
+        }
+      }
+      for(const category of categories){
+        if(category.value === seatDataTransformer.category){
+          seatDataTransformer.color = category.color
+          seatDataTransformer.img = category.icon
+        }
       }
     }
-    for(const category of categories){
-      if(category.value === seatDataTransformer.category){
-        seatDataTransformer.color = category.color
-        seatDataTransformer.img = category.icon
-      }
-    }
-
     setRefresh(!refresh);
     onSeatClick &&
     onSeatClick(seatDataTransformer)
@@ -151,10 +179,19 @@ const SvgScheme = forwardRef(({
         category: el.getAttribute("data-category"),
         disabled: el.getAttribute("data-disabled")
       }
+
       var suitableTicket = false
-      for (var j = 0; j < tickets.length; j++) {
-        if (tickets[j].row.toString() === el_data.row && tickets[j].seat.toString() === el_data.seat) {
+      if(el_data.category === dancefloor_category_name){
+        var dancefloor_tickets = tickets.filter(ticket => ticket.section === dancefloor_category_name)
+        if(dancefloor_tickets.length > 0){
           suitableTicket = true
+        }
+      }
+      else{
+        for (var j = 0; j < tickets.length; j++) {
+          if (tickets[j].row.toString() === el_data.row && tickets[j].seat.toString() === el_data.seat) {
+            suitableTicket = true
+          }
         }
       }
       if(!suitableTicket){
@@ -183,6 +220,21 @@ const SvgScheme = forwardRef(({
     }
   }
 
+  var cart = JSON.parse(localStorage?.getItem("cart")) || []
+  for(var i=0;i<svg_seats.length;i++){
+    var el = svg_seats[i];
+    var el_data = {
+      seat: el.getAttribute("data-seat"),
+      row: el.getAttribute("data-row"),
+      category: el.getAttribute("data-category"),
+      disabled: el.getAttribute("data-disabled")
+    }
+    for(var j=0;j<cart.length;j++){
+      if(cart[j].row.toString() === el_data.row && cart[j].seat.toString() === el_data.seat){
+        svg_seats[i].style.fill = "black"
+      }
+    }
+  }
 
   var SvgToInsert = parsedDocument.getElementsByTagName("svg")[0];
   if(!SvgToInsert){return <div>Loading</div>} else{}
@@ -218,15 +270,31 @@ function SvgSchemeSeatPreview({
                                                text,
                                                icon,
                                                color,
-                                               footer
+                                               footer,
+    categoriesF = [],
                                              }) {
   var currency = "€"
+  var dancefloor_category_name = categoriesF.find(cat => cat.code_type === "Dancefloor")?.value
+  var dancefloor_flag = false
   if (!row || !seat) {
     currency = ""
     price = "Seat not available"
+      if(category === dancefloor_category_name){
+
+        var dancefloor_tickets = tickets.filter(ticket => ticket.section === dancefloor_category_name)
+          dancefloor_tickets.sort((a,b) => b.seat - a.seat)
+        if(!dancefloor_tickets[0]){
+          dancefloor_tickets[0] = {price: 0, currency: "€"}
+        }else {
+          price = dancefloor_tickets[0].price
+          currency = dancefloor_tickets[0].currency
+          dancefloor_flag = true
+        }
+      }
   }
   else{
-    var suitableTicket = tickets.find(t => t.row.toString() === row.toString() && t.seat.toString() === seat.toString())
+    var suitableTicket
+    suitableTicket = tickets.find(t => t.row.toString() === row.toString() && t.seat.toString() === seat.toString())
     if (!suitableTicket){
       price = "Seat not available"
       currency = ""
@@ -237,14 +305,6 @@ function SvgSchemeSeatPreview({
     }
   }
 
-  const currenciesSymbols = {
-    "EUR": "€",
-    "USD": "$",
-    "GBP": "£",
-    "RUB": "₽",
-    "UAH": "₴",
-    "BYR": "p",
-  }
   if(!currenciesSymbols[currency]){
 
   }
@@ -255,6 +315,9 @@ function SvgSchemeSeatPreview({
   const cat = categories.find(c => c.value === category)
   const svg = icon || cat?.icon
   const clr = color || cat?.color || '#fff'
+  var cart = JSON.parse(localStorage?.getItem("cart")) || [];
+  var item = cart.find(i => i.category === category && i.row === row && i.seat === seat)
+
   return (
       <div className={s.preview + " " +className}>
         <div className={s.block}>
@@ -270,6 +333,12 @@ function SvgSchemeSeatPreview({
           <div className={s.seat}><span>Seat </span>{seat}</div>
         </div>}
         {!!footer && <div className={s.footer}>{footer}</div>}
+        <div className={s.footer}>
+          {
+              item ? <span className={s["tooltip-selected"]}>In Cart</span> :
+                  (cat.value === dancefloor_category_name && dancefloor_flag) ? <span className={s["tooltip-selected"]}>In Cart</span> : <span className={s["tooltip-select"]}>Click To Select</span>
+          }
+        </div>
       </div>
   )
 }
@@ -293,10 +362,12 @@ export const App = () => {
   const dragStartX = useRef(0);
   const dragStartY = useRef(0);
   const initialDistance = useRef(0);
-  var { data, isLoading, error, refetch } = useTickets({ event_id: 0, skip: 0, limit: 30 }, {})
+  let [categoriesF, setCategoriesF] = useState([]);
+  var { data, isLoading, error, refetch } = useTickets({ event_id: 383, skip: 0, limit: 30 }, {})
 
   const [tickets, setTickets] = useState()
   const [currentCategory, setCurrentCategory] = useState("all");
+  const [ScheduleFee, setScheduleFee] = useState(0);
   useEffect(() => {
     const updateZoom = () => {
       if (window.innerWidth <= 768) {
@@ -326,6 +397,32 @@ export const App = () => {
     }
     LoadStadiumData();
     makeUpCategoriesF()
+    GetCart(localStorage.getItem("phantom_user_token"),localStorage.getItem("phantom_user_u_hash")).then((data) => {
+        var crt = []
+      for(var i = 0; i < data.data.cart.length; i++){
+          crt.push({
+            "row":data.data.cart[i].prop.split(";")[2],
+            "seat":data.data.cart[i].prop.split(";")[3],
+          })
+      }
+      for(const i of cart){
+        var tmp = {
+          "row":i.row,
+          "seat":i.seat
+        }
+        if (!crt.includes(tmp)){
+          var ind;
+          for(var j = 0; j < crt.length; j++){
+            if(crt[j].row === i.row && crt[j].seat === i.seat){
+              ind = j
+            }
+          }
+          var new_cart = cart.pop(ind)
+          setCart(new_cart)
+          reloadCart()
+        }
+      }
+    })
 
     //
     return () => window.removeEventListener("resize", updateZoom);
@@ -339,7 +436,6 @@ export const App = () => {
       AuthUser(email).then((phantom_auth_data) => {
         localStorage.setItem("phantom_user_token", phantom_auth_data.token)
         localStorage.setItem("phantom_user_u_hash", phantom_auth_data.u_hash)
-        console.log("Phantom User Registered")
       })
     });
   }
@@ -357,62 +453,102 @@ export const App = () => {
   const GetSeat = (row, seat) => {
     return tickets?.find((x) => x?.row.toString() === row.toString() && x?.seat.toString() === seat.toString());
   }
+  const GetFreeDancefloorTicket = () => {
+    var dancefloor_tickets = tickets?.filter((x) => x?.row === "-1" || x?.row === -1);
+    dancefloor_tickets.sort((a, b) => b?.seat - a?.seat);
+    for(var i = 0; i < dancefloor_tickets.length; i++){
+        var flag = true
+        for(var j = 0; j < cart.length; j++){
+          if(dancefloor_tickets[i].seat === cart[j].seat && dancefloor_tickets[i].row === cart[j].row){
+            flag = false
+          }
+        }
+        if(flag){
+          dancefloor_tickets[i].category = "Dancefloor"
+          dancefloor_tickets[i].code_categoy = "Dancefloor"
+          return dancefloor_tickets[i]
+        }
+    }
+  }
 
   const addToCart = useCallback( (seat, st) =>
     {
-      console.log("seat", seat, st);
-
+      //console.log("seat", seat, st);
+      var dancefloor_category = categoriesF?.find((x) => x?.code_type === "Dancefloor")?.value
       cart = JSON.parse(localStorage?.getItem("cart")) || [];
       //refresh_cart();
-      const cartItem = cart?.find((x) => x?.id === seat?.id);
-      if (cartItem) {
-        if (seat.category === "DANCE FLOOR") {
-          if (st) {
-            if (cartItem?.quantity === 1) {
-              cart?.splice(cart?.indexOf(cartItem), 1);
-            } else {
-              cartItem.quantity--;
+      var cartItem = cart?.find((x) => x?.id === seat?.id);
+      if (cartItem || seat?.category === dancefloor_category) {
+        if (seat.category === dancefloor_category) {
+          if (st) {  // minus seat to dancefloor
+            var dancefloor_ticktes_in_cart = cart.filter((x) => x?.row === "-1" || x?.row === -1);
+            dancefloor_ticktes_in_cart.sort((a, b) => b.quantity - a.quantity);
+            var tkt = dancefloor_ticktes_in_cart[0]
+            cartItem = tkt
+            cart?.splice(cart?.indexOf(tkt), 1);
+            CartSeat(localStorage.getItem("phantom_user_token"),localStorage.getItem("phantom_user_u_hash"), tkt.hall_id+";"+tkt.section+";"+tkt.row+";"+tkt.seat+"", tkt.t_id,0).then((data) => {
+              //console.log("Cart Seat", data);
+            })
+            localStorage?.setItem("cart", JSON?.stringify(cart));
+            reloadCart()
+            return;
+          } else { //plus seat to dancefloor
+
+            var free_dancefloor_ticket = GetFreeDancefloorTicket();
+            if (!free_dancefloor_ticket) {
+              return;
             }
-          } else {
-            cartItem.quantity++;
+            free_dancefloor_ticket.hall_id = GetSeat(free_dancefloor_ticket.row, free_dancefloor_ticket.seat)?.hall_id
+            free_dancefloor_ticket.section = GetSeat(free_dancefloor_ticket.row, free_dancefloor_ticket.seat)?.section
+            free_dancefloor_ticket.t_id = GetSeat(free_dancefloor_ticket.row, free_dancefloor_ticket.seat)?.t_id
+            free_dancefloor_ticket.event_id = GetSeat(free_dancefloor_ticket.row, free_dancefloor_ticket.seat)?.event_id
+            CartSeat(localStorage.getItem("phantom_user_token"),localStorage.getItem("phantom_user_u_hash"), free_dancefloor_ticket.hall_id+";"+free_dancefloor_ticket.section+";"+free_dancefloor_ticket.row+";"+free_dancefloor_ticket.seat+"", free_dancefloor_ticket.t_id,1).then((data) => {
+              //console.log("Cart Seat", data);
+            })
+            cart?.push(free_dancefloor_ticket);
+            localStorage?.setItem("cart", JSON?.stringify(cart));
+            reloadCart()
+            return;
           }
           localStorage?.setItem("cart", JSON?.stringify(cart));
-          return;
+          reloadCart()
         }
 
+        // Cart Seat
+        if(seat.category !== dancefloor_category){
+          seat.el.style.fill = categoriesF.find((x) => x.name === seat.category)?.color
+        }
         CartSeat(localStorage.getItem("phantom_user_token"),localStorage.getItem("phantom_user_u_hash"), cartItem.hall_id+";"+cartItem.section+";"+seat.row+";"+seat.seat+"", cartItem.t_id,0).then((data) => {
-          console.log("Cart Seat", data);
+          //console.log("Cart Seat", data);
         })
         cart?.splice(cart?.indexOf(cartItem), 1);
         localStorage?.setItem("cart", JSON?.stringify(cart));
       } else {
-        if (seat.category === "DANCE FLOOR") {
-          cart?.push({ ...seat, quantity: 1 });
-          localStorage.setItem("cart", JSON.stringify(cart));
-          return;
-        }
-
         // Cart Seat
+        if(seat.category !== dancefloor_category) {
+          seat.el.style.fill = "black"
+        }
         var ticket_Data = {
           t_id: GetSeat(seat?.row, seat?.seat).t_id,
           hall_id: GetSeat(seat?.row, seat?.seat).hall_id,
           event_id: GetSeat(seat?.row, seat?.seat).event_id,
           section: GetSeat(seat?.row, seat?.seat).section,
         }
-        console.log("ticket_Data",ticket_Data)
+
         seat.t_id = ticket_Data.t_id
         seat.hall_id = ticket_Data.hall_id
         seat.event_id = ticket_Data.event_id
         seat.section = ticket_Data.section
         CartSeat(localStorage.getItem("phantom_user_token"),localStorage.getItem("phantom_user_u_hash"), ticket_Data.hall_id+";"+ticket_Data.section+";"+seat.row+";"+seat.seat+"", ticket_Data.t_id,1).then((data) => {
-          console.log("Cart Seat", data);
+          //console.log("Cart Seat", data);
         })
+
         cart?.push(seat);
         localStorage.setItem("cart", JSON.stringify(cart));
 
       }
       reloadCart()
-    },[tickets]
+    },[tickets,categoriesF]
   )
 
   const deleteFromCart = (category) => {
@@ -520,26 +656,21 @@ export const App = () => {
       max: prices.reduce((a, b) => Math.max(a, b)),
     })
   }
-  const trip_id = "3";
   const [stadiumData, setStadiumData] = useState({});
   const [stadiumDataReceived, setStadiumDataReceived] = useState(false);
   function LoadStadiumData() {
     if (!stadiumDataReceived) {
-      GetTrip(trip_id).then((trip_data) => {
-        GetStadium(trip_data["sc_id"]).then((stadium_data) => {
-          GetStadiumScheme(stadium_data["scheme_blob"]).then((stadium_scheme) => {
-            if (!stadiumDataReceived) {
-              setStadiumData(stadium_scheme);
-              setStadiumDataReceived(true);
-              console.log("Stadium data received");
-            }
-          })
+      GetStadium(schedule_id).then((stadium_data) => {
+        GetStadiumScheme(stadium_data["stadium"]["scheme_blob"]).then((stadium_scheme) => {
+          if (!stadiumDataReceived) {
+            setScheduleFee(stadium_data.schedule.fee*1)
+            setStadiumData(stadium_scheme);
+            setStadiumDataReceived(true);
+          }
         })
       })
     }
   }
-
-  let [categoriesF, setCategoriesF] = useState([]);
   const makeUpCategoriesF = () => {
     var out = []
     if(stadiumDataReceived){
@@ -547,8 +678,8 @@ export const App = () => {
         id: "ct_all",
         name: "ALL CATEGORIES",
         seats: totalC_V.totalLeft,
-        price: 199.5,
-        old_price: 76.5,
+        price: "",
+        old_price: "",
         currency: "€",
         type: "all",
         early_bird: false,
@@ -560,6 +691,7 @@ export const App = () => {
         var tmp = {
           id:undefined,
           name:cat.label,
+          value:cat.value,
           seats:undefined,
           price:undefined,
           old_price:undefined,
@@ -567,9 +699,21 @@ export const App = () => {
           type:"chair",
           early_bird:true,
           color:cat.color,
-          img:cat.icon
+          img:cat.icon,
+          code_type: undefined
         }
-        var cat_tickets = tickets.filter(ticket => ticket.section === cat.label)
+        var cat_tickets = tickets.filter(ticket => ticket.section === cat.value)
+
+        var flag = true
+        for(var j = 0; j < cat_tickets.length; j++){
+          if(cat_tickets[j].row.toString() !== "-1" && cat_tickets[j].row.toString() !== "0"){
+            flag = false
+            break
+          }
+        }
+        if(flag && cat_tickets.length > 0){
+          tmp.code_type = "Dancefloor"
+        }
 
         tmp.seats = (cat_tickets.length ? cat_tickets.length :0)
         tmp.price = cat_tickets[0]?.price
@@ -601,8 +745,15 @@ export const App = () => {
     },
     [tickets, stadiumDataReceived]
   )
-
-  if(categoriesF.length === 0) return null
+  if(categoriesF.length === 0) return <div className={"loading-screen"}>
+    <div className="loader-wrapper-bg">
+      <div className="loader-wrapper">
+        <div className="loader">
+          <div className="loader loader-inner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
   //
   return (
       <div className="w100 gap15 wrapper" onClick={passiveSeat}>
@@ -653,6 +804,7 @@ export const App = () => {
                   className="df aic jcc fs12 cp bottom-back-btn"
                   onClick={() => {
                     setSelected(0);
+                    setCategoriesF(categoriesF)
                     setActive(0);
                     setOpen(false);
                     setZoom(mobile ? 0.8 : 1);
@@ -671,10 +823,12 @@ export const App = () => {
               className="w100 df aic jcc fs12 cp bottom-back-btn"
               onClick={() => {
                 setSelected(0);
+                refresh_cart()
                 setActive(0);
                 setOpen(false);
                 setZoom(mobile ? 0.8 : 1);
                 setD({ x: 0, y: 0 });
+                console.log("clicked")
               }}>
             BACK TO ALL <br /> CATEGORIES
           </div>
@@ -686,11 +840,13 @@ export const App = () => {
                 transform: `translate(${d.x}px, ${d.y}px) scale(${zoom})`,
               }}>
             <SvgScheme src={stadiumData["scheme"]}
+                       key={selected}
                        categories={stadiumData["categories"]}
                        tickets={tickets}
                        currentCategory={currentCategory}
                        onSeatClick={addToCart}
-                       tooltip={data => <SvgSchemeSeatPreview className={s.preview} categories={stadiumData["categories"]} price='16$' tickets={tickets} {...data} />}
+                       categoriesF={categoriesF}
+                       tooltip={data => <SvgSchemeSeatPreview className={s.preview} categories={stadiumData["categories"]} price='16$' tickets={tickets} categoriesF={categoriesF} {...data} />}
             />
 
           </div>
@@ -849,7 +1005,7 @@ export const App = () => {
                         <div
                             className="w100 df aic jcsb basket-header"
                             style={{
-                              borderBottom: `1px solid ${seats?.[0]?.color}99`,
+                              borderBottom: `1px solid ${categoriesF?.find((x) => x.name === category)?.color}99`,
                               paddingBottom: "8px",
                             }}>
                           <p
@@ -861,22 +1017,15 @@ export const App = () => {
                                 style={{ color: "#f8f5ec4d" }}
                                 className="df aic gap10 fs12">
                         <RxCross2 className="fs9" />{" "}
-                              {category === "DANCE FLOOR"
-                                  ? seats?.[0]?.quantity
+                              {category === categoriesF?.find((x) => x.code_type === "Dancefloor").value
+                                  ? seats.length
                                   : seats.length}
                       </span>
                           </p>
                           <p className="df aic gap10 fs14">
-                            {category === "DANCE FLOOR"
-                                ? seats
-                                    ?.reduce(
-                                        (acc, curr) => acc + curr?.price * curr?.quantity,
-                                        0
-                                    )
-                                    ?.toFixed(2)
-                                : seats
-                                    ?.reduce((acc, curr) => acc + curr?.price, 0)
-                                    ?.toFixed(2)}
+                            {category === categoriesF?.find((x) => x.code_type === "Dancefloor").value
+                                ? seats?.reduce((acc, curr) => acc + curr?.price, 0)?.toFixed(2)
+                                : seats?.reduce((acc, curr) => acc + curr?.price, 0)?.toFixed(2)}
                             {seats?.[0]?.currency || "€"}
                             <span
                                 className="cp fs14 delete-btn"
@@ -889,6 +1038,68 @@ export const App = () => {
                         </div>
                         <div className="w100 df fdc gap5">
                           {seats.map((seat, index) => {
+                            if(category === categoriesF?.find((x) => x.code_type === "Dancefloor").value){
+                              return index===0 && (
+                                  <label
+                                      key={`${seat.seat}_${index}`}
+                                      className="w100 df aic jcsb basket-item">
+                                    <p
+                                        className="df aic gap10 fs14"
+                                        style={{ color: "#f8f5ec4d" }}>
+                                      Quantity:
+                                    </p>
+                                    <i
+                                        className="df aic gap10 fs10"
+                                        style={{ color: "#f8f5ec4d" }}>
+                                      <span className="cp fs14 delete-btn">
+                               <span className="df aic gap5">
+                                  <RxMinus
+                                      onClick={() => addToCart(seat, true)}
+                                  />
+                                 {seats.length}
+                                 <RxPlus onClick={() => addToCart(seat)} />
+                                </span>
+                            </span>
+                                    </i>
+                                  </label>
+                              )
+                            }
+                            else{
+                              return (
+                                  <label
+                                      key={`${seat.seat}_${index}`}
+                                      className="w100 df aic jcsb basket-item">
+                                    <p
+                                        className="df aic gap10 fs14"
+                                        style={{ color: "#f8f5ec4d" }}>
+                                      <>
+                                                <span className="df aic gap10">
+                                                  Row:{" "}
+                                                  <span style={{ color: "#f8f5ec" }}>
+                                                    {seat.row}
+                                                  </span>
+                                                </span>
+                                        <span className="df aic gap10">
+                                                  Seat:{" "}
+                                          <span style={{ color: "#f8f5ec" }}>
+                                                    {seat.seat}
+                                                  </span>
+                                                </span>
+                                      </>
+                                    </p>
+                                    <i
+                                        className="df aic gap10 fs10"
+                                        style={{ color: "#f8f5ec4d" }}>
+                                      <b>
+                                        {seat.price} {seat.currency}
+                                      </b>
+                                      <span className="cp fs14 delete-btn">
+                                      </span>
+                                    </i>
+                                  </label>
+                              );
+                            }
+                            /*
                             return (
                                 <label
                                     key={`${seat.seat}_${index}`}
@@ -896,9 +1107,8 @@ export const App = () => {
                                   <p
                                       className="df aic gap10 fs14"
                                       style={{ color: "#f8f5ec4d" }}>
-                                    {category === "DANCE FLOOR" ? (
-                                        "Quantity:"
-                                    ) : (
+                                    {category === categoriesF?.find((x) => x.code_type === "Dancefloor").value ? ("Quantity:") :
+                                        (
                                         <>
                                 <span className="df aic gap10">
                                   Row:{" "}
@@ -913,23 +1123,24 @@ export const App = () => {
                                   </span>
                                 </span>
                                         </>
-                                    )}
+                                    )
+                                    }
                                   </p>
                                   <i
                                       className="df aic gap10 fs10"
                                       style={{ color: "#f8f5ec4d" }}>
-                                    {category !== "DANCE FLOOR" && (
+                                    {category !== categoriesF?.find((x) => x.code_type === "Dancefloor").value && (
                                         <b>
                                           {seat.price} {seat.currency}
                                         </b>
                                     )}
                                     <span className="cp fs14 delete-btn">
-                              {category === "DANCE FLOOR" ? (
+                              {category === categoriesF?.find((x) => x.code_type === "Dancefloor").value ? (
                                   <span className="df aic gap5">
                                   <RxMinus
                                       onClick={() => addToCart(seat, true)}
                                   />
-                                    {seat.quantity}
+                                    {seats.length}
                                     <RxPlus onClick={() => addToCart(seat)} />
                                 </span>
                               ) : (
@@ -941,6 +1152,7 @@ export const App = () => {
                                   </i>
                                 </label>
                             );
+                            */
                           })}
                         </div>
                       </div>
@@ -954,15 +1166,15 @@ export const App = () => {
           </div>
           <div className="w100 df fdc gap5 basket-footer">
             <p className="w100 df aic jcsb fs10" style={{ color: "#f8f5ec4d" }}>
-              <span>fee 5%:</span>
+              <span>fee {(ScheduleFee*1).toPrecision(2)}%:</span>
               <i>
-                <b>{CalculateTotal(cart, 5)?.fee || 0} €</b>
+                <b>{CalculateTotal(cart, ScheduleFee)?.fee || 0} €</b>
               </i>
             </p>
             <p className="w100 df aic jcsb">
               <span className="fs14">Total:</span>
               <i className="fs14">
-                <b>{CalculateTotal(cart, 5)?.total || 0} €</b>
+                <b>{CalculateTotal(cart, ScheduleFee)?.total || 0} €</b>
               </i>
             </p>
             <button
@@ -981,7 +1193,7 @@ export const App = () => {
         </div>
         {cartModal && (
             <Suspense>
-              <CartModal setOpen={setCartModal} open={cartModal} />
+              <CartModal setOpen={setCartModal} open={cartModal} ScheduleFee={ScheduleFee}/>
             </Suspense>
         )}
       </div>

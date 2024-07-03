@@ -52,6 +52,7 @@
     span {
       font-size: 12px;
       color: #999;
+      display: block;
     }
     font-size: 16px;
   }
@@ -63,6 +64,9 @@
     margin: 6px -8px 0;
     border-top: 1px solid #666;
     padding-top: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 }
 
@@ -77,4 +81,24 @@
 
 .scheme {
   position: relative;
+}
+
+.tooltip-selected{
+  color: white;
+  font-weight: bold;
+  background-color: #46b446;
+  border-radius: 6px;
+  padding: 8px;
+  box-shadow: 0px 4px 4px 0px #0000000D;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+}
+.tooltip-select{
+  color: #fff;
+  border-radius: 6px;
+  box-shadow: 0px 4px 4px 0px #0000000D;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
 }

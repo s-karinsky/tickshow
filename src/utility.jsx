@@ -4,11 +4,11 @@ import { Checkbox, ConfigProvider } from "antd";
 import { MdOutlineAccessTime } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
 import { BiLoaderCircle } from "react-icons/bi";
-import {CreateOrder, GetCart} from "./tools/Ibronevik_API.jsx";
+import {AuthUser, ChangeUser, CreateOrder, GetCart} from "./tools/Ibronevik_API.jsx";
 
-const CartModal = ({ setOpen, open }) => {
+const CartModal = ({ setOpen, open,ScheduleFee }) => {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
-  const t = CalculateTotal(cart, 5);
+  const t = CalculateTotal(cart, ScheduleFee);
   const [load, setLoad] = useState(false);
   const [token,setToken] = useState(null)
   const [u_hash,setU_hash] = useState(null)
@@ -24,6 +24,17 @@ const CartModal = ({ setOpen, open }) => {
     var phantom_user_token = localStorage.getItem("phantom_user_token");
     var phantom_user_u_hash = localStorage.getItem("phantom_user_u_hash");
 
+    ChangeUser(phantom_user_token,phantom_user_u_hash,values.Name,values.Email,values.Phone).then((data)=>{
+      console.log(data)
+      if(data.status === "error" && data.message.startsWith("busy user data:")){
+        AuthUser(values.Email,values.Phone).then((data)=>{
+            localStorage.setItem("phantom_user_token",data.token)
+          localStorage.setItem("phantom_user_u_hash",data.u_hash)
+          console.log(data)
+        })
+      }
+    })
+
     // group seats by trip_id (t_id)
     var seats = JSON.parse(localStorage?.getItem("cart")) || []
     seats = seats.reduce((acc, seat) => {
@@ -34,7 +45,7 @@ const CartModal = ({ setOpen, open }) => {
       acc[seat.t_id][seatFormat] = 1;
       return acc;
     }, {});
-    console.log("seatsNew",seats)
+
     CreateOrder(seats, phantom_user_token, phantom_user_u_hash).then((data)=>{
       console.log(data)
       var payment_link = data.data.payment
@@ -43,6 +54,7 @@ const CartModal = ({ setOpen, open }) => {
       window.location.href = payment_link
 
     })
+    
 
     setLoad(true);
     window.parent.postMessage(

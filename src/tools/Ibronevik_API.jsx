@@ -109,7 +109,10 @@ export async function GetStadium(sc_id){
     }
     data = await make_async_request("data/?fields=3",data)
     var stadium_id = data["data"]["data"]["schedule"][sc_id]["stadium"]
-    return data["data"]["data"]["stadiums"][stadium_id]
+    return {
+        stadium:data["data"]["data"]["stadiums"][stadium_id],
+        schedule:data["data"]["data"]["schedule"][sc_id]
+    }
 }
 export async function GetStadiumScheme(link){
     const headers = {
@@ -134,7 +137,7 @@ export async function GetCart(token, u_hash){
     }
     return await make_async_request("cart",data,"POST")
 }
-async function ChangeUser(token,u_hash,name,email,phone){
+export async function ChangeUser(token,u_hash,name,email,phone){
     var data = {
         "token":token,
         "u_hash":u_hash,
