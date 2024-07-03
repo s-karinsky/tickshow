@@ -276,6 +276,11 @@ function SvgSchemeSeatPreview({
   var currency = "€"
   var dancefloor_category_name = categoriesF.find(cat => cat.code_type === "Dancefloor")?.value
   var dancefloor_flag = false
+
+  var cart = JSON.parse(localStorage?.getItem("cart")) || []
+  if(cart.filter(item => item.category === dancefloor_category_name).length > 0){
+    dancefloor_flag = true
+  }
   if (!row || !seat) {
     currency = ""
     price = "Seat not available"
@@ -288,7 +293,7 @@ function SvgSchemeSeatPreview({
         }else {
           price = dancefloor_tickets[0].price
           currency = dancefloor_tickets[0].currency
-          dancefloor_flag = true
+
         }
       }
   }
@@ -317,6 +322,8 @@ function SvgSchemeSeatPreview({
   const clr = color || cat?.color || '#fff'
   var cart = JSON.parse(localStorage?.getItem("cart")) || [];
   var item = cart.find(i => i.category === category && i.row === row && i.seat === seat)
+
+  console.log(cat.value,dancefloor_category_name,dancefloor_flag)
 
   return (
       <div className={s.preview + " " +className}>
