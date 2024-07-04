@@ -35,6 +35,9 @@
       margin-top: 5px;
     }
   }
+  .category{
+    font-size: 12px;
+  }
 
   .price {
     font-size: 18px;
@@ -54,7 +57,7 @@
       color: #999;
       display: block;
     }
-    font-size: 16px;
+    font-size: 12px;
   }
   .row:last-child ,.seat:last-child {
     margin-left: 50px;
@@ -64,6 +67,8 @@
     margin: 6px -8px 0;
     border-top: 1px solid #666;
     padding-top: 6px;
+    padding-left: 15px;
+    padding-right: 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -95,7 +100,9 @@
   display: flex;
 }
 .tooltip-select{
-  color: #fff;
+  width:80px;
+  font-size: 14px;
+  color: #a1a1a1;
   border-radius: 6px;
   box-shadow: 0px 4px 4px 0px #0000000D;
   margin-left: auto;

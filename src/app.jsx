@@ -1,20 +1,20 @@
 import React, { useState, useMemo, useRef, Suspense, lazy } from "react";
 import { useEffect } from "react";
-import { CalculateTotal, findMinMaxPrices, getSeats } from "./utility";
+import {CalculateTotal, CountdownTimer, findMinMaxPrices, getSeats} from "./utility";
 import { getUniqueCategory } from "./utility";
 import { generateSeat } from "./generate-fileld";
 import { mainData, data, categories, generateIcon } from "./generate-fileld";
 
 import { FaCheck } from "react-icons/fa6";
-import { RiZoomInLine, RiZoomOutLine } from "react-icons/ri";
-import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
+import {RiCheckboxBlankCircleFill, RiZoomInLine, RiZoomOutLine} from "react-icons/ri";
+import {IoIosArrowDown, IoIosArrowUp, IoIosCheckmarkCircle} from "react-icons/io";
 import { RiArrowGoBackLine } from "react-icons/ri";
 import { RxPlus, RxMinus, RxCross2 } from "react-icons/rx";
 import birds from "./images/EARLY BIRDS.svg";
 import "./progress-bar.css"
 import {
   AuthUser,
-  CartSeat, GetCart,
+  CartSeat, ClearSeats, GetCart, GetLimitTime,
   GetStadium,
   GetStadiumScheme,
   RegisterPhantomUser
@@ -28,6 +28,7 @@ import fetchTickets, {useTickets} from "./tools/tickets";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ReactDOM from 'react-dom';
 import tickets from "./tools/tickets";
+import {MdOutlineAccessTime, MdOutlineCheckCircle} from "react-icons/md";
 
 const schedule_id = "383"
 const currenciesSymbols = {
@@ -86,8 +87,7 @@ const SvgScheme = forwardRef(({
                                 onSeatOut,
     categoriesF = [],
                               }, ref) => {
-
-
+  //console.log("POINT: SvgScheme-01 :", currentCategory)
   const [ tooltipSeat, setTooltipSeat ] = useState()
   const [refresh, setRefresh] = useState(false);
   //console.log(tickets.filter((ticket) => ticket.row.toString() === "-1" || ticket.row.toString() === "0"),
@@ -323,7 +323,7 @@ function SvgSchemeSeatPreview({
   var cart = JSON.parse(localStorage?.getItem("cart")) || [];
   var item = cart.find(i => i.category === category && i.row === row && i.seat === seat)
 
-  console.log(cat.value,dancefloor_category_name,dancefloor_flag)
+  //console.log(cat.value,dancefloor_category_name,dancefloor_flag)
 
   return (
       <div className={s.preview + " " +className}>
@@ -370,12 +370,28 @@ export const App = () => {
   const dragStartY = useRef(0);
   const initialDistance = useRef(0);
   let [categoriesF, setCategoriesF] = useState([]);
+  const [firstZ, setFirtZ] = useState(true);
   var { data, isLoading, error, refetch } = useTickets({ event_id: 383, skip: 0, limit: 30 }, {})
 
   const [tickets, setTickets] = useState()
   const [currentCategory, setCurrentCategory] = useState("all");
   const [ScheduleFee, setScheduleFee] = useState(0);
+  const [LimitTime, setLimitTime] = useState(600);
   useEffect(() => {
+
+    GetLimitTime().then((data) => {
+        setLimitTime(data)
+    })
+
+    if(!localStorage.getItem("phantom_user_token")){
+      RegisterPhantomUser().then((email) => {
+        localStorage.setItem("phantom_user_email", email)
+        AuthUser(email).then((phantom_auth_data) => {
+          localStorage.setItem("phantom_user_token", phantom_auth_data.token)
+          localStorage.setItem("phantom_user_u_hash", phantom_auth_data.u_hash)
+        })
+      });
+    }
     const updateZoom = () => {
       if (window.innerWidth <= 768) {
         setMobile(true);
@@ -393,7 +409,7 @@ export const App = () => {
     }
     else{
       refetch({
-        event_id: 0,
+        event_id: schedule_id,
         skip: 0,
         limit: 30}).then(
           (data) => {
@@ -403,55 +419,10 @@ export const App = () => {
       )
     }
     LoadStadiumData();
-    makeUpCategoriesF()
-    GetCart(localStorage.getItem("phantom_user_token"),localStorage.getItem("phantom_user_u_hash")).then((data) => {
-        var crt = []
-      for(var i = 0; i < data.data.cart.length; i++){
-          crt.push({
-            "row":data.data.cart[i].prop.split(";")[2],
-            "seat":data.data.cart[i].prop.split(";")[3],
-          })
-      }
-      for(const i of cart){
-        var tmp = {
-          "row":i.row,
-          "seat":i.seat
-        }
-        if (!crt.includes(tmp)){
-          var ind;
-          for(var j = 0; j < crt.length; j++){
-            if(crt[j].row === i.row && crt[j].seat === i.seat){
-              ind = j
-            }
-          }
-          var new_cart = cart.pop(ind)
-          setCart(new_cart)
-          reloadCart()
-        }
-      }
-    })
 
     //
     return () => window.removeEventListener("resize", updateZoom);
   }, []);
-
-  // Registering Phantom User
-
-  if(localStorage.getItem("phantom_user_token")===null){
-    RegisterPhantomUser().then((email) => {
-      localStorage.setItem("phantom_user_email", email)
-      AuthUser(email).then((phantom_auth_data) => {
-        localStorage.setItem("phantom_user_token", phantom_auth_data.token)
-        localStorage.setItem("phantom_user_u_hash", phantom_auth_data.u_hash)
-      })
-    });
-  }
-
-
-  //
-  const refresh_cart = () => {
-    setUpdate(!update);
-  };
   const reloadCart = () => {
     setCart(JSON.parse(localStorage?.getItem("cart")) || []);
   };
@@ -517,8 +488,6 @@ export const App = () => {
             reloadCart()
             return;
           }
-          localStorage?.setItem("cart", JSON?.stringify(cart));
-          reloadCart()
         }
 
         // Cart Seat
@@ -560,16 +529,29 @@ export const App = () => {
 
   const deleteFromCart = (category) => {
     var items_to_delete = cart.filter((item) => item.category === category);
-    for (var i = 0; i < items_to_delete.length; i++) {
-        var seat = items_to_delete[i];
-        CartSeat(localStorage.getItem("phantom_user_token"),localStorage.getItem("phantom_user_u_hash"), seat.hall_id+";"+seat.section+";"+seat.row+";"+seat.seat+"", seat.t_id,0).then((data) => {
-          console.log("Cart Seat", data);
-        })
+
+    var new_format_seats_to_delete = items_to_delete.map((item) => {
+      return {
+        "prop": item.hall_id+";"+item.section+";"+item.row+";"+item.seat+"",
+        "prod": item.t_id,
+        "count": 0
+      }
+    })
+    var new_total_seats_to_delete = {}
+    for(const seat of new_format_seats_to_delete){
+      new_total_seats_to_delete[seat.prod] = []
     }
+    for(const seat of new_format_seats_to_delete){
+      new_total_seats_to_delete[seat.prod].push(seat.prop)
+    }
+    ClearSeats(localStorage.getItem("phantom_user_token"),localStorage.getItem("phantom_user_u_hash"),new_total_seats_to_delete).then((data) => {
+          //console.log("Delete Seats By Category", data)
+        }
+    )
     var newCart = cart.filter((item) => item.category !== category)
     localStorage.setItem("cart", JSON.stringify(newCart));
     reloadCart()
-    refresh_cart()
+
   };
 
   const handleMouseDown = (e) => {
@@ -679,6 +661,9 @@ export const App = () => {
     }
   }
   const makeUpCategoriesF = () => {
+    if(!tickets) {
+      return
+    }
     var out = []
     if(stadiumDataReceived){
       out.push({
@@ -709,7 +694,7 @@ export const App = () => {
           img:cat.icon,
           code_type: undefined
         }
-        var cat_tickets = tickets.filter(ticket => ticket.section === cat.value)
+        var cat_tickets = tickets?.filter(ticket => ticket.section === cat.value)
 
         var flag = true
         for(var j = 0; j < cat_tickets.length; j++){
@@ -750,7 +735,7 @@ export const App = () => {
       build_totalC_V()
       makeUpCategoriesF()
     },
-    [tickets, stadiumDataReceived]
+    [tickets, stadiumData]
   )
   if(categoriesF.length === 0) return <div className={"loading-screen"}>
     <div className="loader-wrapper-bg">
@@ -790,6 +775,42 @@ export const App = () => {
               <RiZoomInLine />
             </button>
           </div>
+          {cart.length !== 0 && (
+              <div className="df aic jcc gap10 zoom-box time-box" id="action">
+                <MdOutlineAccessTime className="fs18" /> Time left to place your order: {<CountdownTimer initialTime={LimitTime} action={() => {
+                  var cart_tickets = cart
+                var new_tickets = {}
+                for(var i = 0; i < cart_tickets.length; i++){
+                    if(!new_tickets[cart_tickets[i].t_id]){
+                        new_tickets[cart_tickets[i].t_id] = []
+                    }
+                    new_tickets[cart_tickets[i].t_id].push(cart_tickets[i].hall_id + ";" + cart_tickets[i].section + ";" + cart_tickets[i].row + ";" + cart_tickets[i].seat)
+                }
+                var token = localStorage.getItem("phantom_user_token")
+                var u_hash = localStorage.getItem("phantom_user_u_hash")
+                ClearSeats(token, u_hash, new_tickets).then( res => {
+                    //console.log("Clearing Seats ",res)
+                })
+                  setCart([]);
+                  localStorage.setItem("cart", JSON.stringify([]));
+              }} />}
+              </div>
+          )}
+          {(zoom > (mobile ? 0.8 : 1) || zoom < (mobile ? 0.8 : 1)) && (
+              <div
+                  className="df aic jcc back-btn"
+                  onClick={() => {
+                    setOpen(false);
+                    setZoom(mobile ? 0.8 : 1);
+                    setD({ x: 0, y: 0 });
+                    setFirtZ(true);
+                  }}
+                  id="action">
+                <button className="df aic jcc fs18 cp">
+                  <RiArrowGoBackLine />
+                </button>
+              </div>
+          )}
           {(categoriesF[selected].type !== "all" ||
               zoom > (mobile ? 0.8 : 1) ||
               zoom < (mobile ? 0.8 : 1)) && (
@@ -806,12 +827,13 @@ export const App = () => {
                 </button>
               </div>
           )}
+
           {categoriesF[selected].type !== "all" && (
               <span
                   className="df aic jcc fs12 cp bottom-back-btn"
                   onClick={() => {
                     setSelected(0);
-                    setCategoriesF(categoriesF)
+                    setCurrentCategory("all")
                     setActive(0);
                     setOpen(false);
                     setZoom(mobile ? 0.8 : 1);
@@ -826,19 +848,7 @@ export const App = () => {
             отрисовка мест
             */
           }
-          <div
-              className="w100 df aic jcc fs12 cp bottom-back-btn"
-              onClick={() => {
-                setSelected(0);
-                refresh_cart()
-                setActive(0);
-                setOpen(false);
-                setZoom(mobile ? 0.8 : 1);
-                setD({ x: 0, y: 0 });
-                console.log("clicked")
-              }}>
-            BACK TO ALL <br /> CATEGORIES
-          </div>
+
 
           <div
               className="df fdc aic gap10 chairs-body"
@@ -847,7 +857,6 @@ export const App = () => {
                 transform: `translate(${d.x}px, ${d.y}px) scale(${zoom})`,
               }}>
             <SvgScheme src={stadiumData["scheme"]}
-                       key={selected}
                        categories={stadiumData["categories"]}
                        tickets={tickets}
                        currentCategory={currentCategory}

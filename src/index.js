@@ -7,19 +7,23 @@ import { App } from "./app";
 import { ConfigProvider, theme } from "antd";
 import { themeConfig } from "./ant.config";
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
+import { Provider } from "react-redux";
+import { store } from "./context/store";
 
 const queryClient = new QueryClient()
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-    <QueryClientProvider client={queryClient}>
-        <ConfigProvider
+    <Provider store={store}>
+        <QueryClientProvider client={queryClient}>
+            <ConfigProvider
             theme={{
                 algorithm: theme.darkAlgorithm,
                 token: themeConfig.token,
                 components: themeConfig.components,
             }}>
-            <App />
-        </ConfigProvider>
-    </QueryClientProvider>
+                <App />
+            </ConfigProvider>
+        </QueryClientProvider>
+    </Provider>
 );
 

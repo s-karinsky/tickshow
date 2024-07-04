@@ -4,7 +4,9 @@ import { Checkbox, ConfigProvider } from "antd";
 import { MdOutlineAccessTime } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
 import { BiLoaderCircle } from "react-icons/bi";
-import {AuthUser, ChangeUser, CreateOrder, GetCart} from "./tools/Ibronevik_API.jsx";
+import {AuthUser, ChangeUser, CreateOrder, GetCart, MoveCart} from "./tools/Ibronevik_API.jsx";
+import { useDispatch, useSelector } from "react-redux";
+import {acTimer} from "./context/timer";
 
 const CartModal = ({ setOpen, open,ScheduleFee }) => {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
@@ -18,20 +20,30 @@ const CartModal = ({ setOpen, open,ScheduleFee }) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const values = Object.fromEntries(formData.entries());
-    console.log({ ...values, fee: "5 %" });
 
+    values.Phone = values.Phone.toString().replace("+","")
+    console.log({ ...values, fee: ScheduleFee + "%" });
 
     var phantom_user_token = localStorage.getItem("phantom_user_token");
     var phantom_user_u_hash = localStorage.getItem("phantom_user_u_hash");
 
     ChangeUser(phantom_user_token,phantom_user_u_hash,values.Name,values.Email,values.Phone).then((data)=>{
-      console.log(data)
+      console.log("ChangeUser",data)
       if(data.status === "error" && data.message.startsWith("busy user data:")){
         AuthUser(values.Email,values.Phone).then((data)=>{
             localStorage.setItem("phantom_user_token",data.token)
           localStorage.setItem("phantom_user_u_hash",data.u_hash)
-          console.log(data)
+          console.log("USER STTTKOVKA",data)
+          MoveCart(phantom_user_token,phantom_user_u_hash,JSON.parse(localStorage.getItem("cart")),data.u_id).then((data)=>{
+              console.log("POINT: MoveCart-01:",data)
+          })
         })
+      }
+      else if(data.message === "user or modified data not found"){
+        console.log("CHANGE USER: ok, user already here")
+      }
+      else if(data.message === "database update failed"){
+        console.log("BUG")
       }
     })
 
@@ -45,7 +57,7 @@ const CartModal = ({ setOpen, open,ScheduleFee }) => {
       acc[seat.t_id][seatFormat] = 1;
       return acc;
     }, {});
-
+    /*
     CreateOrder(seats, phantom_user_token, phantom_user_u_hash).then((data)=>{
       console.log(data)
       var payment_link = data.data.payment
@@ -54,7 +66,7 @@ const CartModal = ({ setOpen, open,ScheduleFee }) => {
       window.location.href = payment_link
 
     })
-    
+    */
 
     setLoad(true);
     window.parent.postMessage(
@@ -198,6 +210,7 @@ export const CalculateTotal = (data, percentage) => {
   };
 };
 
+/*
 export const CountdownTimer = ({ initialTime }) => {
   const [time, setTime] = useState(initialTime);
 
@@ -227,7 +240,42 @@ export const CountdownTimer = ({ initialTime }) => {
 
   return <span>{formatTime(time)}</span>;
 };
+*/
 
+export const CountdownTimer = ({ initialTime, action }) => {
+  const [time, setTime] = useState(initialTime);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTime((prevTime) => {
+        if (prevTime === 0) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prevTime - 1;
+      });
+      dispatch(acTimer(time));
+      if (time === 0) {
+        localStorage.removeItem("cart");
+        action((prev) => !prev);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [action, dispatch, time]);
+
+  // Zamanı biçimlendirerek ekrana yazdıralım
+  const formatTime = (time) => {
+    const minutes = Math.floor((time % 3600) / 60);
+    const seconds = time % 60;
+    return `${minutes.toString().padStart(2, "0")}:${seconds
+        .toString()
+        .padStart(2, "0")}`;
+  };
+
+  return <span>{formatTime(time)}</span>;
+};
 export const getSeats = (cart, category) => {
   return cart.reduce((acc, curr) => {
     if (curr.category === category) {

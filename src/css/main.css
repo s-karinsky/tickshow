@@ -3,13 +3,14 @@
   padding: 1%;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(7, 1fr);
+  grid-template-rows: repeat(9, 1fr);
+  overflow: hidden;
 }
 
 .chairs-container {
   position: relative;
   grid-column: span 2;
-  grid-row: span 7;
+  grid-row: span 9;
   border-radius: 15px;
   border: 1px solid #414140;
   overflow: hidden;
@@ -29,7 +30,7 @@
 .back-btn {
   position: absolute;
   top: 10px;
-  height: 32px;
+  height: 34px;
   padding: 0.5% 1%;
   border: 1px solid #414140;
   background: #212121;
@@ -40,6 +41,17 @@
 
 .zoom-box {
   left: 10px;
+}
+
+.zoom-box.time-box {
+  max-width: 360px;
+  width: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.zoom-box.time-box > span {
+  width: 45px;
 }
 
 .back-btn {
@@ -55,6 +67,7 @@
 }
 
 .bottom-back-btn {
+  display: flex;
   position: absolute;
   bottom: 8px;
   right: 50%;
@@ -142,13 +155,14 @@
 }
 
 .sidebar-filter {
-  padding: 4% 5%;
-  grid-row: span 1;
+  padding: 4% 5% 2%;
+  grid-row: span auto;
+  transition: all 0.3s ease-in-out;
 }
 
 .basket-box {
   padding: 3% 5%;
-  grid-row: span 6;
+  grid-row: span 8;
   overflow: hidden;
 }
 
@@ -187,7 +201,7 @@
   padding: 0 2%;
 }
 
-.basket-footer > p {
+.price-info > p {
   padding: 0 3%;
 }
 
@@ -270,6 +284,27 @@
   height: 10px;
 }
 
+.basket-arrow {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  width: 80px;
+  height: 26px;
+  border-radius: 26px;
+  background: #2c2c2b;
+  box-shadow: 0px -8px 10px 0px #2121214d;
+
+  > svg {
+    margin: auto;
+  }
+}
+
+.price-info-mobile-title {
+  display: none;
+}
+
 @media (max-width: 1650px) {
   :where(.sidebar-filter, .basket-box) {
     width: 530px;
@@ -290,46 +325,146 @@
 
 @media (max-width: 970px) {
   .wrapper {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     padding: 0;
     gap: 0;
   }
 
   .chairs-container {
-    grid-column: span 1;
-    grid-row: span 3;
+    width: 100%;
+    height: calc(100dvh - 160px);
     order: 2;
     border-radius: 0;
+    border: none;
+    overflow: auto;
+  }
+
+  .chairs-body {
+    width: 550px;
+    padding: calc(50px / 2);
+    height: auto;
+  }
+
+  .bottom-back-btn {
+    bottom: 20px;
   }
 
   .sidebar-filter {
+    padding: 0;
+    height: 60px;
+    justify-content: center;
     order: 1;
-    grid-row: span 1;
+  }
+
+  .sidebar-filter > :first-child {
+    display: none;
   }
 
   .basket-box {
-    padding: 3% 0%;
+    position: fixed;
+    top: calc(100% - 100px);
+    max-height: calc(100dvh - 23px);
+    left: 0;
+    padding: 2% 0%;
     order: 3;
-    grid-row: span 3;
+    grid-row: span 0;
+    overflow: visible;
+    gap: 20px;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0px -8px 10px 0px #2121214d;
+    z-index: 999999;
   }
 
-  .basket-box > :first-child {
-    padding: 0 5% 1%;
+  .basket-box.open {
+    top: unset;
+    bottom: 0;
   }
 
   .basket-body {
+    max-height: calc(100% - 100px);
+    order: 3;
     padding: 1% 5%;
   }
 
+  .basket-body :where(.basket-header, .basket-item) {
+    padding: 0;
+  }
+
   .basket-footer {
-    padding: 1.3% 5% 0;
+    height: 100px;
+    flex-direction: row;
+    align-items: center;
+    order: 2;
+    border: none;
+    padding: 0% 5%;
+    gap: 20px;
+  }
+
+  #buy-ticket {
+    width: 40%;
+    height: 60px;
+    margin-top: 0;
+    border-radius: 30px;
+    font-size: 14px;
+  }
+
+  .price-info {
+    width: calc(60% - 20px) !important;
+  }
+
+  .price-info > p {
+    padding: 0;
+  }
+
+  .price-info-mobile-title {
+    display: flex;
   }
 
   .sidebar-filter,
   .basket-box {
     width: 100%;
-    grid-column: span 1;
     border-radius: 0;
+  }
+
+  .basket-box > p {
+    display: none;
+  }
+
+  .basket-arrow {
+    display: flex;
+  }
+
+  .zoom-box:not(.time-box) {
+    /* display: none; */
+    position: fixed;
+    left: 5%;
+    top: calc(100% - 155px);
+    aspect-ratio: 1.2/1;
+    justify-content: center;
+
+    > :first-child {
+      display: none;
+    }
+  }
+
+  .zoom-box.time-box {
+    max-width: 345px;
+    position: fixed;
+    left: 4.6%;
+    top: 80px;
+    transform: none;
+
+    > svg {
+      order: 3;
+    }
+  }
+
+  .back-btn {
+    position: fixed;
+    right: 4.6%;
+    top: 80px;
   }
 
   .zoom-box > button:hover,
@@ -339,10 +474,21 @@
 }
 
 @media (max-width: 600px) {
-  .basket-box > :first-child {
-    border-bottom: 1px solid #414140;
-  }
   .basket-body {
     padding: 1% 5% 0;
+  }
+}
+
+@media (max-width: 400px) {
+  .zoom-box.time-box {
+    max-width: 310px;
+    font-size: 14px;
+    gap: 5px;
+  }
+}
+
+@media (max-width: 380px) {
+  .zoom-box.time-box {
+    max-width: 290px;
   }
 }

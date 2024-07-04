@@ -28,7 +28,7 @@ export async function AuthUser(email="", phone="", auth_type="e-mail"){
     var auth_hash = await make_async_request("auth",data)
     auth_hash = auth_hash.auth_hash
     var req = await make_async_request("token",{"auth_hash":auth_hash})
-    return {"token":req.data.token,"u_hash":req.data.u_hash}
+    return {"token":req.data.token,"u_hash":req.data.u_hash,u_id:req.auth_user.u_id}
 }
 export async function RegisterUser(email="", phone="", name){
     var data = {
@@ -137,6 +137,14 @@ export async function GetCart(token, u_hash){
     }
     return await make_async_request("cart",data,"POST")
 }
+export async function ClearSeats(token, u_hash,items){
+    var data = {
+        "token":token,
+        "u_hash":u_hash,
+        "item":JSON.stringify(items)
+    }
+    return await make_async_request("cart/clear",data,"POST")
+}
 export async function ChangeUser(token,u_hash,name,email,phone){
     var data = {
         "token":token,
@@ -149,4 +157,33 @@ export async function ChangeUser(token,u_hash,name,email,phone){
     }
     return await make_async_request("user",data,"POST")
 
+}
+export async function MoveCart(token,u_hash,items,u_id){
+
+    var new_tickets_grouped = {}
+
+    items.forEach((item)=>{
+        if (!new_tickets_grouped[item.t_id]){
+            new_tickets_grouped[item.t_id] = []
+        }
+        new_tickets_grouped[item.t_id].push(item)
+    })
+
+    var data = {
+        "token":token,
+        "u_hash":u_hash,
+        "item":JSON.stringify(new_tickets_grouped),
+        "u_id":u_id
+    }
+    return await make_async_request("cart/move",data,"POST")
+}
+export async function GetLimitTime(){
+    var response = {};
+    const headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json"
+    }
+        response = await axios.post("https://ibronevik.ru/taxi/cache/data_TikShow.(iso).json",{},{headers:headers})
+
+    return response.data.data.site_constants.ticket_booking_duration.value
 }
