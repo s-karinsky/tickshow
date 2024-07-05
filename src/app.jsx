@@ -340,12 +340,15 @@ function SvgSchemeSeatPreview({
           <div className={s.seat}><span>Seat </span>{seat}</div>
         </div>}
         {!!footer && <div className={s.footer}>{footer}</div>}
-        <div className={s.footer}>
-          {
-              item ? <span className={s["tooltip-selected"]}>In Cart</span> :
-                  (cat.value === dancefloor_category_name && dancefloor_flag) ? <span className={s["tooltip-selected"]}>In Cart</span> : <span className={s["tooltip-select"]}>Click To Select</span>
-          }
-        </div>
+        {price!=="Seat not available" && (
+            <div className={s.footer}>
+              {
+                item ? <span className={s["tooltip-selected"]}>In Cart</span> :
+                    (cat.value === dancefloor_category_name && dancefloor_flag) ? <span className={s["tooltip-selected"]}>In Cart</span> : <span className={s["tooltip-select"]}>Click To Select</span>
+              }
+            </div>
+        )}
+
       </div>
   )
 }
