@@ -879,14 +879,7 @@ export const App = () => {
         <div className="df fdc gap15 sidebar-filter">
           <div className="w100 df aic jcsb">
             <p className="fs22">CATEGORIES:</p>
-            {
-              (categoriesF[selected].type === "all" ||
-                categoriesF[selected]?.old_price) && (
-                <p className="df aic gap5 fs12">
-                  <span style={{ color: "#aaa" }}>old price:</span>
-                  <span style={{ color: "#ddd", width: "47px" }}>new price:</span>
-                </p>
-            )}
+            
           </div>
           <div className="w100 df fdc aic select-component">
             <div
