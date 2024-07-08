@@ -8,7 +8,7 @@ import {AuthUser, ChangeUser, CreateOrder, GetCart, MoveCart} from "./tools/Ibro
 import { useDispatch, useSelector } from "react-redux";
 import {acTimer} from "./context/timer";
 
-const CartModal = ({ setOpen, open,ScheduleFee,categoriesF }) => {
+const CartModal = ({ setOpen, open,ScheduleFee,categoriesF,LimitTime }) => {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
   const t = CalculateTotal(cart, ScheduleFee);
   const [load, setLoad] = useState(false);
@@ -57,7 +57,7 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF }) => {
       acc[seat.t_id][seatFormat] = 1;
       return acc;
     }, {});
-    /*
+
     CreateOrder(seats, phantom_user_token, phantom_user_u_hash).then((data)=>{
       console.log(data)
       var payment_link = data.data.payment
@@ -66,7 +66,7 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF }) => {
       window.location.href = payment_link
 
     })
-    */
+
 
     setLoad(true);
     window.parent.postMessage(
@@ -89,17 +89,15 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF }) => {
     setLoad(false);
   }, [l]);
 
-  //
-  //console.log(categoriesF)
+
   var first_dancefloor_seat_index = cart.findIndex(x => x.category === categoriesF.find((cat) => cat.code_type === "Dancefloor")?.value)
-  //
 
   return (
     <div className={`w100 df aic jcc modal-container ${open && "open"}`}>
       <div className="df fdc aic gap10 modal-content">
         <p className="w100 df aic jcc gap10 fs12 ticket-time">
           <MdOutlineAccessTime className="fs18" />
-          Time left to place your order: <CountdownTimer initialTime={900} />
+          Time left to place your order: <CountdownTimer initialTime={LimitTime} />
         </p>
         <div className="w100 df fdc aic gap10 modal-info">
           <div className="w100 df aic jcsb _info-title">
