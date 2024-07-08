@@ -8,7 +8,7 @@ import {AuthUser, ChangeUser, CreateOrder, GetCart, MoveCart} from "./tools/Ibro
 import { useDispatch, useSelector } from "react-redux";
 import {acTimer} from "./context/timer";
 
-const CartModal = ({ setOpen, open,ScheduleFee }) => {
+const CartModal = ({ setOpen, open,ScheduleFee,categoriesF }) => {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
   const t = CalculateTotal(cart, ScheduleFee);
   const [load, setLoad] = useState(false);
@@ -73,7 +73,7 @@ const CartModal = ({ setOpen, open,ScheduleFee }) => {
       JSON.stringify({
         type: "submit",
         products: JSON.stringify(cart),
-        data: { ...values, fee: `5 % = ${t.fee}` },
+        data: { ...values, fee: `{${ScheduleFee} % = ${t.fee}` },
       }),
       "*"
     );
@@ -90,7 +90,8 @@ const CartModal = ({ setOpen, open,ScheduleFee }) => {
   }, [l]);
 
   //
-
+  //console.log(categoriesF)
+  var first_dancefloor_seat_index = cart.findIndex(x => x.category === categoriesF.find((cat) => cat.code_type === "Dancefloor")?.value)
   //
 
   return (
@@ -109,24 +110,36 @@ const CartModal = ({ setOpen, open,ScheduleFee }) => {
           </div>
           <div className="w100 df aic fww gap10 tags">
             {cart?.map((chair, ind) => {
-              return (
-                <label
-                  className="df aic gap10  fs12 tag"
-                  key={`${chair?.seat}_${ind}`}>
-                  {generateIcon(chair?.type, chair?.color)}
-                  {chair?.type === "stand" ? (
-                    `Dancefloor × ${chair.quantity}`
-                  ) : (
-                    <>
-                      {chair?.row} {chair?.seat}
-                    </>
-                  )}
-                </label>
-              );
+              if(chair?.category === categoriesF?.find((x) => x.code_type === "Dancefloor").value && first_dancefloor_seat_index === ind){
+                return (
+                    <label
+                        className="df aic gap10  fs12 tag"
+                        key={`${chair?.seat}_${ind}`}>
+                      <div
+                          dangerouslySetInnerHTML={{ __html: categoriesF?.find((x) => x.value === chair?.category).img }}>
+                      </div>
+                      Dancefloor × {cart.filter((x) => x.category === categoriesF?.find((x) => x.code_type === "Dancefloor").value).length}
+                    </label>
+                )
+              }
+              else if(chair?.category !== categoriesF?.find((x) => x.code_type === "Dancefloor").value){
+                return (
+                    <label
+                        className="df aic gap10  fs12 tag"
+                        key={`${chair?.seat}_${ind}`}>
+                      <div
+                          dangerouslySetInnerHTML={{ __html: categoriesF?.find((x) => x.value === chair?.category).img }}>
+                      </div>
+                      <>
+                        {chair?.row} {chair?.seat}
+                      </>
+                    </label>
+                )
+              }
             })}
           </div>
           <p className="w100 df aic jcsb" style={{ color: "#f8f5ec80" }}>
-            <span className="fs12">fee 5%:</span>
+            <span className="fs12">fee {ScheduleFee}%:</span>
             <i className="fs12">
               <b>{t?.fee || 0} €</b>
             </i>

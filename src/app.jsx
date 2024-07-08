@@ -879,7 +879,7 @@ export const App = () => {
         <div className="df fdc gap15 sidebar-filter">
           <div className="w100 df aic jcsb">
             <p className="fs22">CATEGORIES:</p>
-            
+
           </div>
           <div className="w100 df fdc aic select-component">
             <div
@@ -1205,7 +1205,7 @@ export const App = () => {
         </div>
         {cartModal && (
             <Suspense>
-              <CartModal setOpen={setCartModal} open={cartModal} ScheduleFee={ScheduleFee}/>
+              <CartModal setOpen={setCartModal} open={cartModal} ScheduleFee={ScheduleFee} categoriesF={categoriesF}/>
             </Suspense>
         )}
       </div>
