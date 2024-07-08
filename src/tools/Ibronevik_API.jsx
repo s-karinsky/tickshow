@@ -108,6 +108,9 @@ export async function GetStadium(sc_id){
         "sc_id":sc_id
     }
     data = await make_async_request("data/?fields=3",data)
+    if(!data["data"]["data"]["schedule"][sc_id]){
+        return
+    }
     var stadium_id = data["data"]["data"]["schedule"][sc_id]["stadium"]
     return {
         stadium:data["data"]["data"]["stadiums"][stadium_id],

@@ -30,7 +30,10 @@ import ReactDOM from 'react-dom';
 import tickets from "./tools/tickets";
 import {MdOutlineAccessTime, MdOutlineCheckCircle} from "react-icons/md";
 
-const schedule_id = "383"
+import {useParams, useSearchParams} from 'react-router-dom'
+
+//let schedule_id = "383"
+let schedule_id = null
 const currenciesSymbols = {
   "EUR": "€",
   "USD": "$",
@@ -353,7 +356,7 @@ function SvgSchemeSeatPreview({
   )
 }
 
-export const App = () => {
+export const App = (params) => {
   const [update, setUpdate] = useState(false);
   const [activeSeat, setActiveSeat] = useState(null);
   //const cart = useMemo(() => {
@@ -375,11 +378,17 @@ export const App = () => {
   let [categoriesF, setCategoriesF] = useState([]);
   const [firstZ, setFirtZ] = useState(true);
   var { data, isLoading, error, refetch } = useTickets({ event_id: 383, skip: 0, limit: 30 }, {})
-
   const [tickets, setTickets] = useState()
   const [currentCategory, setCurrentCategory] = useState("all");
   const [ScheduleFee, setScheduleFee] = useState(0);
   const [LimitTime, setLimitTime] = useState(600);
+  const searchParams = new URLSearchParams(window.location.search);
+  const [ScheduleDoesNotExist, setScheduleDoesNotExist] = useState(false);
+  const {a} = useParams()
+  console.log(window.location.href.split("/").slice(-1)[0])
+  schedule_id = !isNaN(+window.location.href.split("/").slice(-1)[0]) ? window.location.href.split("/").slice(-1)[0] : null;
+
+
   useEffect(() => {
 
     GetLimitTime().then((data) => {
@@ -650,9 +659,15 @@ export const App = () => {
   }
   const [stadiumData, setStadiumData] = useState({});
   const [stadiumDataReceived, setStadiumDataReceived] = useState(false);
-  function LoadStadiumData() {
-    if (!stadiumDataReceived) {
+  const LoadStadiumData = () => {
+    console.log(schedule_id)
+    if (!stadiumDataReceived && schedule_id) {
       GetStadium(schedule_id).then((stadium_data) => {
+        console.log(stadium_data)
+        if(!stadium_data) {
+          setScheduleDoesNotExist(true)
+          return
+        }
         GetStadiumScheme(stadium_data["stadium"]["scheme_blob"]).then((stadium_scheme) => {
           if (!stadiumDataReceived) {
             setScheduleFee(stadium_data.schedule.fee*1)
@@ -740,6 +755,29 @@ export const App = () => {
     },
     [tickets, stadiumData]
   )
+  if(!schedule_id || ScheduleDoesNotExist) {
+    return (
+        <div
+        style={{
+          borderRadius: "16px",
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          backgroundColor: "white",
+        }}>
+          <span style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%,-50%)",
+            fontSize: "20px",
+            fontWeight: "bold"
+          }}>
+            Event does not exist
+          </span>
+        </div>
+    )
+  }
   if(categoriesF.length === 0) return <div className={"loading-screen"}>
     <div className="loader-wrapper-bg">
       <div className="loader-wrapper">
