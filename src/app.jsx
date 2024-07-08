@@ -1038,7 +1038,7 @@ export const App = () => {
                             {category === categoriesF?.find((x) => x.code_type === "Dancefloor").value
                                 ? seats?.reduce((acc, curr) => acc + curr?.price, 0)?.toFixed(2)
                                 : seats?.reduce((acc, curr) => acc + curr?.price, 0)?.toFixed(2)}
-                            {seats?.[0]?.currency || "€"}
+                            {seats?.[0]?.currency}
                             <span
                                 className="cp fs14 delete-btn"
                                 onClick={() => {
