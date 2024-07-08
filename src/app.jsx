@@ -1111,60 +1111,6 @@ export const App = () => {
                                   </label>
                               );
                             }
-                            /*
-                            return (
-                                <label
-                                    key={`${seat.seat}_${index}`}
-                                    className="w100 df aic jcsb basket-item">
-                                  <p
-                                      className="df aic gap10 fs14"
-                                      style={{ color: "#f8f5ec4d" }}>
-                                    {category === categoriesF?.find((x) => x.code_type === "Dancefloor").value ? ("Quantity:") :
-                                        (
-                                        <>
-                                <span className="df aic gap10">
-                                  Row:{" "}
-                                  <span style={{ color: "#f8f5ec" }}>
-                                    {seat.row}
-                                  </span>
-                                </span>
-                                          <span className="df aic gap10">
-                                  Seat:{" "}
-                                            <span style={{ color: "#f8f5ec" }}>
-                                    {seat.seat}
-                                  </span>
-                                </span>
-                                        </>
-                                    )
-                                    }
-                                  </p>
-                                  <i
-                                      className="df aic gap10 fs10"
-                                      style={{ color: "#f8f5ec4d" }}>
-                                    {category !== categoriesF?.find((x) => x.code_type === "Dancefloor").value && (
-                                        <b>
-                                          {seat.price} {seat.currency}
-                                        </b>
-                                    )}
-                                    <span className="cp fs14 delete-btn">
-                              {category === categoriesF?.find((x) => x.code_type === "Dancefloor").value ? (
-                                  <span className="df aic gap5">
-                                  <RxMinus
-                                      onClick={() => addToCart(seat, true)}
-                                  />
-                                    {seats.length}
-                                    <RxPlus onClick={() => addToCart(seat)} />
-                                </span>
-                              ) : (
-                                  <span onClick={() => addToCart(seat)}>
-                                  <RxCross2 className="fs12" />
-                                </span>
-                              )}
-                            </span>
-                                  </i>
-                                </label>
-                            );
-                            */
                           })}
                         </div>
                       </div>
@@ -1205,7 +1151,12 @@ export const App = () => {
         </div>
         {cartModal && (
             <Suspense>
-              <CartModal setOpen={setCartModal} open={cartModal} ScheduleFee={ScheduleFee} categoriesF={categoriesF}/>
+              <CartModal setOpen={setCartModal}
+                         open={cartModal}
+                         ScheduleFee={ScheduleFee}
+                         categoriesF={categoriesF}
+                         LimitTime={LimitTime}
+              />
             </Suspense>
         )}
       </div>
