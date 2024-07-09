@@ -57,7 +57,7 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF,LimitTime }) => {
       acc[seat.t_id][seatFormat] = 1;
       return acc;
     }, {});
-
+    /*
     CreateOrder(seats, phantom_user_token, phantom_user_u_hash).then((data)=>{
       console.log(data)
       var payment_link = data.data.payment
@@ -66,6 +66,7 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF,LimitTime }) => {
       window.location.href = payment_link
 
     })
+    */
 
 
     setLoad(true);
@@ -77,11 +78,11 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF,LimitTime }) => {
       }),
       "*"
     );
-/*
+
     setTimeout(() => {
       localStorage.removeItem("cart");
       window.location.reload();
-    }, 2000);*/
+    }, 2000);
 
   };
 
