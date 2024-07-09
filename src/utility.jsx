@@ -31,11 +31,11 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF,LimitTime }) => {
       console.log("ChangeUser",data)
       if(data.status === "error" && data.message.startsWith("busy user data:")){
         AuthUser(values.Email,values.Phone).then((data)=>{
-            localStorage.setItem("phantom_user_token",data.token)
+          localStorage.setItem("phantom_user_token",data.token)
           localStorage.setItem("phantom_user_u_hash",data.u_hash)
           console.log("USER STTTKOVKA",data)
           MoveCart(phantom_user_token,phantom_user_u_hash,JSON.parse(localStorage.getItem("cart")),data.u_id).then((data)=>{
-              console.log("POINT: MoveCart-01:",data)
+            console.log("POINT: MoveCart-01:",data)
           })
         })
       }
@@ -67,16 +67,26 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF,LimitTime }) => {
 
     })
     */
+    var to_stripe_formatting_dancefloor_flag = false
+    for(var i = 0; i < cart.length; i++){
+      cart[i].name = "Row - " + cart[i].row + ", Seat - " + cart[i].seat
+
+      if(cart[i].category === categoriesF.find((cat) => cat.code_type === "Dancefloor")?.value && !to_stripe_formatting_dancefloor_flag){
+        to_stripe_formatting_dancefloor_flag = true
+        cart[i].name = "DANCE FLOOR"
+        cart[i].quantity = cart.filter((x) => x.category === categoriesF.find((cat) => cat.code_type === "Dancefloor")?.value).length
+      }
+    }
 
 
     setLoad(true);
     window.parent.postMessage(
-      JSON.stringify({
-        type: "submit",
-        products: JSON.stringify([...cart,{ name: "fee", img: "", price: t.fee, id: "727430761" }]),
-        data: { ...values },
-      }),
-      "*"
+        JSON.stringify({
+          type: "submit",
+          products: JSON.stringify([...cart,{ name: "fee", img: "", price: t.fee, id: "727430761" }]),
+          data: { ...values },
+        }),
+        "*"
     );
 
     setTimeout(() => {
@@ -94,112 +104,112 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF,LimitTime }) => {
   var first_dancefloor_seat_index = cart.findIndex(x => x.category === categoriesF.find((cat) => cat.code_type === "Dancefloor")?.value)
 
   return (
-    <div className={`w100 df aic jcc modal-container ${open && "open"}`}>
-      <div className="df fdc aic gap10 modal-content">
-        <p className="w100 df aic jcc gap10 fs12 ticket-time">
-          <MdOutlineAccessTime className="fs18" />
-          Time left to place your order: <CountdownTimer initialTime={LimitTime} />
-        </p>
-        <div className="w100 df fdc aic gap10 modal-info">
-          <div className="w100 df aic jcsb _info-title">
-            <p className="fs22">YOUR TICKETS</p>
-            <span className="fs18 cp" onClick={() => setOpen(false)}>
+      <div className={`w100 df aic jcc modal-container ${open && "open"}`}>
+        <div className="df fdc aic gap10 modal-content">
+          <p className="w100 df aic jcc gap10 fs12 ticket-time">
+            <MdOutlineAccessTime className="fs18" />
+            Time left to place your order: <CountdownTimer initialTime={LimitTime} />
+          </p>
+          <div className="w100 df fdc aic gap10 modal-info">
+            <div className="w100 df aic jcsb _info-title">
+              <p className="fs22">YOUR TICKETS</p>
+              <span className="fs18 cp" onClick={() => setOpen(false)}>
               <RxCross2 />
             </span>
+            </div>
+            <div className="w100 df aic fww gap10 tags">
+              {cart?.map((chair, ind) => {
+                if(chair?.category === categoriesF?.find((x) => x.code_type === "Dancefloor").value && first_dancefloor_seat_index === ind){
+                  return (
+                      <label
+                          className="df aic gap10  fs12 tag"
+                          key={`${chair?.seat}_${ind}`}>
+                        <div
+                            dangerouslySetInnerHTML={{ __html: categoriesF?.find((x) => x.value === chair?.category).img }}>
+                        </div>
+                        Dancefloor × {cart.filter((x) => x.category === categoriesF?.find((x) => x.code_type === "Dancefloor").value).length}
+                      </label>
+                  )
+                }
+                else if(chair?.category !== categoriesF?.find((x) => x.code_type === "Dancefloor").value){
+                  return (
+                      <label
+                          className="df aic gap10  fs12 tag"
+                          key={`${chair?.seat}_${ind}`}>
+                        <div
+                            dangerouslySetInnerHTML={{ __html: categoriesF?.find((x) => x.value === chair?.category).img }}>
+                        </div>
+                        <>
+                          {chair?.row} {chair?.seat}
+                        </>
+                      </label>
+                  )
+                }
+              })}
+            </div>
+            <p className="w100 df aic jcsb" style={{ color: "#f8f5ec80" }}>
+              <span className="fs12">fee {ScheduleFee}%:</span>
+              <i className="fs12">
+                <b>{t?.fee || 0} €</b>
+              </i>
+            </p>
+            <p className="w100 df aic jcsb">
+              <span className="fs14">Total:</span>
+              <i className="fs14">
+                <b>{t.total || 0} €</b>
+              </i>
+            </p>
+            <form
+                className="w100 df fdc aic gap10  _info-form"
+                onSubmit={addPayment}>
+              <input
+                  id={"modal-auth-name"}
+                  type="text"
+                  name="Name"
+                  placeholder="Name"
+                  autoComplete="off"
+                  required
+              />
+              <input
+                  id={"modal-auth-phone"}
+                  type="tel"
+                  name="Phone"
+                  placeholder="Phone"
+                  autoComplete="off"
+                  required
+              />
+              <input
+                  id={"modal-auth-email"}
+                  type="email"
+                  name="Email"
+                  placeholder="Email"
+                  autoComplete="off"
+                  required
+              />
+              <label className="w100 df aic gap8 fs12 checkbox">
+                <ConfigProvider
+                    theme={{
+                      token: {
+                        colorWhite: "#2c2c2b",
+                      },
+                    }}>
+                  <Checkbox
+                      defaultChecked
+                      style={{ opacity: 0.3, transform: "scale(0.8)" }}
+                  />
+                </ConfigProvider>
+                <p>
+                  Checkbox txt on one line to <u>show</u> what it will.
+                </p>
+              </label>
+              <button className="w100 df aic jcc gap10 fs16 basket-btn" type={"submit"}>
+                <i>BUY TICKET</i>
+                {load && <BiLoaderCircle />}
+              </button>
+            </form>
           </div>
-          <div className="w100 df aic fww gap10 tags">
-            {cart?.map((chair, ind) => {
-              if(chair?.category === categoriesF?.find((x) => x.code_type === "Dancefloor").value && first_dancefloor_seat_index === ind){
-                return (
-                    <label
-                        className="df aic gap10  fs12 tag"
-                        key={`${chair?.seat}_${ind}`}>
-                      <div
-                          dangerouslySetInnerHTML={{ __html: categoriesF?.find((x) => x.value === chair?.category).img }}>
-                      </div>
-                      Dancefloor × {cart.filter((x) => x.category === categoriesF?.find((x) => x.code_type === "Dancefloor").value).length}
-                    </label>
-                )
-              }
-              else if(chair?.category !== categoriesF?.find((x) => x.code_type === "Dancefloor").value){
-                return (
-                    <label
-                        className="df aic gap10  fs12 tag"
-                        key={`${chair?.seat}_${ind}`}>
-                      <div
-                          dangerouslySetInnerHTML={{ __html: categoriesF?.find((x) => x.value === chair?.category).img }}>
-                      </div>
-                      <>
-                        {chair?.row} {chair?.seat}
-                      </>
-                    </label>
-                )
-              }
-            })}
-          </div>
-          <p className="w100 df aic jcsb" style={{ color: "#f8f5ec80" }}>
-            <span className="fs12">fee {ScheduleFee}%:</span>
-            <i className="fs12">
-              <b>{t?.fee || 0} €</b>
-            </i>
-          </p>
-          <p className="w100 df aic jcsb">
-            <span className="fs14">Total:</span>
-            <i className="fs14">
-              <b>{t.total || 0} €</b>
-            </i>
-          </p>
-          <form
-            className="w100 df fdc aic gap10  _info-form"
-            onSubmit={addPayment}>
-            <input
-                id={"modal-auth-name"}
-              type="text"
-              name="Name"
-              placeholder="Name"
-              autoComplete="off"
-              required
-            />
-            <input
-                id={"modal-auth-phone"}
-              type="tel"
-              name="Phone"
-              placeholder="Phone"
-              autoComplete="off"
-              required
-            />
-            <input
-                id={"modal-auth-email"}
-              type="email"
-              name="Email"
-              placeholder="Email"
-              autoComplete="off"
-              required
-            />
-            <label className="w100 df aic gap8 fs12 checkbox">
-              <ConfigProvider
-                theme={{
-                  token: {
-                    colorWhite: "#2c2c2b",
-                  },
-                }}>
-                <Checkbox
-                  defaultChecked
-                  style={{ opacity: 0.3, transform: "scale(0.8)" }}
-                />
-              </ConfigProvider>
-              <p>
-                Checkbox txt on one line to <u>show</u> what it will.
-              </p>
-            </label>
-            <button className="w100 df aic jcc gap10 fs16 basket-btn" type={"submit"}>
-              <i>BUY TICKET</i>
-              {load && <BiLoaderCircle />}
-            </button>
-          </form>
         </div>
       </div>
-    </div>
   );
 };
 
@@ -207,13 +217,13 @@ export default CartModal;
 
 export const CalculateTotal = (data, percentage) => {
   const total = data
-    ?.reduce(
-      (acc, curr) =>
-        acc +
-        (curr?.type === "stand" ? curr?.price * curr?.quantity : curr?.price),
-      0
-    )
-    ?.toFixed(2);
+      ?.reduce(
+          (acc, curr) =>
+              acc +
+              (curr?.type === "stand" ? curr?.price * curr?.quantity : curr?.price),
+          0
+      )
+      ?.toFixed(2);
   const fee = total * (percentage / 100);
 
   return {
