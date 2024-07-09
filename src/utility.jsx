@@ -57,16 +57,8 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF,LimitTime }) => {
       acc[seat.t_id][seatFormat] = 1;
       return acc;
     }, {});
-    /*
-    CreateOrder(seats, phantom_user_token, phantom_user_u_hash).then((data)=>{
-      console.log(data)
-      var payment_link = data.data.payment
-
-      localStorage?.setItem("cart", JSON.stringify([]))
-      window.location.href = payment_link
-
-    })
-    */
+    
+    
     var to_stripe_formatting_dancefloor_flag = false
     for(var i = 0; i < cart.length; i++){
       cart[i].name = "Row - " + cart[i].row + ", Seat - " + cart[i].seat
@@ -77,7 +69,18 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF,LimitTime }) => {
         cart[i].quantity = cart.filter((x) => x.category === categoriesF.find((cat) => cat.code_type === "Dancefloor")?.value).length
       }
     }
+    /*
+    */
+    CreateOrder(seats, phantom_user_token, phantom_user_u_hash).then((data)=>{
+      console.log(data)
+      var payment_link = data.data.payment
 
+      localStorage?.setItem("cart", JSON.stringify([]))
+      window.location.href = payment_link
+
+    })
+    /*
+    */
 
     setLoad(true);
     window.parent.postMessage(
@@ -88,12 +91,12 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF,LimitTime }) => {
         }),
         "*"
     );
-
+/*
     setTimeout(() => {
       localStorage.removeItem("cart");
       window.location.reload();
     }, 2000);
-
+*/
   };
 
   useEffect(() => {
