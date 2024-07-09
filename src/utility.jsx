@@ -22,7 +22,7 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF,LimitTime }) => {
     const values = Object.fromEntries(formData.entries());
 
     values.Phone = values.Phone.toString().replace("+","")
-    console.log({ ...values, fee: ScheduleFee + "%" });
+    console.log({ ...values});
 
     var phantom_user_token = localStorage.getItem("phantom_user_token");
     var phantom_user_u_hash = localStorage.getItem("phantom_user_u_hash");
