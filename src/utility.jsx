@@ -73,7 +73,7 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF,LimitTime }) => {
     window.parent.postMessage(
       JSON.stringify({
         type: "submit",
-        products: JSON.stringify(cart),
+        products: JSON.stringify([{ name: "fee", img: "", price: t.fee, id: "727430761" }, ...cart]),
         data: { ...values, fee: `${ScheduleFee} % = ${t.fee}` },
       }),
       "*"
