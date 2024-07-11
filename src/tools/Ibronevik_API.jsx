@@ -186,7 +186,7 @@ export async function MoveCart(token, u_hash, items, u_id) {
     }
     new_tickets_grouped[item.t_id].push(item);
   });
-
+  console.log("MOVING CART ITEMS", new_tickets_grouped);
   var data = {
     token: token,
     u_hash: u_hash,
