@@ -202,8 +202,8 @@ const SvgScheme = forwardRef(
       return categories.reduce(
         (acc, cat) => {
           acc += `
-        .svg-seat[data-category="${cat.value}"] { fill: ${cat.color}; }
-        .svg-seat[data-category="${cat.value}"]:not([data-disabled]):hover { stroke: ${cat.color}; stroke-width: 3px; }
+        .svg-seat[data-category="${cat.value}"]:not([data-in-cart]) { fill: ${cat.color}; }
+        .svg-seat[data-category="${cat.value}"]:not([data-disabled]):not([data-in-cart]):hover { stroke: ${cat.color}; stroke-width: 3px; }
         .svg-scheme-icon-cat-${cat.value} { color: ${cat.color}; }
         .svg-scheme-bg-cat-${cat.value} { background-color: ${cat.color}; }
       `;
@@ -211,7 +211,8 @@ const SvgScheme = forwardRef(
         },
         `
       .svg-seat:not([data-disabled]) { cursor: pointer; }
-      .svg-seat[data-disabled] { fill: #666 !important; }
+      .svg-seat[data-disabled]:not([data-in-cart]) { fill: #666 !important; }
+      .svg-seat[data-in-cart] { fill: black; }
     `
       );
     }, [categories]);
@@ -244,6 +245,7 @@ const SvgScheme = forwardRef(
               tickets[j].seat.toString() === el_data.seat
             ) {
               suitableTicket = true;
+
             }
           }
         }
@@ -267,6 +269,7 @@ const SvgScheme = forwardRef(
             tickets[j].seat.toString() === el_data.seat
           ) {
             suitableTicket = true;
+
           }
         }
         if (
@@ -281,18 +284,19 @@ const SvgScheme = forwardRef(
     var cart = JSON.parse(localStorage?.getItem("cart")) || [];
     for (var i = 0; i < svg_seats.length; i++) {
       var el = svg_seats[i];
-      var el_data = {
+      var el_data1 = {
         seat: el.getAttribute("data-seat"),
         row: el.getAttribute("data-row"),
         category: el.getAttribute("data-category"),
         disabled: el.getAttribute("data-disabled"),
       };
-      for (var j = 0; j < cart.length; j++) {
+      for (var j = 0; j < cart.filter( (x) => x.category === el_data.category).length; j++) {
         if (
-          cart[j].row.toString() === el_data.row &&
-          cart[j].seat.toString() === el_data.seat
+          cart[j].row.toString() === el_data1.row?.toString() &&
+          cart[j].seat.toString() === el_data1.seat?.toString()
         ) {
-          svg_seats[i].style.fill = "black";
+          svg_seats[i].setAttribute("data-in-cart", true);
+          svg_seats[i].setAttribute("data-disabled", false);
         }
       }
     }
@@ -473,7 +477,7 @@ export const App = () => {
   const [tickets, setTickets] = useState();
   const [currentCategory, setCurrentCategory] = useState("all");
   const [ScheduleFee, setScheduleFee] = useState(0);
-  const [LimitTime, setLimitTime] = useState(600);
+  const [LimitTime, setLimitTime] = useState();
   const searchParams = new URLSearchParams(window.location.search);
   const [ScheduleDoesNotExist, setScheduleDoesNotExist] = useState(false);
   const { a } = useParams();
@@ -484,9 +488,12 @@ export const App = () => {
   var { data, refetch } = useTickets({ event_id: schedule_id, skip: 0, limit: 30 }, {});
 
   useEffect(() => {
-    GetLimitTime().then((data) => {
-      setLimitTime(data);
-    });
+    if(!LimitTime){
+      GetLimitTime().then((data) => {
+        setLimitTime(data);
+      });
+    }
+
 
     if (!localStorage.getItem("phantom_user_token")) {
       RegisterPhantomUser().then((email) => {
@@ -681,21 +688,16 @@ export const App = () => {
           0
         ).then((data) => {
           //console.log("Cart Seat", data);
-          if(data?.status === "error") {
-            alert("This place has just been reserved")
-            refetch().then(r => {
-              setTickets(r.data);
-              localStorage?.setItem("cart", JSON?.stringify(cart));
-            })
-          }
+          refetch().then(r => {
+            setTickets(r.data);
+
+          })
         });
         cart?.splice(cart?.indexOf(cartItem), 1);
         localStorage?.setItem("cart", JSON?.stringify(cart));
       } else {
         // Cart Seat
-        if (seat.category !== dancefloor_category) {
-          seat.el.style.fill = "black";
-        }
+
         var ticket_Data = {
           t_id: GetSeat(seat?.row, seat?.seat).t_id,
           hall_id: GetSeat(seat?.row, seat?.seat).hall_id,
