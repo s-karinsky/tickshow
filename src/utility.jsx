@@ -70,7 +70,7 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF,LimitTime }) => {
       }
     }
     /*
-    */
+    
     CreateOrder(seats, phantom_user_token, phantom_user_u_hash).then((data)=>{
       console.log(data)
       var payment_link = data.data.payment
@@ -92,7 +92,7 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF,LimitTime }) => {
       //window.location.href = payment_link
 
     })
-    /*
+    
     */
 
     
