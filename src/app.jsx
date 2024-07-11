@@ -468,7 +468,7 @@ export const App = () => {
   const [firstZ, setFirstZ] = useState(true);
   const discount = useSelector((state) => state.discount);
   // isLoading, error,
-  var { data, refetch } = useTickets({ event_id: 383, skip: 0, limit: 30 }, {});
+
 
   const [tickets, setTickets] = useState();
   const [currentCategory, setCurrentCategory] = useState("all");
@@ -481,6 +481,7 @@ export const App = () => {
   const schedule_id = !isNaN(+window.location.href.split("/").slice(-1)[0])
     ? window.location.href.split("/").slice(-1)[0]
     : null;
+  var { data, refetch } = useTickets({ event_id: schedule_id, skip: 0, limit: 30 }, {});
 
   useEffect(() => {
     GetLimitTime().then((data) => {
@@ -595,6 +596,13 @@ export const App = () => {
               0
             ).then((data) => {
               //console.log("Cart Seat", data);
+              if(data?.status === "error") {
+                  alert("This place has just been reserved")
+                refetch().then(r => {
+                  setTickets(r.data);
+                  localStorage?.setItem("cart", JSON?.stringify(cart));
+                })
+              }
             });
             localStorage?.setItem("cart", JSON?.stringify(cart));
             reloadCart();
@@ -637,6 +645,13 @@ export const App = () => {
               1
             ).then((data) => {
               //console.log("Cart Seat", data);
+              if(data?.status === "error") {
+                alert("This place has just been reserved")
+                refetch().then(r => {
+                  setTickets(r.data);
+                  localStorage?.setItem("cart", JSON?.stringify(cart));
+                })
+              }
             });
             cart?.push(free_dancefloor_ticket);
             localStorage?.setItem("cart", JSON?.stringify(cart));
@@ -666,6 +681,13 @@ export const App = () => {
           0
         ).then((data) => {
           //console.log("Cart Seat", data);
+          if(data?.status === "error") {
+            alert("This place has just been reserved")
+            refetch().then(r => {
+              setTickets(r.data);
+              localStorage?.setItem("cart", JSON?.stringify(cart));
+            })
+          }
         });
         cart?.splice(cart?.indexOf(cartItem), 1);
         localStorage?.setItem("cart", JSON?.stringify(cart));
@@ -700,6 +722,13 @@ export const App = () => {
           1
         ).then((data) => {
           //console.log("Cart Seat", data);
+          if(data?.status === "error") {
+            alert("This place has just been reserved")
+            refetch().then(r => {
+              setTickets(r.data);
+              localStorage?.setItem("cart", JSON?.stringify(cart));
+            })
+          }
         });
 
         cart?.push(seat);

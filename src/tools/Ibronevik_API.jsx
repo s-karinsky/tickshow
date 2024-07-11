@@ -179,7 +179,7 @@ export async function ChangeUser(token, u_hash, name, email, phone) {
 }
 export async function MoveCart(token, u_hash, items, u_id) {
   var new_tickets_grouped = {};
-
+  console.log("RECEIVED TO MOVE CART", items);
   items.forEach((item) => {
     if (!new_tickets_grouped[item.t_id]) {
       new_tickets_grouped[item.t_id] = [];
@@ -187,6 +187,7 @@ export async function MoveCart(token, u_hash, items, u_id) {
     new_tickets_grouped[item.t_id].push(item);
   });
   console.log("MOVING CART ITEMS", new_tickets_grouped);
+
   var data = {
     token: token,
     u_hash: u_hash,
