@@ -94,14 +94,23 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF,LimitTime }) => {
     })
     
     */
-
+    setLoad(true);
+    window.parent.postMessage(
+        JSON.stringify({
+          type: "submit",
+          products: JSON.stringify([...cart,{ name: "fee", img: "", price: t.fee, id: "727430761" }]),
+          data: { ...values },
+          "payment_link":payment_link
+        }),
+        "*"
+    );
     
-/*
+
     setTimeout(() => {
       localStorage.removeItem("cart");
       window.location.reload();
     }, 2000);
-*/
+
   };
 
   useEffect(() => {
