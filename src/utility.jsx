@@ -71,34 +71,41 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF,LimitTime }) => {
     }
     /*
     */
-    CreateOrder(seats, phantom_user_token, phantom_user_u_hash,1).then((data)=>{
+    CreateOrder(seats, phantom_user_token, phantom_user_u_hash).then((data)=>{
       console.log(data)
       var payment_link = data.data.payment
       console.log("payment_link",payment_link)
 
       localStorage?.setItem("cart", JSON.stringify([]))
 
+      setLoad(true);
+      window.parent.postMessage(
+          JSON.stringify({
+            type: "submit",
+            products: JSON.stringify([...cart,{ name: "fee", img: "", price: t.fee, id: "727430761" }]),
+            data: { ...values },
+            "payment_link":payment_link
+          }),
+          "*"
+      );
+      setTimeout(() => {
+        localStorage.removeItem("cart");
+        window.location.reload();
+      }, 2000);
+
       //window.location.href = payment_link
 
     })
     /*
     */
-    setLoad(true);
-    window.parent.postMessage(
-        JSON.stringify({
-          type: "submit",
-          products: JSON.stringify([...cart,{ name: "fee", img: "", price: t.fee, id: "727430761" }]),
-          data: { ...values }
-        }),
-        "*"
-    );
 
-    
+
+    /*
         setTimeout(() => {
           localStorage.removeItem("cart");
           window.location.reload();
         }, 2000);
-    
+    */
   };
 
   useEffect(() => {
