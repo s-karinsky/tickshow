@@ -26,6 +26,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF }) => {
   const [u_hash, setU_hash] = useState(null);
   let l = window.location.pathname;
   const time = useSelector((state) => state.time);
+  const [correctUserData, setCorrectUserData] = useState(false);
 
   function addPayment(e) {
     e.preventDefault();
@@ -101,7 +102,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF }) => {
       }
     }
 
-    CreateOrder(seats, phantom_user_token, phantom_user_u_hash, "https://tick-show.vercel.app/distribute/").then(
+    CreateOrder(seats, phantom_user_token, phantom_user_u_hash, "https://tick-show.vercel.app/distribute").then(
         (data) => {
           var payment_link = data.data.payment;
 
@@ -140,6 +141,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF }) => {
         }, 2000);
     */
   }
+
 
   useEffect(() => {
     setLoad(false);
@@ -246,6 +248,19 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF }) => {
                   placeholder="Email"
                   autoComplete="off"
                   required
+                  onInput={ (e) => {
+                    var email_input = document.querySelector("#modal-auth-email")
+                    if (email_input) {
+                      email_input = email_input.value
+                      if (email_input.match(/.+@.+\..+/i)) {
+                        setCorrectUserData(true)
+                      }
+                      else{
+                        setCorrectUserData(false)
+                      }
+                    }
+                  }
+                  }
               />
               <label className="w100 df aic gap8 fs12 checkbox">
                 <ConfigProvider
@@ -264,7 +279,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF }) => {
                 </p>
               </label>
               <button
-                  className="w100 df aic jcc gap10 fs16 basket-btn"
+                  className={correctUserData ? "w100 df aic jcc gap10 fs16 basket-btn active": "w100 df aic jcc gap10 fs16 basket-btn"}
                   type={"submit"}>
                 <i>BUY TICKET</i>
                 {load && <BiLoaderCircle />}
