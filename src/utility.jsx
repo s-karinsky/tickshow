@@ -100,7 +100,6 @@ const CartModal = ({ setOpen, open,ScheduleFee,categoriesF,LimitTime }) => {
           type: "submit",
           products: JSON.stringify([...cart,{ name: "fee", img: "", price: t.fee, id: "727430761" }]),
           data: { ...values },
-          "payment_link":payment_link
         }),
         "*"
     );
