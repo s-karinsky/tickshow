@@ -101,7 +101,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF }) => {
       }
     }
 
-    CreateOrder(seats, phantom_user_token, phantom_user_u_hash, "https://tick-show.vercel.app/distribute").then(
+    CreateOrder(seats, phantom_user_token, phantom_user_u_hash, "https://tick-show.vercel.app/distribute/").then(
         (data) => {
           var payment_link = data.data.payment;
 
