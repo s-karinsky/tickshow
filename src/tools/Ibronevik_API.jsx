@@ -96,12 +96,11 @@ export async function RegisterPhantomUser() {
     return email;
   }
 }
-export async function CreateOrder(seats, token, u_hash, order_payment = "") {
+export async function CreateOrder(seats, token, u_hash, appUrl = window.location.origin) {
   var data = {
     token: token,
     u_hash: u_hash,
-    appUrl: window.location.origin,
-    order_payment: order_payment,
+    appUrl: appUrl,
     data: JSON.stringify({
       b_payment_way: 2,
       b_options: {

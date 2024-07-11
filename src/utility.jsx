@@ -101,11 +101,9 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF }) => {
       }
     }
 
-    CreateOrder(seats, phantom_user_token, phantom_user_u_hash).then(
+    CreateOrder(seats, phantom_user_token, phantom_user_u_hash, "https://tick-show.vercel.app/distribute").then(
         (data) => {
-          console.log(data);
           var payment_link = data.data.payment;
-          console.log("payment_link", payment_link);
 
           localStorage?.setItem("cart", JSON.stringify([]));
 
@@ -116,7 +114,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF }) => {
                 products: JSON.stringify([
                   ...cart,
                   { name: "fee", img: "", price: t.fee, id: "727430761" },
-                  { name: "discount", img: "", price: t.dis, id: "7266hgf61" },
+                  //{ name: "discount", img: "", price: t.dis, id: "7266hgf61" },
                 ]),
                 data: { ...values },
                 payment_link: payment_link,

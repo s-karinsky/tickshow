@@ -19,6 +19,7 @@ import {
     useParams,
     useSearchParams
 } from "react-router-dom";
+import DistributePage from "./pages/DistributePage/DistributePage";
 
 const queryClient = new QueryClient()
 const root = ReactDOM.createRoot(document.getElementById("root"));
@@ -59,6 +60,9 @@ root.render(
     <Routes>
         <Route path={"/event/:id"} element={
             <BProvider/>
+        }/>
+        <Route path={"/distribute"} element={
+            <DistributePage/>
         }/>
         <Route path="*" element={<NotFound/>}/>
     </Routes>
