@@ -4,7 +4,7 @@
     height: auto;
 
     * {
-      font-family: 'Courier New', Courier, monospace;
+      font-family: "Courier New", Courier, monospace;
     }
   }
 }
@@ -14,34 +14,35 @@
 }
 
 .preview {
+  width: 150px;
+  height: 104px;
   background-color: #343433;
-  border-radius: 6px;
-  padding: 8px;
+  border-radius: 16px;
   color: #fff;
-  box-shadow: 0px 4px 4px 0px #0000000D;
-  width: 100%;
+  padding-top: 11px;
+  box-shadow: 0px 4px 4px 0px #0000000d;
 
   .block {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 0 12px;
   }
-  .desc{
+  .desc {
     display: inline-block;
     align-items: center;
-    .text{
+    .text {
       font-size: 12px;
       color: #fff;
       margin-top: 5px;
     }
   }
-  .category{
+  .category {
     font-size: 12px;
   }
 
   .price {
     font-size: 18px;
-    margin-bottom: 5px;
   }
 
   .icon {
@@ -51,27 +52,38 @@
     }
   }
 
-  .row, .seat {
+  .container {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 20px;
+    margin-bottom: 5px;
+  }
+
+  .row,
+  .seat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #aaa;
+    font-size: 12px;
     span {
       font-size: 12px;
-      color: #999;
+      color: #f8f5ec;
       display: block;
     }
-    font-size: 12px;
-  }
-  .row:last-child ,.seat:last-child {
-    margin-left: 50px;
   }
 
   .footer {
-    margin: 6px -8px 0;
-    border-top: 1px solid #666;
-    padding-top: 6px;
-    padding-left: 15px;
-    padding-right: 15px;
+    width: 100%;
+    height: 30%;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
+    gap: 3px;
+    font-size: 13px;
+    border-top: 1px solid #666;
+    border-radius: 0 0 15px 15px;
   }
 }
 
@@ -81,31 +93,17 @@
   opacity: 0;
   left: -500px;
   top: -500px;
-  transition: ease .01s opacity;
+  transition: ease 0.01s opacity;
 }
 
 .scheme {
   position: relative;
 }
 
-.tooltip-selected{
-  color: white;
-  font-weight: bold;
-  background-color: #46b446;
-  border-radius: 6px;
-  padding: 8px;
-  box-shadow: 0px 4px 4px 0px #0000000D;
-  margin-left: auto;
-  margin-right: auto;
-  display: flex;
+.selected {
+  color: #2c2c2b;
+  background: #53bc6b;
 }
-.tooltip-select{
-  width:80px;
-  font-size: 14px;
-  color: #a1a1a1;
-  border-radius: 6px;
-  box-shadow: 0px 4px 4px 0px #0000000D;
-  margin-left: auto;
-  margin-right: auto;
-  display: flex;
+.select {
+  color: #525250;
 }
