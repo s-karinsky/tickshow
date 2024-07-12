@@ -119,7 +119,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF }) => {
                 ]),
                 data: { ...values },
                 payment_link: payment_link,
-                order_id:data.data.b_id,
+                order:data.data.b_id,
               }),
               "*"
           );
