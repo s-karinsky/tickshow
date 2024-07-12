@@ -109,6 +109,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF }) => {
           localStorage?.setItem("cart", JSON.stringify([]));
 
           setLoad(true);
+          values.order = data.data.b_id;
           window.parent.postMessage(
               JSON.stringify({
                 type: "submit",
@@ -119,7 +120,6 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF }) => {
                 ]),
                 data: { ...values },
                 payment_link: payment_link,
-                order:data.data.b_id,
               }),
               "*"
           );
