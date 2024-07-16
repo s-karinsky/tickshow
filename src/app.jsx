@@ -52,7 +52,8 @@ import { useSelector } from "react-redux";
 import arrow from "./images/Frame 6282.svg";
 import { useParams } from "react-router-dom";
 
-const schedule_id = "383";
+let test = {"row:": "-1", "seat": "0"};
+
 const currenciesSymbols = {
   EUR: "€",
   USD: "$",
@@ -110,6 +111,8 @@ const SvgScheme = forwardRef(
     },
     ref
   ) => {
+    console.log("ON INPUT SVG_SCHEME:",!!tickets.find((x) => x?.row === test?.row && x?.seat === test?.seat))
+
     //console.log("POINT: SvgScheme-01 :", currentCategory)
     const [tooltipSeat, setTooltipSeat] = useState();
     const [refresh, setRefresh] = useState(false);
@@ -123,10 +126,7 @@ const SvgScheme = forwardRef(
       async (e) => {
         const { target: el } = e;
         if (!el.matches(seatSelector)) return;
-        if (!tickets) {
-          console.log("no tickets,return", tickets);
-          return;
-        }
+
         if (el.getAttribute("data-disabled") === "true") {
           return;
         }
@@ -203,7 +203,7 @@ const SvgScheme = forwardRef(
         (acc, cat) => {
           acc += `
         .svg-seat[data-category="${cat.value}"]:not([data-in-cart]) { fill: ${cat.color}; }
-        .svg-seat[data-category="${cat.value}"]:not([data-disabled]):not([data-in-cart]):hover { stroke: ${cat.color}; stroke-width: 3px; }
+        .svg-seat[data-category="${cat.value}"]:not([data-in-cart]):not([data-disabled]):hover { stroke: ${cat.color}; stroke-width: 3px; }
         .svg-scheme-icon-cat-${cat.value} { color: ${cat.color}; }
         .svg-scheme-bg-cat-${cat.value} { background-color: ${cat.color}; }
       `;
@@ -211,7 +211,7 @@ const SvgScheme = forwardRef(
         },
         `
       .svg-seat:not([data-disabled]) { cursor: pointer; }
-      .svg-seat[data-disabled]:not([data-in-cart]) { fill: #666 !important; }
+      .svg-seat[data-disabled] { fill: #666 !important; }
       .svg-seat[data-in-cart] { fill: black; }
     `
       );
@@ -240,15 +240,22 @@ const SvgScheme = forwardRef(
           }
         } else {
           for (var j = 0; j < tickets.length; j++) {
-            if (
+            try{
+              if(tickets[j].row.toString() === el_data.row.toString() &&
+                  tickets[j].seat.toString() === el_data.seat.toString()){}
+            }
+            catch (e) {
+              console.log(tickets[j],el_data)
+            }
+            if(
               tickets[j].row.toString() === el_data.row &&
               tickets[j].seat.toString() === el_data.seat
             ) {
               suitableTicket = true;
-
             }
           }
         }
+        test.suitableTicket = suitableTicket
         if (!suitableTicket) {
           el.setAttribute("data-disabled", true);
         }
@@ -290,13 +297,13 @@ const SvgScheme = forwardRef(
         category: el.getAttribute("data-category"),
         disabled: el.getAttribute("data-disabled"),
       };
-      for (var j = 0; j < cart.filter( (x) => x.category === el_data.category).length; j++) {
+      for (var j = 0; j < cart.filter( (x) => x.category === el_data1.category).length; j++) {
         if (
           cart[j].row.toString() === el_data1.row?.toString() &&
           cart[j].seat.toString() === el_data1.seat?.toString()
         ) {
           svg_seats[i].setAttribute("data-in-cart", true);
-          svg_seats[i].setAttribute("data-disabled", false);
+          svg_seats[i].removeAttribute("data-disabled");
         }
       }
     }
@@ -481,7 +488,6 @@ export const App = () => {
   const searchParams = new URLSearchParams(window.location.search);
   const [ScheduleDoesNotExist, setScheduleDoesNotExist] = useState(false);
   const { a } = useParams();
-  console.log(window.location.href.split("/").slice(-1)[0]);
   const schedule_id = !isNaN(+window.location.href.split("/").slice(-1)[0])
     ? window.location.href.split("/").slice(-1)[0]
     : null;
@@ -567,16 +573,54 @@ export const App = () => {
       }
     }
   };
+  const SeatCartProvider = (seat,count,onError) => {
+    //seat drawing logic
+    var svg_scheme = document.body.getElementsByTagName("svg")[0];
+    var el = document.body.querySelector(".svg-seat[data-row=\"" + seat.row + "\"][data-seat=\"" + seat.seat + "\"]");
+    console.log(el)
+    if(count===1){
+      el.setAttribute("data-in-cart", "true");
+    }
+    else{
+      console.log(!!tickets.find(x => x.row.toString()===test.row.toString() && x.seat.toString()===test.seat.toString()))
+      el.setAttribute("data-in-cart", "false");
+    }
+
+
+    CartSeat(
+        localStorage.getItem("phantom_user_token"),
+        localStorage.getItem("phantom_user_u_hash"),
+        seat.hall_id +
+        ";" +
+        seat.section +
+        ";" +
+        seat.row +
+        ";" +
+        seat.seat +
+        "",
+        seat.t_id,
+        count
+    ).then(
+        (data) => {
+            if(data.status === "error"){
+
+              seat.el.setAttribute("data-disabled", "true");
+              console.log("setting this seat as disabled")
+              onError(data)
+            }
+        }
+    )
+  }
 
   const addToCart = useCallback(
     (seat, st) => {
-      //console.log("seat", seat, st);
+      console.log(seat, st);
       var dancefloor_category = categoriesF?.find(
         (x) => x?.code_type === "Dancefloor"
       )?.value;
       cart = JSON.parse(localStorage?.getItem("cart")) || [];
-      //refresh_cart();
       var cartItem = cart?.find((x) => x?.id === seat?.id);
+
       if (cartItem || seat?.category === dancefloor_category) {
         if (seat.category === dancefloor_category) {
           if (st) {
@@ -586,31 +630,15 @@ export const App = () => {
             );
             dancefloor_ticktes_in_cart.sort((a, b) => b.quantity - a.quantity);
             var tkt = dancefloor_ticktes_in_cart[0];
-            cartItem = tkt;
             cart?.splice(cart?.indexOf(tkt), 1);
-            CartSeat(
-              localStorage.getItem("phantom_user_token"),
-              localStorage.getItem("phantom_user_u_hash"),
-              tkt.hall_id +
-                ";" +
-                tkt.section +
-                ";" +
-                tkt.row +
-                ";" +
-                tkt.seat +
-                "",
-              tkt.t_id,
-              0
-            ).then((data) => {
-              //console.log("Cart Seat", data);
-              if(data?.status === "error") {
-                  alert("This place has just been reserved")
-                refetch().then(r => {
-                  setTickets(r.data);
-                  localStorage?.setItem("cart", JSON?.stringify(cart));
-                })
-              }
-            });
+            SeatCartProvider(tkt, 0, onError => {
+              alert("This place has just been reserved")
+              /*
+              refetch().then(r => {
+                setTickets(r.data.concat(cart));
+              })
+               */
+            })
             localStorage?.setItem("cart", JSON?.stringify(cart));
             reloadCart();
             return;
@@ -637,29 +665,14 @@ export const App = () => {
               free_dancefloor_ticket.row,
               free_dancefloor_ticket.seat
             )?.event_id;
-            CartSeat(
-              localStorage.getItem("phantom_user_token"),
-              localStorage.getItem("phantom_user_u_hash"),
-              free_dancefloor_ticket.hall_id +
-                ";" +
-                free_dancefloor_ticket.section +
-                ";" +
-                free_dancefloor_ticket.row +
-                ";" +
-                free_dancefloor_ticket.seat +
-                "",
-              free_dancefloor_ticket.t_id,
-              1
-            ).then((data) => {
-              //console.log("Cart Seat", data);
-              if(data?.status === "error") {
-                alert("This place has just been reserved")
-                refetch().then(r => {
-                  setTickets(r.data);
-                  localStorage?.setItem("cart", JSON?.stringify(cart));
-                })
-              }
-            });
+            SeatCartProvider(free_dancefloor_ticket,1, onError => {
+              alert("This place has just been reserved")
+              /*
+              refetch().then(r => {
+                setTickets(r.data.concat(cart));
+              })
+               */
+            })
             cart?.push(free_dancefloor_ticket);
             localStorage?.setItem("cart", JSON?.stringify(cart));
             reloadCart();
@@ -668,70 +681,44 @@ export const App = () => {
         }
 
         // Cart Seat
-        if (seat.category !== dancefloor_category) {
+        /*
+        * if (seat.category !== dancefloor_category) {
           seat.el.style.fill = categoriesF.find(
             (x) => x.name === seat.category
           )?.color;
+        }*/
+        if(!seat.price){
+          seat = cartItem;
         }
-        CartSeat(
-          localStorage.getItem("phantom_user_token"),
-          localStorage.getItem("phantom_user_u_hash"),
-          cartItem.hall_id +
-            ";" +
-            cartItem.section +
-            ";" +
-            seat.row +
-            ";" +
-            seat.seat +
-            "",
-          cartItem.t_id,
-          0
-        ).then((data) => {
-          //console.log("Cart Seat", data);
+        test = seat;
+        setTickets([...tickets,{...seat}])
+        SeatCartProvider(cartItem, 0, onError => {
+          alert("This place has just been reserved")
+          /*
           refetch().then(r => {
             setTickets(r.data);
-
+            localStorage?.setItem("cart", JSON?.stringify(cart));
           })
-        });
+           */
+        })
         cart?.splice(cart?.indexOf(cartItem), 1);
         localStorage?.setItem("cart", JSON?.stringify(cart));
       } else {
         // Cart Seat
 
-        var ticket_Data = {
-          t_id: GetSeat(seat?.row, seat?.seat).t_id,
-          hall_id: GetSeat(seat?.row, seat?.seat).hall_id,
-          event_id: GetSeat(seat?.row, seat?.seat).event_id,
-          section: GetSeat(seat?.row, seat?.seat).section,
-        };
-
-        seat.t_id = ticket_Data.t_id;
-        seat.hall_id = ticket_Data.hall_id;
-        seat.event_id = ticket_Data.event_id;
-        seat.section = ticket_Data.section;
-        CartSeat(
-          localStorage.getItem("phantom_user_token"),
-          localStorage.getItem("phantom_user_u_hash"),
-          ticket_Data.hall_id +
-            ";" +
-            ticket_Data.section +
-            ";" +
-            seat.row +
-            ";" +
-            seat.seat +
-            "",
-          ticket_Data.t_id,
-          1
-        ).then((data) => {
-          //console.log("Cart Seat", data);
-          if(data?.status === "error") {
-            alert("This place has just been reserved")
-            refetch().then(r => {
-              setTickets(r.data);
-              localStorage?.setItem("cart", JSON?.stringify(cart));
-            })
-          }
-        });
+        const get_seat_result = GetSeat(seat?.row, seat?.seat);
+        seat.t_id = get_seat_result.t_id;
+        seat.hall_id = get_seat_result.hall_id;
+        seat.event_id = get_seat_result.event_id;
+        seat.section = get_seat_result.section;
+        SeatCartProvider(seat, 1, onError => {
+          alert("This place has just been reserved")
+          /*
+          refetch().then(r => {
+            setTickets(r.data.concat(cart));
+          })
+           */
+        })
 
         cart?.push(seat);
         localStorage.setItem("cart", JSON.stringify(cart));
@@ -1271,7 +1258,6 @@ export const App = () => {
           if (e.target.tagName !== "BUTTON") {
             setOpenB(true);
           }
-          console.log(e.target.tagName);
           if (e.target.tagName === "svg" || e.target.tagName === "LABEL") {
             setOpenB(!openB);
           }
