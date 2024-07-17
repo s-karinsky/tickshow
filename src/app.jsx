@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, Suspense, lazy } from "react";
+import React, { useState, useMemo, useRef, useImperativeHandle, Suspense, lazy } from "react";
 import { useEffect } from "react";
 import {
   calculateScale,
@@ -51,6 +51,7 @@ import { useControls } from "react-zoom-pan-pinch";
 import { useSelector } from "react-redux";
 import arrow from "./images/Frame 6282.svg";
 import { useParams } from "react-router-dom";
+import { isEqualStr } from "./utils/string.js";
 
 let test = {"row:": "-1", "seat": "0"};
 
@@ -111,6 +112,8 @@ const SvgScheme = forwardRef(
     },
     ref
   ) => {
+    const innerRef = useRef(null)
+    useImperativeHandle(ref, () => innerRef.current, [])
     console.log("ON INPUT SVG_SCHEME:",!!tickets.find((x) => x?.row === test?.row && x?.seat === test?.seat))
 
     //console.log("POINT: SvgScheme-01 :", currentCategory)
@@ -198,12 +201,52 @@ const SvgScheme = forwardRef(
       [onSeatOut, seatSelector, tooltip]
     );
 
+    useEffect(() => {
+      const root = innerRef.current
+      if (!root) return
+      const svg_seats = Array.from(root.getElementsByClassName("svg-seat"));
+      if (currentCategory === "all") {
+        svg_seats.forEach(el => {
+          const el_data = ['seat', 'row', 'category', 'disabled'].reduce((acc, key) => ({
+            ...acc,
+            [key]: el.getAttribute(`data-${key}`)
+          }), {})
+          let suitableTicket = false
+
+          if (el_data.category === dancefloor_category_name) {
+            suitableTicket = tickets.filter(({ section }) => section === dancefloor_category_name).length > 0
+          } else {
+            suitableTicket = tickets.findIndex(({ seat, row }) => isEqualStr(seat, el_data.seat) && isEqualStr(row, el_data.row)) > -1
+          }
+          test.suitableTicket = suitableTicket
+          if (!suitableTicket) {
+            el.setAttribute("data-disabled", true);
+          }
+        })
+      } else {
+        const currentCat = active || currentCategory
+        svg_seats.forEach(el => {
+          const el_data = ['seat', 'row', 'category', 'disabled'].reduce((acc, key) => ({
+            ...acc,
+            [key]: el.getAttribute(`data-${key}`)
+          }), {})
+          let suitableTicket = false
+          if (el_data.category === currentCat) {
+            suitableTicket = tickets.findIndex(({ seat, row }) => isEqualStr(seat, el_data.seat) && isEqualStr(row, el_data.row)) > -1
+          }
+          if (!suitableTicket) {
+            el.setAttribute("data-disabled", true);
+          }
+        })
+      }
+    }, [src])
+
     const styles = useMemo(() => {
       return categories.reduce(
         (acc, cat) => {
           acc += `
-        .svg-seat[data-category="${cat.value}"]:not([data-in-cart]) { fill: ${cat.color}; }
-        .svg-seat[data-category="${cat.value}"]:not([data-in-cart]):not([data-disabled]):hover { stroke: ${cat.color}; stroke-width: 3px; }
+        .svg-seat[data-category="${cat.value}"] { fill: ${cat.color}; }
+        .svg-seat[data-category="${cat.value}"]:not([data-disabled]):hover { stroke: ${cat.color}; stroke-width: 3px; }
         .svg-scheme-icon-cat-${cat.value} { color: ${cat.color}; }
         .svg-scheme-bg-cat-${cat.value} { background-color: ${cat.color}; }
       `;
@@ -212,109 +255,10 @@ const SvgScheme = forwardRef(
         `
       .svg-seat:not([data-disabled]) { cursor: pointer; }
       .svg-seat[data-disabled] { fill: #666 !important; }
-      .svg-seat[data-in-cart] { fill: black; }
     `
       );
     }, [categories]);
-    const parser = new DOMParser();
-    const parsedDocument = parser.parseFromString(src, "text/html");
-    //const svg_seats = parsedDocument.getElementsByTagName("path")
-    const svg_seats = parsedDocument.getElementsByClassName("svg-seat");
-    if (currentCategory === "all") {
-      for (var i = 0; i < svg_seats.length; i++) {
-        var el = svg_seats[i];
-        var el_data = {
-          seat: el.getAttribute("data-seat"),
-          row: el.getAttribute("data-row"),
-          category: el.getAttribute("data-category"),
-          disabled: el.getAttribute("data-disabled"),
-        };
-
-        var suitableTicket = false;
-        if (el_data.category === dancefloor_category_name) {
-          var dancefloor_tickets = tickets.filter(
-            (ticket) => ticket.section === dancefloor_category_name
-          );
-          if (dancefloor_tickets.length > 0) {
-            suitableTicket = true;
-          }
-        } else {
-          for (var j = 0; j < tickets.length; j++) {
-            try{
-              if(tickets[j].row.toString() === el_data.row.toString() &&
-                  tickets[j].seat.toString() === el_data.seat.toString()){}
-            }
-            catch (e) {
-              console.log(tickets[j],el_data)
-            }
-            if(
-              tickets[j].row.toString() === el_data.row &&
-              tickets[j].seat.toString() === el_data.seat
-            ) {
-              suitableTicket = true;
-            }
-          }
-        }
-        test.suitableTicket = suitableTicket
-        if (!suitableTicket) {
-          el.setAttribute("data-disabled", true);
-        }
-      }
-    } else {
-      for (var i = 0; i < svg_seats.length; i++) {
-        var el = svg_seats[i];
-        var el_data = {
-          seat: el.getAttribute("data-seat"),
-          row: el.getAttribute("data-row"),
-          category: el.getAttribute("data-category"),
-          disabled: el.getAttribute("data-disabled"),
-        };
-        var suitableTicket = false;
-        for (var j = 0; j < tickets.length; j++) {
-          if (
-            tickets[j].row.toString() === el_data.row &&
-            tickets[j].seat.toString() === el_data.seat
-          ) {
-            suitableTicket = true;
-
-          }
-        }
-        if (
-          !suitableTicket ||
-          el_data.category !== (active || currentCategory)
-        ) {
-          el.setAttribute("data-disabled", true);
-        }
-      }
-    }
-
-    var cart = JSON.parse(localStorage?.getItem("cart")) || [];
-    for (var i = 0; i < svg_seats.length; i++) {
-      var el = svg_seats[i];
-      var el_data1 = {
-        seat: el.getAttribute("data-seat"),
-        row: el.getAttribute("data-row"),
-        category: el.getAttribute("data-category"),
-        disabled: el.getAttribute("data-disabled"),
-      };
-      for (var j = 0; j < cart.filter( (x) => x.category === el_data1.category).length; j++) {
-        if (
-          cart[j].row.toString() === el_data1.row?.toString() &&
-          cart[j].seat.toString() === el_data1.seat?.toString()
-        ) {
-          svg_seats[i].setAttribute("data-in-cart", true);
-          svg_seats[i].removeAttribute("data-disabled");
-        }
-      }
-    }
-
-    var SvgToInsert = parsedDocument.getElementsByTagName("svg")[0];
-    if (!SvgToInsert) {
-      return <div>Loading</div>;
-    } else {
-    }
-    var s = new XMLSerializer();
-    var str_svg = s.serializeToString(SvgToInsert);
+    
     return (
       <div className={s.scheme} id="stage">
         {!!tooltip && (
@@ -324,9 +268,9 @@ const SvgScheme = forwardRef(
         )}
         <style>{styles}</style>
         <div
-          ref={ref}
+          ref={innerRef}
           className={s.svgContainer}
-          dangerouslySetInnerHTML={{ __html: str_svg }}
+          dangerouslySetInnerHTML={{ __html: src }}
           onClick={handleClick}
           onMouseOver={handleMouseOver}
           onMouseOut={handleMouseOut}></div>
@@ -578,12 +522,25 @@ export const App = () => {
     var svg_scheme = document.body.getElementsByTagName("svg")[0];
     var el = document.body.querySelector(".svg-seat[data-row=\"" + seat.row + "\"][data-seat=\"" + seat.seat + "\"]");
     console.log(el)
+    const xmlType = "http://www.w3.org/2000/svg"
+    const next = el.nextSibling
     if(count===1){
       el.setAttribute("data-in-cart", "true");
-    }
-    else{
+      const { x, y } = el.getBBox()
+      const check = document.createElementNS(xmlType, 'path')
+      // <path fill-rule="" clip-rule="evenodd" d="" fill="#323232" stroke="#323232" stroke-width="0.5"/>
+      check.setAttribute('d', 'M5.3023 0.656738C5.39993 0.754369 5.39993 0.91266 5.3023 1.01029L2.5591 3.7535C2.46209 3.85051 2.30502 3.85121 2.20714 3.75508L0.660761 2.23631C0.562254 2.13957 0.560828 1.98128 0.657576 1.88277L0.832753 1.70441C0.9295 1.60591 1.08778 1.60448 1.18629 1.70123L2.37915 2.87278L4.77197 0.479962C4.8696 0.382331 5.02789 0.38233 5.12553 0.479962L5.3023 0.656738Z')
+      check.setAttribute('fill', '#323232')
+      check.setAttribute('stroke-width', '0.5')
+      check.setAttribute('class', 'seat-check')
+      check.setAttribute('style', `transform: translate(${x + 2}px, ${y + 3}px)`)
+      next.parentNode.insertBefore(check, next)
+    } else{
       console.log(!!tickets.find(x => x.row.toString()===test.row.toString() && x.seat.toString()===test.seat.toString()))
       el.setAttribute("data-in-cart", "false");
+      if (next.classList.contains('seat-check')) {
+        next.parentNode.removeChild(next)
+      }
     }
 
 
