@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, Suspense, lazy } from "react";
+import React, { useState, useMemo, useRef, useImperativeHandle, Suspense, lazy } from "react";
 import { useEffect } from "react";
 import {
   calculateScale,
@@ -51,6 +51,10 @@ import { useControls } from "react-zoom-pan-pinch";
 import { useSelector } from "react-redux";
 import arrow from "./images/Frame 6282.svg";
 import { useParams } from "react-router-dom";
+import { isEqualStr } from "./utils/string.js";
+import { addDef, createCheckElement, createUse, insertAfter, svgSeat } from "./utils/dom-scheme.js";
+import { useLocalStorage } from "./utils/hooks.js";
+import './app.css'
 
 let test = {"row:": "-1", "seat": "0"};
 
@@ -68,6 +72,11 @@ const currenciesSymbols = {
   JPY: "¥",
   TRY: "₺",
 };
+
+export const CHECK_PATH_ID = 'checked-seat-path'
+const SEAT_CLASS = 'svg-seat'
+const SEAT_CLASS_ACTIVE = `${SEAT_CLASS}-active`
+
 const CartModal = lazy(() => import("./utility"));
 
 const addStyles = (el, styles) => Object.assign(el.style, styles);
@@ -98,7 +107,7 @@ const SvgScheme = forwardRef(
   (
     {
       categories = [],
-      seatSelector = ".svg-seat",
+      seatSelector = `.${SEAT_CLASS}`,
       src,
       tickets,
       currentCategory = "all",
@@ -111,7 +120,11 @@ const SvgScheme = forwardRef(
     },
     ref
   ) => {
-    console.log("ON INPUT SVG_SCHEME:",!!tickets.find((x) => x?.row === test?.row && x?.seat === test?.seat))
+    const innerRef = useRef(null)
+    useImperativeHandle(ref, () => innerRef.current, [])
+    const [ cart ] = useLocalStorage('cart', [])
+
+    // console.log("ON INPUT SVG_SCHEME:",!!tickets.find((x) => x?.row === test?.row && x?.seat === test?.seat))
 
     //console.log("POINT: SvgScheme-01 :", currentCategory)
     const [tooltipSeat, setTooltipSeat] = useState();
@@ -198,123 +211,54 @@ const SvgScheme = forwardRef(
       [onSeatOut, seatSelector, tooltip]
     );
 
+    useEffect(() => {
+      const root = innerRef.current
+      if (!root) return
+      const cat = currentCategory === 'all' ? null : currentCategory
+      addDef(root, CHECK_PATH_ID, createCheckElement())
+      const ticketMap = tickets.reduce((acc, { seat, row, section }) =>
+        ({ ...acc, [row === '-1' ? section : [row, seat].join('-')]: true })
+      , {})
+      const cartMap = (cart || []).reduce((acc, { seat, row, section }) =>
+        ({ ...acc, [row === '-1' ? section : [row, seat].join('-')]: true })
+      , {})
+      Array.from(root.querySelectorAll(`.${SEAT_CLASS}`)).forEach(el => {
+        const seat = svgSeat(el)
+        const inCart = !!cartMap[seat.getKey()]
+        seat.checked(inCart).set('in-cart', inCart.toString())
+        const ticket = ticketMap[seat.getKey()]
+        if (ticket && (!cat || cat === seat.get('category'))) {
+          el.classList.add(SEAT_CLASS_ACTIVE)
+          el.removeAttribute('data-disabled')
+          //seat.set('disabled', 'false')
+        } else {
+          if ((!cat || cat === seat.get('category')) && inCart) {
+            el.removeAttribute('data-disabled')
+          } else {
+            seat.set('disabled', 'true')
+          }
+        }
+      })
+    }, [cart, currentCategory])
+
     const styles = useMemo(() => {
       return categories.reduce(
         (acc, cat) => {
           acc += `
-        .svg-seat[data-category="${cat.value}"]:not([data-in-cart]) { fill: ${cat.color}; }
-        .svg-seat[data-category="${cat.value}"]:not([data-in-cart]):not([data-disabled]):hover { stroke: ${cat.color}; stroke-width: 3px; }
-        .svg-scheme-icon-cat-${cat.value} { color: ${cat.color}; }
-        .svg-scheme-bg-cat-${cat.value} { background-color: ${cat.color}; }
+        .${SEAT_CLASS}[data-category="${cat.value}"] { fill: ${cat.color}; stroke: ${cat.color}; stroke-width: 0; transition: ease-out .3s stroke-width; }
+        .${SEAT_CLASS}[data-category="${cat.value}"]:not([data-disabled]):hover { stroke-width: 2px; }
+        .${SEAT_CLASS}-icon-cat-${cat.value} { color: ${cat.color}; }
+        .${SEAT_CLASS}-bg-cat-${cat.value} { background-color: ${cat.color}; }
       `;
           return acc;
         },
         `
-      .svg-seat:not([data-disabled]) { cursor: pointer; }
-      .svg-seat[data-disabled] { fill: #666 !important; }
-      .svg-seat[data-in-cart] { fill: black; }
+      .${SEAT_CLASS}:not([data-disabled]) { cursor: pointer; }
+      .${SEAT_CLASS}[data-disabled] { fill: #666 !important; }
     `
       );
     }, [categories]);
-    const parser = new DOMParser();
-    const parsedDocument = parser.parseFromString(src, "text/html");
-    //const svg_seats = parsedDocument.getElementsByTagName("path")
-    const svg_seats = parsedDocument.getElementsByClassName("svg-seat");
-    if (currentCategory === "all") {
-      for (var i = 0; i < svg_seats.length; i++) {
-        var el = svg_seats[i];
-        var el_data = {
-          seat: el.getAttribute("data-seat"),
-          row: el.getAttribute("data-row"),
-          category: el.getAttribute("data-category"),
-          disabled: el.getAttribute("data-disabled"),
-        };
-
-        var suitableTicket = false;
-        if (el_data.category === dancefloor_category_name) {
-          var dancefloor_tickets = tickets.filter(
-            (ticket) => ticket.section === dancefloor_category_name
-          );
-          if (dancefloor_tickets.length > 0) {
-            suitableTicket = true;
-          }
-        } else {
-          for (var j = 0; j < tickets.length; j++) {
-            try{
-              if(tickets[j].row.toString() === el_data.row.toString() &&
-                  tickets[j].seat.toString() === el_data.seat.toString()){}
-            }
-            catch (e) {
-              console.log(tickets[j],el_data)
-            }
-            if(
-              tickets[j].row.toString() === el_data.row &&
-              tickets[j].seat.toString() === el_data.seat
-            ) {
-              suitableTicket = true;
-            }
-          }
-        }
-        test.suitableTicket = suitableTicket
-        if (!suitableTicket) {
-          el.setAttribute("data-disabled", true);
-        }
-      }
-    } else {
-      for (var i = 0; i < svg_seats.length; i++) {
-        var el = svg_seats[i];
-        var el_data = {
-          seat: el.getAttribute("data-seat"),
-          row: el.getAttribute("data-row"),
-          category: el.getAttribute("data-category"),
-          disabled: el.getAttribute("data-disabled"),
-        };
-        var suitableTicket = false;
-        for (var j = 0; j < tickets.length; j++) {
-          if (
-            tickets[j].row.toString() === el_data.row &&
-            tickets[j].seat.toString() === el_data.seat
-          ) {
-            suitableTicket = true;
-
-          }
-        }
-        if (
-          !suitableTicket ||
-          el_data.category !== (active || currentCategory)
-        ) {
-          el.setAttribute("data-disabled", true);
-        }
-      }
-    }
-
-    var cart = JSON.parse(localStorage?.getItem("cart")) || [];
-    for (var i = 0; i < svg_seats.length; i++) {
-      var el = svg_seats[i];
-      var el_data1 = {
-        seat: el.getAttribute("data-seat"),
-        row: el.getAttribute("data-row"),
-        category: el.getAttribute("data-category"),
-        disabled: el.getAttribute("data-disabled"),
-      };
-      for (var j = 0; j < cart.filter( (x) => x.category === el_data1.category).length; j++) {
-        if (
-          cart[j].row.toString() === el_data1.row?.toString() &&
-          cart[j].seat.toString() === el_data1.seat?.toString()
-        ) {
-          svg_seats[i].setAttribute("data-in-cart", true);
-          svg_seats[i].removeAttribute("data-disabled");
-        }
-      }
-    }
-
-    var SvgToInsert = parsedDocument.getElementsByTagName("svg")[0];
-    if (!SvgToInsert) {
-      return <div>Loading</div>;
-    } else {
-    }
-    var s = new XMLSerializer();
-    var str_svg = s.serializeToString(SvgToInsert);
+    
     return (
       <div className={s.scheme} id="stage">
         {!!tooltip && (
@@ -324,12 +268,13 @@ const SvgScheme = forwardRef(
         )}
         <style>{styles}</style>
         <div
-          ref={ref}
+          ref={innerRef}
           className={s.svgContainer}
-          dangerouslySetInnerHTML={{ __html: str_svg }}
+          dangerouslySetInnerHTML={{ __html: src }}
           onClick={handleClick}
           onMouseOver={handleMouseOver}
-          onMouseOut={handleMouseOut}></div>
+          onMouseOut={handleMouseOut}
+        />
       </div>
     );
   }
@@ -459,7 +404,7 @@ function SvgSchemeSeatPreview({
   );
 }
 
-export const App = () => {
+export const App = (factory, deps) => {
   const [activeSeat, setActiveSeat] = useState(null);
   //const cart = useMemo(() => {
   //  return JSON.parse(localStorage.getItem("cart")) || [];
@@ -481,13 +426,14 @@ export const App = () => {
   // isLoading, error,
 
 
-  const [tickets, setTickets] = useState();
+  const [tickets, setTickets] = useState([])
+  const mixedTickets = useMemo(()=>{
+    return [...tickets, ...cart]
+  },[tickets])
+
   const [currentCategory, setCurrentCategory] = useState("all");
   const [ScheduleFee, setScheduleFee] = useState(0);
   const [LimitTime, setLimitTime] = useState();
-  const searchParams = new URLSearchParams(window.location.search);
-  const [ScheduleDoesNotExist, setScheduleDoesNotExist] = useState(false);
-  const { a } = useParams();
   const schedule_id = !isNaN(+window.location.href.split("/").slice(-1)[0])
     ? window.location.href.split("/").slice(-1)[0]
     : null;
@@ -518,13 +464,11 @@ export const App = () => {
         skip: 0,
         limit: 30,
       }).then((data) => {
-        setTickets(
-          data.data.concat(JSON.parse(localStorage?.getItem("cart")) || [])
-        );
+        setTickets(data.data);
       });
     }
     LoadStadiumData();
-  }, [LoadStadiumData, data, refetch]);
+  }, [LoadStadiumData, data]);
 
   useEffect(() => {
     const updateZoom = () => {
@@ -545,7 +489,8 @@ export const App = () => {
   };
 
   const GetSeat = (row, seat) => {
-    return tickets?.find(
+    console.log(mixedTickets.length,tickets.length)
+    return mixedTickets?.find(
       (x) =>
         x?.row.toString() === row.toString() &&
         x?.seat.toString() === seat.toString()
@@ -576,16 +521,11 @@ export const App = () => {
   const SeatCartProvider = (seat,count,onError) => {
     //seat drawing logic
     var svg_scheme = document.body.getElementsByTagName("svg")[0];
-    var el = document.body.querySelector(".svg-seat[data-row=\"" + seat.row + "\"][data-seat=\"" + seat.seat + "\"]");
-    console.log(el)
-    if(count===1){
-      el.setAttribute("data-in-cart", "true");
-    }
-    else{
-      console.log(!!tickets.find(x => x.row.toString()===test.row.toString() && x.seat.toString()===test.seat.toString()))
-      el.setAttribute("data-in-cart", "false");
-    }
-
+    var el = seat.row === '-1' ?
+      document.body.querySelector(".svg-seat[data-category=\"" + seat.category + "\"]") :
+      document.body.querySelector(".svg-seat[data-row=\"" + seat.row + "\"][data-seat=\"" + seat.seat + "\"]")
+    
+    svgSeat(el).set('in-cart', count === 1).checked(count === 1)
 
     CartSeat(
         localStorage.getItem("phantom_user_token"),
@@ -603,7 +543,6 @@ export const App = () => {
     ).then(
         (data) => {
             if(data.status === "error"){
-
               seat.el.setAttribute("data-disabled", "true");
               console.log("setting this seat as disabled")
               onError(data)
@@ -614,13 +553,11 @@ export const App = () => {
 
   const addToCart = useCallback(
     (seat, st) => {
-      console.log(seat, st);
       var dancefloor_category = categoriesF?.find(
         (x) => x?.code_type === "Dancefloor"
       )?.value;
       cart = JSON.parse(localStorage?.getItem("cart")) || [];
       var cartItem = cart?.find((x) => x?.id === seat?.id);
-
       if (cartItem || seat?.category === dancefloor_category) {
         if (seat.category === dancefloor_category) {
           if (st) {
@@ -691,7 +628,7 @@ export const App = () => {
           seat = cartItem;
         }
         test = seat;
-        setTickets([...tickets,{...seat}])
+
         SeatCartProvider(cartItem, 0, onError => {
           alert("This place has just been reserved")
           /*
