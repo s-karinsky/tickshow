@@ -392,7 +392,7 @@ function SvgSchemeSeatPreview({
             ? s["selected"]
             : s["select"])
         } style={
-        suitableTicket && isMobile ? { background:cat.color } : {  }
+        item || (cat.value === dancefloor_category_name && dancefloor_flag) ? {} : suitableTicket ? {background:clr} : {}
       }>
         {item || (cat.value === dancefloor_category_name && dancefloor_flag) ? (
           <>
@@ -493,7 +493,6 @@ export const App = (factory, deps) => {
   };
 
   const GetSeat = (row, seat) => {
-    console.log(mixedTickets.length,tickets.length)
     return mixedTickets?.find(
       (x) =>
         x?.row.toString() === row.toString() &&
@@ -652,6 +651,7 @@ export const App = (factory, deps) => {
         seat.hall_id = get_seat_result.hall_id;
         seat.event_id = get_seat_result.event_id;
         seat.section = get_seat_result.section;
+        seat.price = seat.price ? seat.price : get_seat_result.price;
         SeatCartProvider(seat, 1, onError => {
           alert("This place has just been reserved")
           /*
@@ -1020,7 +1020,7 @@ export const App = (factory, deps) => {
                     <SvgScheme
                       src={stadiumData["scheme"]}
                       categories={stadiumData["categories"]}
-                      tickets={tickets}
+                      tickets={mixedTickets}
                       currentCategory={currentCategory}
                       onSeatClick={addToCart}
                       categoriesF={categoriesF}
@@ -1030,7 +1030,7 @@ export const App = (factory, deps) => {
                           className={s.preview}
                           categories={stadiumData["categories"]}
                           price="16$"
-                          tickets={tickets}
+                          tickets={mixedTickets}
                           categoriesF={categoriesF}
                           isMobile={mobile}
                           {...data}
