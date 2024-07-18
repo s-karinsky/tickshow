@@ -1210,7 +1210,7 @@ export const App = (factory, deps) => {
           {getUniqueCategory(cart).length ? (
             getUniqueCategory(cart).map((category, ind) => {
               const seats = getSeats(cart, category);
-              const ct = categoriesF?.find((x) => x.code_type === "Dancefloor");
+              const ct = categoriesF?.find((x) => x.code_type === "Dancefloor") ? categoriesF?.find((x) => x.code_type === "Dancefloor") : {value:""};
               return (
                 <div className="w100 df fdc gap10" key={`${category}_${ind}`}>
                   <div
