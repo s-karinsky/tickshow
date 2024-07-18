@@ -1317,9 +1317,9 @@ export const App = (factory, deps) => {
                               </b>
                               <span className="cp fs14 delete-btn">
                                 {/* onClick={() => addToCart(seat)} */}
-                                <span>
-                                  <RxCross2 className="fs12" />
-                                </span>
+                                <button className="fs12l" onClick={() => addToCart(seat)}>
+                                  <RxCross2 />
+                                </button>
                               </span>
                             </i>
                           </label>
