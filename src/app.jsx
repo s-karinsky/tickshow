@@ -390,7 +390,9 @@ function SvgSchemeSeatPreview({
           (item || (cat.value === dancefloor_category_name && dancefloor_flag)
             ? s["selected"]
             : s["select"])
-        }>
+        } style={
+        suitableTicket ? { background:cat.color } : {  }
+      }>
         {item || (cat.value === dancefloor_category_name && dancefloor_flag) ? (
           <>
             <MdOutlineCheckCircle style={{ marginRight: "3px" }} />
@@ -440,22 +442,6 @@ export const App = (factory, deps) => {
   var { data, refetch } = useTickets({ event_id: schedule_id, skip: 0, limit: 30 }, {});
 
   useEffect(() => {
-    if(!LimitTime){
-      GetLimitTime().then((data) => {
-        setLimitTime(data);
-      });
-    }
-
-
-    if (!localStorage.getItem("phantom_user_token")) {
-      RegisterPhantomUser().then((email) => {
-        localStorage.setItem("phantom_user_email", email);
-        AuthUser(email).then((phantom_auth_data) => {
-          localStorage.setItem("phantom_user_token", phantom_auth_data.token);
-          localStorage.setItem("phantom_user_u_hash", phantom_auth_data.u_hash);
-        });
-      });
-    }
     if (data) {
       setTickets(data);
     } else {
@@ -483,6 +469,23 @@ export const App = (factory, deps) => {
     window.addEventListener("resize", updateZoom);
     return () => window.removeEventListener("resize", updateZoom);
   }, [categoriesF.length]);
+
+  useEffect( () => {
+    if(!LimitTime){
+      GetLimitTime().then((data) => {
+        setLimitTime(data);
+      });
+    }
+    if (!localStorage.getItem("phantom_user_token")) {
+      RegisterPhantomUser().then((email) => {
+        localStorage.setItem("phantom_user_email", email);
+        AuthUser(email).then((phantom_auth_data) => {
+          localStorage.setItem("phantom_user_token", phantom_auth_data.token);
+          localStorage.setItem("phantom_user_u_hash", phantom_auth_data.u_hash);
+        });
+      });
+    }
+  },[])
 
   const reloadCart = () => {
     setCart(JSON.parse(localStorage?.getItem("cart")) || []);
