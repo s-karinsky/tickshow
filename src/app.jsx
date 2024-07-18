@@ -293,6 +293,7 @@ function SvgSchemeSeatPreview({
   color,
   footer,
   categoriesF = [],
+    isMobile = false
 }) {
   var currency = "€";
   var dancefloor_category_name = categoriesF.find(
@@ -391,7 +392,7 @@ function SvgSchemeSeatPreview({
             ? s["selected"]
             : s["select"])
         } style={
-        suitableTicket ? { background:cat.color } : {  }
+        suitableTicket && isMobile ? { background:cat.color } : {  }
       }>
         {item || (cat.value === dancefloor_category_name && dancefloor_flag) ? (
           <>
@@ -1031,6 +1032,7 @@ export const App = (factory, deps) => {
                           price="16$"
                           tickets={tickets}
                           categoriesF={categoriesF}
+                          isMobile={mobile}
                           {...data}
                         />
                       )}
