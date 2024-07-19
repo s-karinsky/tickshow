@@ -1,14 +1,9 @@
-@font-face {
-  font-family: "articulatcf";
-  src: url("../font/ArticulatCF-Normal.otf") format("opentype");
-}
-
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   letter-spacing: 0.05rem;
-  font-family: articulatcf, sans-serif;
+  font-family: 'Articulat CF', sans-serif;
 }
 
 html,

@@ -50,11 +50,10 @@ import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { useControls } from "react-zoom-pan-pinch";
 import { useSelector } from "react-redux";
 import arrow from "./images/Frame 6282.svg";
-import { useParams } from "react-router-dom";
-import { isEqualStr } from "./utils/string.js";
-import { addDef, createCheckElement, createUse, insertAfter, svgSeat } from "./utils/dom-scheme.js";
+import { addDef, createCheckElement, svgSeat } from "./utils/dom-scheme.js";
 import { useLocalStorage } from "./utils/hooks.js";
 import './app.css'
+import { group } from "./tools/utils.js";
 
 let test = {"row:": "-1", "seat": "0"};
 
@@ -78,6 +77,8 @@ const SEAT_CLASS = 'svg-seat'
 const SEAT_CLASS_ACTIVE = `${SEAT_CLASS}-active`
 
 const CartModal = lazy(() => import("./utility"));
+
+const byCategory = group('category')
 
 const addStyles = (el, styles) => Object.assign(el.style, styles);
 
@@ -110,6 +111,7 @@ const SvgScheme = forwardRef(
       seatSelector = `.${SEAT_CLASS}`,
       src,
       tickets,
+      cart,
       currentCategory = "all",
       tooltip,
       onSeatClick,
@@ -122,7 +124,6 @@ const SvgScheme = forwardRef(
   ) => {
     const innerRef = useRef(null)
     useImperativeHandle(ref, () => innerRef.current, [])
-    const [ cart ] = useLocalStorage('cart', [])
 
     // console.log("ON INPUT SVG_SCHEME:",!!tickets.find((x) => x?.row === test?.row && x?.seat === test?.seat))
 
@@ -301,7 +302,7 @@ function SvgSchemeSeatPreview({
   )?.value;
   var dancefloor_flag = false;
 
-  var cart = JSON.parse(localStorage?.getItem("cart")) || [];
+  var [ cart ] = useLocalStorage('cart', []);
   if (
     cart.filter((item) => item.category === dancefloor_category_name).length > 0
   ) {
@@ -346,7 +347,6 @@ function SvgSchemeSeatPreview({
   const cat = categories.find((c) => c.value === category);
   const svg = icon || cat?.icon;
   const clr = color || cat?.color || "#fff";
-  var cart = JSON.parse(localStorage?.getItem("cart")) || [];
   var item = cart.find(
     (i) => i.category === category && i.row === row && i.seat === seat
   );
@@ -412,9 +412,7 @@ export const App = (factory, deps) => {
   //const cart = useMemo(() => {
   //  return JSON.parse(localStorage.getItem("cart")) || [];
   //}, [update]);
-  let [cart, setCart] = useState(
-    JSON.parse(localStorage?.getItem("cart")) || []
-  );
+  const [ cart, setCart ] = useLocalStorage('cart', [])
   const [selected, setSelected] = useState(0);
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState(false);
@@ -427,7 +425,6 @@ export const App = (factory, deps) => {
   const [firstZ, setFirstZ] = useState(true);
   const discount = useSelector((state) => state.discount);
   // isLoading, error,
-
 
   const [tickets, setTickets] = useState([])
   const mixedTickets = useMemo(()=>{
@@ -487,10 +484,6 @@ export const App = (factory, deps) => {
       });
     }
   },[])
-
-  const reloadCart = () => {
-    setCart(JSON.parse(localStorage?.getItem("cart")) || []);
-  };
 
   const GetSeat = (row, seat) => {
     return mixedTickets?.find(
@@ -559,7 +552,6 @@ export const App = (factory, deps) => {
       var dancefloor_category = categoriesF?.find(
         (x) => x?.code_type === "Dancefloor"
       )?.value;
-      cart = JSON.parse(localStorage?.getItem("cart")) || [];
       var cartItem = cart?.find((x) => x?.id === seat?.id);
       if (cartItem || seat?.category === dancefloor_category) {
         if (seat.category === dancefloor_category) {
@@ -570,7 +562,7 @@ export const App = (factory, deps) => {
             );
             dancefloor_ticktes_in_cart.sort((a, b) => b.quantity - a.quantity);
             var tkt = dancefloor_ticktes_in_cart[0];
-            cart?.splice(cart?.indexOf(tkt), 1);
+            setCart([ ...cart ].splice(cart?.indexOf(tkt), 1));
             SeatCartProvider(tkt, 0, onError => {
               alert("This place has just been reserved")
               /*
@@ -579,8 +571,7 @@ export const App = (factory, deps) => {
               })
                */
             })
-            localStorage?.setItem("cart", JSON?.stringify(cart));
-            reloadCart();
+            setCartModal(cart)
             return;
           } else {
             //plus seat to dancefloor
@@ -613,9 +604,7 @@ export const App = (factory, deps) => {
               })
                */
             })
-            cart?.push(free_dancefloor_ticket);
-            localStorage?.setItem("cart", JSON?.stringify(cart));
-            reloadCart();
+            setCart([...cart, free_dancefloor_ticket])
             return;
           }
         }
@@ -641,8 +630,7 @@ export const App = (factory, deps) => {
           })
            */
         })
-        cart?.splice(cart?.indexOf(cartItem), 1);
-        localStorage?.setItem("cart", JSON?.stringify(cart));
+        setCart([...cart].splice(cart?.indexOf(cartItem), 1))
       } else {
         // Cart Seat
 
@@ -661,16 +649,14 @@ export const App = (factory, deps) => {
            */
         })
 
-        cart?.push(seat);
-        localStorage.setItem("cart", JSON.stringify(cart));
+        setCart([...cart, seat])
       }
-      reloadCart();
     },
-    [tickets, categoriesF]
+    [tickets, categoriesF, cart]
   );
 
   const deleteFromCart = (category) => {
-    var items_to_delete = cart.filter((item) => item.category === category);
+    var items_to_delete = category ? cart.filter((item) => item.category === category) : cart;
 
     var new_format_seats_to_delete = items_to_delete.map((item) => {
       return {
@@ -701,9 +687,8 @@ export const App = (factory, deps) => {
     ).then((data) => {
       //console.log("Delete Seats By Category", data)
     });
-    var newCart = cart.filter((item) => item.category !== category);
-    localStorage.setItem("cart", JSON.stringify(newCart));
-    reloadCart();
+    var newCart = category ? cart.filter((item) => item.category !== category) : [];
+    setCart(newCart)
   };
 
   const handleMouseDown = useCallback((e) => {
@@ -769,7 +754,6 @@ export const App = (factory, deps) => {
                     //console.log("Clearing Seats ",res)
                   });
                   setCart([]);
-                  localStorage.setItem("cart", JSON.stringify([]));
                 }}
               />
             }
@@ -986,13 +970,15 @@ export const App = (factory, deps) => {
       </div>
     );
   const total = calculateTotal(cart, ScheduleFee, discount);
+  
   return (
     <div className="w100 gap15 wrapper">
       <TransformWrapper
         initialScale={1}
         initialPositionX={0}
         initialPositionY={0}
-        wheel={{ wheelDisabled: true }}>
+        wheel={{ wheelDisabled: true }}
+      >
         {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
           <div
             className={`df aic jcc chairs-container  ${
@@ -1016,7 +1002,8 @@ export const App = (factory, deps) => {
                     onMouseUp={handleUp}
                     style={{
                       transform: `scale(${mobile ? mobile + 0.02 : 1})`,
-                    }}>
+                    }}
+                  >
                     <SvgScheme
                       src={stadiumData["scheme"]}
                       categories={stadiumData["categories"]}
@@ -1025,6 +1012,7 @@ export const App = (factory, deps) => {
                       onSeatClick={addToCart}
                       categoriesF={categoriesF}
                       active={active}
+                      cart={cart}
                       tooltip={(data) => (
                         <SvgSchemeSeatPreview
                           className={s.preview}
@@ -1195,7 +1183,7 @@ export const App = (factory, deps) => {
         )}
       </div>
       <div
-        className={`df fdc basket-box ${mobile && openB && "open"}`}
+        className={`df fdc basket-box ${mobile && openB ? "open" : ""}`}
         onClick={(e) => {
           if (e.target.tagName !== "BUTTON") {
             setOpenB(true);
@@ -1234,7 +1222,9 @@ export const App = (factory, deps) => {
                       {category}{" "}
                       <span
                         style={{ color: "#f8f5ec4d" }}
-                        className="df aic gap10 fs12">
+                        className="df aic gap10 fs12"
+                        onClick={() => deleteFromCart(category)}
+                      >
                         <RxCross2 className="fs9" />{" "}
                         {category === ct.value ? seats.length : seats.length}
                       </span>
