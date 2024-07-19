@@ -51,7 +51,7 @@ import { useControls } from "react-zoom-pan-pinch";
 import { useSelector } from "react-redux";
 import arrow from "./images/Frame 6282.svg";
 import { addDef, createCheckElement, svgSeat } from "./utils/dom-scheme.js";
-import { useLocalStorage } from "./utils/hooks.js";
+import { useIsMobile, useLocalStorage } from "./utils/hooks.js";
 import './app.css'
 import { group } from "./tools/utils.js";
 
@@ -82,24 +82,49 @@ const byCategory = group('category')
 
 const addStyles = (el, styles) => Object.assign(el.style, styles);
 
-export default function SvgSchemeTooltop({ for: el, className, children }) {
-  const [styles, setStyles] = useState();
+export default function SvgSchemeTooltop({ for: el, className, children, scale, handleClick = null }) {
+  const inverseScale = 1 / scale;
+  const [styles, setStyles] = useState()
+  const [seat, setSeat] = useState(null)
 
   useEffect(() => {
     const isElem = el instanceof Element;
     const isString = typeof el === "string";
     if (!isElem && !isString) {
-      setStyles();
+      setStyles({ transform: `scale(${inverseScale})` });
       return;
     }
     const target = isElem ? el : document.querySelector(el);
-    if (target) {
-      const { x: left, y: top, width } = target.getBBox();
-      setStyles({ left: left, top, opacity: 1 });
+    // first way with to use element position
+    const category = target?.getAttribute("data-category");
+    if (target && category !== "Dancefloor") {
+      setSeat(target)
+      const { x, y, } = target.getBBox();
+      const scaledLeft = (x - 305) * scale;
+      const scaledTop = (y + 13) * scale;
+
+      const left = x - 240;
+      const top = y + 118;
+      setStyles({ position: "absolute", left: `${left}px`, top: `${top}px`, opacity: 1 });
     }
-  }, [el]);
+    // second way with to use mouse position by scale
+    // const handleMouseMove = (event) => {
+    //   const category = target?.getAttribute("data-category");
+    //   if (target && category !== "Dancefloor") {
+    //     const left = event.clientX - 410;
+    //     const top = event.clientY - 30;
+    //     setStyles({ position: "absolute", left: `${left}px`, top: `${top}px`, opacity: 1, transform: `scale(${inverseScale})` });
+    //   }
+    // };
+
+    // document.addEventListener('mousemove', handleMouseMove);
+
+    // return () => {
+    //   document.removeEventListener('mousemove', handleMouseMove);
+    // };
+  }, [el, inverseScale]);
   return (
-    <div className={s.svgSchemeTooltip + " " + className} style={styles}>
+    <div className={s.svgSchemeTooltip + " " + className} style={styles} onClick={handleClick && seat ? () => handleClick({ target: seat }) : null}>
       {children}
     </div>
   );
@@ -119,6 +144,7 @@ const SvgScheme = forwardRef(
       onSeatOut,
       categoriesF = [],
       active = "all",
+      zoom = 1,
     },
     ref
   ) => {
@@ -130,6 +156,7 @@ const SvgScheme = forwardRef(
     //console.log("POINT: SvgScheme-01 :", currentCategory)
     const [tooltipSeat, setTooltipSeat] = useState();
     const [refresh, setRefresh] = useState(false);
+    const mobile = useIsMobile();
     //console.log(tickets.filter((ticket) => ticket.row.toString() === "-1" || ticket.row.toString() === "0"),
     //    tickets.filter((ticket) => ticket.category === "Dancefloor").length)
     const dancefloor_category_name = categoriesF.find(
@@ -202,6 +229,16 @@ const SvgScheme = forwardRef(
       [onSeatOver, seatSelector, tooltip]
     );
 
+    const mobileOnlick = useCallback(
+      (e) => {
+        const { target: el } = e;
+        if (!el.matches(seatSelector)) return;
+        if (tooltip) setTooltipSeat(el);
+        onSeatOut && onSeatOut(e);
+      },
+      [onSeatOut, seatSelector, tooltip]
+    )
+
     const handleMouseOut = useCallback(
       (e) => {
         const { target: el } = e;
@@ -259,11 +296,17 @@ const SvgScheme = forwardRef(
     `
       );
     }, [categories]);
-    
+    const eventHandlers = !mobile ? {
+      onClick: handleClick,
+      onMouseOver: handleMouseOver,
+      onMouseOut: handleMouseOut
+    } : {
+      onClick: mobileOnlick
+    };
     return (
       <div className={s.scheme} id="stage">
         {!!tooltip && (
-          <SvgSchemeTooltop for={tooltipSeat}>
+          <SvgSchemeTooltop for={tooltipSeat} scale={zoom} handleClick={mobile ? handleClick : null}>
             {!!tooltipSeat && tooltip(Object.assign({}, tooltipSeat.dataset))}
           </SvgSchemeTooltop>
         )}
@@ -272,9 +315,7 @@ const SvgScheme = forwardRef(
           ref={innerRef}
           className={s.svgContainer}
           dangerouslySetInnerHTML={{ __html: src }}
-          onClick={handleClick}
-          onMouseOver={handleMouseOver}
-          onMouseOut={handleMouseOut}
+          {...eventHandlers}
         />
       </div>
     );
@@ -294,7 +335,7 @@ function SvgSchemeSeatPreview({
   color,
   footer,
   categoriesF = [],
-    isMobile = false
+  mobile = false
 }) {
   var currency = "€";
   var dancefloor_category_name = categoriesF.find(
@@ -400,7 +441,7 @@ function SvgSchemeSeatPreview({
             <span>Selected</span>
           </>
         ) : (
-          <span>{suitableTicket ? "Click To Select" : "Seat not avaible"}</span>
+          <span>{suitableTicket ? (mobile ? "Tap to select" : "Click To Select") : "Seat not avaible"}</span>
         )}
       </div>
     </div>
@@ -981,9 +1022,7 @@ export const App = (factory, deps) => {
       >
         {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
           <div
-            className={`df aic jcc chairs-container  ${
-              activeSeat && "show-off"
-            }`}
+            className={`df aic jcc chairs-container  ${activeSeat && "show-off"}`}
             style={{ cursor: cursor }}
             onMouseDown={closeModal}
             onTouchStart={closeModal}
@@ -1013,6 +1052,7 @@ export const App = (factory, deps) => {
                       categoriesF={categoriesF}
                       active={active}
                       cart={cart}
+                      zoom={zoom}
                       tooltip={(data) => (
                         <SvgSchemeSeatPreview
                           className={s.preview}
@@ -1020,7 +1060,7 @@ export const App = (factory, deps) => {
                           price="16$"
                           tickets={mixedTickets}
                           categoriesF={categoriesF}
-                          isMobile={mobile}
+                          mobile={mobile}
                           {...data}
                         />
                       )}
@@ -1046,9 +1086,8 @@ export const App = (factory, deps) => {
         </div>
         <div className="w100 df fdc aic select-component">
           <div
-            className={`w100 df aic gap10 cp component-label ${
-              (open || selected) && "shadow-none"
-            }`}
+            className={`w100 df aic gap10 cp component-label ${(open || selected) && "shadow-none"
+              }`}
             onClick={() => setOpen(!open)}>
             <p className="df aic fs14 gap5">
               <span
@@ -1112,9 +1151,7 @@ export const App = (factory, deps) => {
                 categoriesF[selected].id !== category.id && (
                   <label
                     key={category.id}
-                    className={`w100 df aic jcsb gap5 component-option ${
-                      category?.type === "all" && "all"
-                    }`}
+                    className={`w100 df aic jcsb gap5 component-option ${category?.type === "all" && "all"}`}
                     onClick={() => {
                       actionCtgy(ind);
                       setSelected(ind);
@@ -1204,9 +1241,7 @@ export const App = (factory, deps) => {
                   <div
                     className="w100 df aic jcsb basket-header"
                     style={{
-                      borderBottom: `1px solid ${
-                        categoriesF?.find((x) => x.name === category)?.color
-                      }99`,
+                      borderBottom: `1px solid ${categoriesF?.find((x) => x.name === category)?.color}99`,
                       paddingBottom: "8px",
                     }}>
                     <p
@@ -1332,7 +1367,7 @@ export const App = (factory, deps) => {
             <p className="w100 df aic jcsb price-info-mobile-title">
               <i className="fs14">Selected tickets:</i>
               <i className="fs14">
-                <b>{total?.total || 0}</b>
+                <b>{total?.qty || 0}</b>
               </i>
             </p>
             {discount > 0 && (
@@ -1357,9 +1392,7 @@ export const App = (factory, deps) => {
             </p>
           </div>
           <button
-            className={`w100 fs16 basket-btn ${
-              getUniqueCategory(cart)?.length ? "active" : ""
-            }`}
+            className={`w100 fs16 basket-btn ${getUniqueCategory(cart)?.length ? "active" : ""}`}
             id="buy-ticket"
             onClick={() => {
               if (getUniqueCategory(cart).length) setCartModal(true);
