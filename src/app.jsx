@@ -36,6 +36,7 @@ import {
   GetStadium,
   GetStadiumScheme,
   RegisterPhantomUser,
+  updateCart,
 } from "./tools/Ibronevik_API.jsx";
 import { forwardRef, useCallback } from "react";
 import s from "./svg-scheme.module.scss";
@@ -52,7 +53,8 @@ import { useSelector } from "react-redux";
 import arrow from "./images/Frame 6282.svg";
 import { addDef, createCheckElement, svgSeat } from "./utils/dom-scheme.js";
 import { useIsMobile, useLocalStorage } from "./utils/hooks.js";
-import { group } from "./tools/utils.js";
+import { group, isEqualSeats } from "./tools/utils.js";
+import { useParams } from "react-router-dom";
 
 let test = {"row:": "-1", "seat": "0"};
 
@@ -262,7 +264,7 @@ const SvgScheme = forwardRef(
       Array.from(root.querySelectorAll(`.${SEAT_CLASS}`)).forEach(el => {
         const seat = svgSeat(el)
         const inCart = !!cartMap[seat.getKey()]
-        seat.checked(inCart).set('in-cart', inCart.toString())
+        seat.checked(inCart)
         const ticket = ticketMap[seat.getKey()]
         if (ticket && (!cat || cat === seat.get('category'))) {
           el.classList.add(SEAT_CLASS_ACTIVE)
@@ -452,7 +454,8 @@ export const App = (factory, deps) => {
   //const cart = useMemo(() => {
   //  return JSON.parse(localStorage.getItem("cart")) || [];
   //}, [update]);
-  const [ cart, setCart ] = useLocalStorage('cart', [])
+  const { id: schedule_id } = useParams()
+  const [ cart, setCart ] = useLocalStorage(`cart-${schedule_id}`, [])
   const [selected, setSelected] = useState(0);
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState(false);
@@ -467,16 +470,13 @@ export const App = (factory, deps) => {
   // isLoading, error,
 
   const [tickets, setTickets] = useState([])
-  const mixedTickets = useMemo(()=>{
+  const allTickets = useMemo(()=>{
     return [...tickets, ...cart]
   },[tickets])
 
   const [currentCategory, setCurrentCategory] = useState("all");
   const [ScheduleFee, setScheduleFee] = useState(0);
   const [LimitTime, setLimitTime] = useState();
-  const schedule_id = !isNaN(+window.location.href.split("/").slice(-1)[0])
-    ? window.location.href.split("/").slice(-1)[0]
-    : null;
   var { data, refetch } = useTickets({ event_id: schedule_id, skip: 0, limit: 30 }, {});
 
   useEffect(() => {
@@ -525,211 +525,48 @@ export const App = (factory, deps) => {
     }
   },[])
 
-  const GetSeat = (row, seat) => {
-    return mixedTickets?.find(
-      (x) =>
-        x?.row.toString() === row.toString() &&
-        x?.seat.toString() === seat.toString()
-    );
-  };
-  const GetFreeDancefloorTicket = () => {
-    var dancefloor_tickets = tickets?.filter(
-      (x) => x?.row === "-1" || x?.row === -1
-    );
-    dancefloor_tickets.sort((a, b) => b?.seat - a?.seat);
-    for (var i = 0; i < dancefloor_tickets.length; i++) {
-      var flag = true;
-      for (var j = 0; j < cart.length; j++) {
-        if (
-          dancefloor_tickets[i].seat === cart[j].seat &&
-          dancefloor_tickets[i].row === cart[j].row
-        ) {
-          flag = false;
-        }
-      }
-      if (flag) {
-        dancefloor_tickets[i].category = "Dancefloor";
-        dancefloor_tickets[i].code_categoy = "Dancefloor";
-        return dancefloor_tickets[i];
-      }
-    }
-  };
-  const SeatCartProvider = (seat,count,onError) => {
-    //seat drawing logic
-    var svg_scheme = document.body.getElementsByTagName("svg")[0];
-    var el = seat.row === '-1' ?
-      document.body.querySelector(".svg-seat[data-category=\"" + seat.category + "\"]") :
-      document.body.querySelector(".svg-seat[data-row=\"" + seat.row + "\"][data-seat=\"" + seat.seat + "\"]")
-    
-    svgSeat(el).set('in-cart', count === 1).checked(count === 1)
+  const toggleInCart = useCallback(async (item, count) => {
+    const { seat, row, section, category: cat } = item
+    const category = section || cat
+    const isMultiple = row === '-1' || row === '0'
+    const inCart = isMultiple ?
+      cart.filter(item => item.section === category) :
+      cart.find(item => isEqualSeats(item, { seat, row, category }))
+    const ticket = isMultiple ?
+      allTickets.filter(item => item.section === category) :
+      allTickets.find(item => isEqualSeats(item, { seat, row, category }))
+    if (!ticket) return Promise.resolve()
 
-    CartSeat(
-        localStorage.getItem("phantom_user_token"),
-        localStorage.getItem("phantom_user_u_hash"),
-        seat.hall_id +
-        ";" +
-        seat.section +
-        ";" +
-        seat.row +
-        ";" +
-        seat.seat +
-        "",
-        seat.t_id,
-        count
-    ).then(
-        (data) => {
-            if(data.status === "error"){
-              seat.el.setAttribute("data-disabled", "true");
-              console.log("setting this seat as disabled")
-              onError(data)
+    if (isMultiple) {
+      count = count === undefined ? inCart.length + 1 : count
+      if (count < inCart.length) {
+        const deleteCount = inCart.length - (count || 0)
+        const toDelete = []
+        setCart([ ...cart.filter(item => {
+          if (item.section === category) {
+            if (toDelete.length < deleteCount) {
+              toDelete.push(item)
+              return false
             }
-        }
-    )
-  }
-
-  const addToCart = useCallback(
-    (seat, st) => {
-      var dancefloor_category = categoriesF?.find(
-        (x) => x?.code_type === "Dancefloor"
-      )?.value;
-      var cartItem = cart?.find((x) => x?.id === seat?.id);
-      if (cartItem || seat?.category === dancefloor_category) {
-        if (seat.category === dancefloor_category) {
-          if (st) {
-            // minus seat to dancefloor
-            var dancefloor_ticktes_in_cart = cart.filter(
-              (x) => x?.row === "-1" || x?.row === -1
-            );
-            dancefloor_ticktes_in_cart.sort((a, b) => b.quantity - a.quantity);
-            var tkt = dancefloor_ticktes_in_cart[0];
-            setCart([ ...cart ].splice(cart?.indexOf(tkt), 1));
-            SeatCartProvider(tkt, 0, onError => {
-              alert("This place has just been reserved")
-              /*
-              refetch().then(r => {
-                setTickets(r.data.concat(cart));
-              })
-               */
-            })
-            setCartModal(cart)
-            return;
-          } else {
-            //plus seat to dancefloor
-
-            var free_dancefloor_ticket = GetFreeDancefloorTicket();
-            if (!free_dancefloor_ticket) {
-              return;
-            }
-            free_dancefloor_ticket.hall_id = GetSeat(
-              free_dancefloor_ticket.row,
-              free_dancefloor_ticket.seat
-            )?.hall_id;
-            free_dancefloor_ticket.section = GetSeat(
-              free_dancefloor_ticket.row,
-              free_dancefloor_ticket.seat
-            )?.section;
-            free_dancefloor_ticket.t_id = GetSeat(
-              free_dancefloor_ticket.row,
-              free_dancefloor_ticket.seat
-            )?.t_id;
-            free_dancefloor_ticket.event_id = GetSeat(
-              free_dancefloor_ticket.row,
-              free_dancefloor_ticket.seat
-            )?.event_id;
-            SeatCartProvider(free_dancefloor_ticket,1, onError => {
-              alert("This place has just been reserved")
-              /*
-              refetch().then(r => {
-                setTickets(r.data.concat(cart));
-              })
-               */
-            })
-            setCart([...cart, free_dancefloor_ticket])
-            return;
           }
-        }
-
-        // Cart Seat
-        /*
-        * if (seat.category !== dancefloor_category) {
-          seat.el.style.fill = categoriesF.find(
-            (x) => x.name === seat.category
-          )?.color;
-        }*/
-        if(!seat.price){
-          seat = cartItem;
-        }
-        test = seat;
-
-        SeatCartProvider(cartItem, 0, onError => {
-          alert("This place has just been reserved")
-          /*
-          refetch().then(r => {
-            setTickets(r.data);
-            localStorage?.setItem("cart", JSON?.stringify(cart));
-          })
-           */
-        })
-        setCart([...cart].splice(cart?.indexOf(cartItem), 1))
-      } else {
-        // Cart Seat
-
-        const get_seat_result = GetSeat(seat?.row, seat?.seat);
-        seat.t_id = get_seat_result.t_id;
-        seat.hall_id = get_seat_result.hall_id;
-        seat.event_id = get_seat_result.event_id;
-        seat.section = get_seat_result.section;
-        seat.price = seat.price ? seat.price : get_seat_result.price;
-        SeatCartProvider(seat, 1, onError => {
-          alert("This place has just been reserved")
-          /*
-          refetch().then(r => {
-            setTickets(r.data.concat(cart));
-          })
-           */
-        })
-
-        setCart([...cart, seat])
+          return true
+        }) ])
+        return Promise.all(toDelete.map(item => updateCart(item, 0)))
+      } else if (count > inCart.length) {
+        const addCount = count - inCart.length
+        const toAdd = ticket.slice(0, addCount)
+        setCart([ ...cart, ...toAdd ])
+        return Promise.all(toAdd.map(item => updateCart(item, 1)))
       }
-    },
-    [tickets, categoriesF, cart]
-  );
-
-  const deleteFromCart = (category) => {
-    var items_to_delete = category ? cart.filter((item) => item.category === category) : cart;
-
-    var new_format_seats_to_delete = items_to_delete.map((item) => {
-      return {
-        prop:
-          item.hall_id +
-          ";" +
-          item.section +
-          ";" +
-          item.row +
-          ";" +
-          item.seat +
-          "",
-        prod: item.t_id,
-        count: 0,
-      };
-    });
-    var new_total_seats_to_delete = {};
-    for (const seat of new_format_seats_to_delete) {
-      new_total_seats_to_delete[seat.prod] = [];
+    } else if (inCart) {
+      setCart([ ...cart.filter(item => !isEqualSeats(item, inCart)) ])
+    } else {
+      setCart([...cart, ticket])
     }
-    for (const seat of new_format_seats_to_delete) {
-      new_total_seats_to_delete[seat.prod].push(seat.prop);
-    }
-    ClearSeats(
-      localStorage.getItem("phantom_user_token"),
-      localStorage.getItem("phantom_user_u_hash"),
-      new_total_seats_to_delete
-    ).then((data) => {
-      //console.log("Delete Seats By Category", data)
-    });
-    var newCart = category ? cart.filter((item) => item.category !== category) : [];
-    setCart(newCart)
-  };
+    return updateCart(ticket, Number(!inCart)).then(res => {
+      
+    })
+  }, [cart, allTickets])
 
   const handleMouseDown = useCallback((e) => {
     setCursor("grabbing");
@@ -856,16 +693,6 @@ export const App = (factory, deps) => {
   const closeModal = () => {
     setOpenB(false);
     setOpen(false);
-  };
-
-  const selectActiveSeat = (e, seat) => {
-    e.stopPropagation();
-    if (seat.status === "available" && !mobile) {
-      addToCart(seat);
-    }
-    if (mobile) {
-      setActiveSeat(seat?.id);
-    }
   };
 
   const cancel = (e) => {
@@ -1045,9 +872,9 @@ export const App = (factory, deps) => {
                     <SvgScheme
                       src={stadiumData["scheme"]}
                       categories={stadiumData["categories"]}
-                      tickets={mixedTickets}
+                      tickets={allTickets}
                       currentCategory={currentCategory}
-                      onSeatClick={addToCart}
+                      onSeatClick={toggleInCart}
                       categoriesF={categoriesF}
                       active={active}
                       cart={cart}
@@ -1057,7 +884,7 @@ export const App = (factory, deps) => {
                           className={s.preview}
                           categories={stadiumData["categories"]}
                           price="16$"
-                          tickets={mixedTickets}
+                          tickets={allTickets}
                           categoriesF={categoriesF}
                           mobile={mobile}
                           {...data}
@@ -1257,7 +1084,7 @@ export const App = (factory, deps) => {
                       <span
                         style={{ color: "#f8f5ec4d" }}
                         className="df aic gap10 fs12"
-                        onClick={() => deleteFromCart(category)}
+                        onClick={() => cart.filter(item => item.section === category).map(toggleInCart)}
                       >
                         <RxCross2 className="fs9" />{" "}
                         {category === ct.value ? seats.length : seats.length}
@@ -1275,7 +1102,7 @@ export const App = (factory, deps) => {
                       <span
                         className="cp fs14 delete-btn"
                         onClick={() => {
-                          deleteFromCart(category);
+                          toggleInCart({ category, row: '-1' }, 0);
                         }}>
                         <RxCross2 className="fs12" />
                       </span>
@@ -1300,10 +1127,10 @@ export const App = (factory, deps) => {
                                 <span className="cp fs14 delete-btn">
                                   <span className="df aic gap5">
                                     <RxMinus
-                                      onClick={() => addToCart(seat, true)}
+                                      onClick={() => toggleInCart(seat, seats.length - 1)}
                                     />
                                     {seats.length}
-                                    <RxPlus onClick={() => addToCart(seat)} />
+                                    <RxPlus onClick={() => toggleInCart(seat, seats.length + 1)} />
                                   </span>
                                 </span>
                               </i>
@@ -1341,7 +1168,7 @@ export const App = (factory, deps) => {
                               </b>
                               <span className="cp fs14 delete-btn">
                                 {/* onClick={() => addToCart(seat)} */}
-                                <button className="fs12l" onClick={() => addToCart(seat)}>
+                                <button className="fs12l" onClick={() => toggleInCart(seat)}>
                                   <RxCross2 />
                                 </button>
                               </span>

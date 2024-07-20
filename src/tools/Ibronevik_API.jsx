@@ -1,5 +1,7 @@
-import axios from "axios";
+import axiosMain from "axios";
+import { axios } from "./axios";
 import MD5 from "crypto-js/md5";
+import { useRequest } from "../utils/hooks";
 const ibronevik_api_link = "https://ibronevik.ru/taxi/c/TikShow/api/v1/";
 async function make_async_request(url, data, method = "POST") {
   var response = {};
@@ -8,11 +10,11 @@ async function make_async_request(url, data, method = "POST") {
     Accept: "application/json",
   };
   if (method === "POST") {
-    response = await axios.post(ibronevik_api_link + url, data, {
+    response = await axiosMain.post(ibronevik_api_link + url, data, {
       headers: headers,
     });
   } else if (method === "GET") {
-    response = await axios.get(ibronevik_api_link + url, { headers: headers });
+    response = await axiosMain.get(ibronevik_api_link + url, { headers: headers });
   }
   return response.data;
 }
@@ -139,7 +141,7 @@ export async function GetStadiumScheme(link) {
     "Content-Type": "application/x-www-form-urlencoded",
     Accept: "application/json",
   };
-  var response = await axios.post(link, {}, { headers: headers });
+  var response = await axiosMain.post(link, {}, { headers: headers });
   return response.data;
 }
 export async function CartSeat(token, u_hash, seat, trip_id, count = 1) {
@@ -150,6 +152,15 @@ export async function CartSeat(token, u_hash, seat, trip_id, count = 1) {
   var url = "cart?prod=" + trip_id + "&prop=" + seat + "&count=" + count;
   return await make_async_request(url, data, "POST");
 }
+export async function updateCart(item, count) {
+  const resp = await axios.post('cart', {}, { params: {
+    prod: item.t_id,
+    prop: ['hall_id', 'section', 'row', 'seat'].map(key => item[key]).join(';'),
+    count
+  } })
+  return resp
+}
+
 export async function GetCart(token, u_hash) {
   var data = {
     token: token,
@@ -202,11 +213,36 @@ export async function GetLimitTime() {
     "Content-Type": "application/x-www-form-urlencoded",
     Accept: "application/json",
   };
-  response = await axios.post(
+  response = await axiosMain.post(
     "https://ibronevik.ru/taxi/cache/data_TikShow.(iso).json",
     {},
     { headers: headers }
   );
 
   return response.data.data.site_constants.ticket_booking_duration.value;
+}
+
+const conf = {
+  stadium: {
+    get: "data/?fields=3",
+    select: data => {
+      console.log(data);
+      return data
+    }
+  }
+}
+
+export default function useApi() {
+  const get = Object.entries(conf).filter(([, item]) => item.get || item.url)
+    .reduce((acc, [key, { get, url, ...options }]) => ({
+      ...acc,
+      [acc[key]]: params => axiosMain.get(get || url, { ...options, params })
+    }), {})
+
+  return {
+    get: (key, params) => {
+      get[key]?.request(params)
+      return get[key]
+    },
+  }
 }

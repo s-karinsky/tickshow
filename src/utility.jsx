@@ -429,7 +429,7 @@ export const CountdownTimer = ({ initialTime, action }) => {
 };
 export const getSeats = (cart, category) => {
   return cart.reduce((acc, curr) => {
-    if (curr.category === category) {
+    if (curr.section === category) {
       acc.push(curr);
     }
     return acc;
@@ -438,8 +438,8 @@ export const getSeats = (cart, category) => {
 
 export const getUniqueCategory = (data) => {
   return data.reduce((acc, curr) => {
-    if (!acc.includes(curr.category)) {
-      acc.push(curr.category);
+    if (!acc.includes(curr.section)) {
+      acc.push(curr.section);
     }
     return acc;
   }, []);
