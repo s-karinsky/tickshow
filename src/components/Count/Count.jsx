@@ -9,7 +9,7 @@ const Count = ({ value, onChange,min,max }) => {
             <div className={styles.display}>
 
                 <div>
-                    <button disabled={value === min} className={styles.buttonMinus} onClick={() => onChange(value - 1)}>
+                    <button disabled={value < min || value === min} className={styles.buttonMinus} onClick={() => onChange(value - 1)}>
                         <PlusComponent />
                     </button>
                 </div>
@@ -19,7 +19,7 @@ const Count = ({ value, onChange,min,max }) => {
                 </div>
 
                 <div>
-                    <button disabled={value === max} className={styles.buttonPlus} onClick={() => onChange(value + 1)}>
+                    <button disabled={value > max || value === max} className={styles.buttonPlus} onClick={() => onChange(value + 1)}>
                         <MinusComponent />
                     </button>
                 </div>
