@@ -52,7 +52,6 @@ import { useSelector } from "react-redux";
 import arrow from "./images/Frame 6282.svg";
 import { addDef, createCheckElement, svgSeat } from "./utils/dom-scheme.js";
 import { useIsMobile, useLocalStorage } from "./utils/hooks.js";
-import './app.css'
 import { group } from "./tools/utils.js";
 
 let test = {"row:": "-1", "seat": "0"};
