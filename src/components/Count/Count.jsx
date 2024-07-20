@@ -1,22 +1,27 @@
+import MinusComponent from '../../icons/MinusComponent'
+import PlusComponent from '../../icons/PlusComponent'
 import styles from './Count.module.scss'
-import minus from './assets/Minus.svg'
-import plus from './assets/Plus.svg'
-const Count = ({ value, onChange }) => {
+
+const Count = ({ value, onChange,min,max }) => {
 
     return ( 
         <div className={styles.count}>
             <div className={styles.display}>
 
                 <div>
-                    <button className={styles.buttonMinus} onClick={() => onChange(value - 1)}><img src={minus} alt="" /></button>
+                    <button disabled={value === min} className={styles.buttonMinus} onClick={() => onChange(value - 1)}>
+                        <PlusComponent />
+                    </button>
                 </div>
 
                 <div>
-                    <input type="number" value={value} onChange={event => onChange(event.target.value)}/>
+                    <input type="number" value={value} onChange={(event) => onChange(parseInt(event.target.value, 10))} min={min} max={max}/>
                 </div>
 
                 <div>
-                    <button className={styles.buttonPlus} onClick={() => onChange(value + 1)}><img src={plus} alt="" /></button>
+                    <button disabled={value === max} className={styles.buttonPlus} onClick={() => onChange(value + 1)}>
+                        <MinusComponent />
+                    </button>
                 </div>
             </div>
         </div>
