@@ -1,0 +1,51 @@
+.count { 
+    width: 77px;
+    border-radius: 60px;
+
+    .display { 
+        display: flex;
+        input { 
+            width: 24px;
+            background-color: #343433;
+            padding: 4px 10px 4.8px 10px;
+            border: none;
+            
+            font-style: italic;
+            font-size: 12px;
+            line-height: 14.4px;
+            color: #F8F5EC;
+            text-align: center;
+
+            &:focus { 
+              outline: none;
+            }
+            
+            &::-webkit-inner-spin-button,::-webkit-outer-spin-button { 
+                -webkit-appearance: none; 
+                margin: 0; 
+            }
+
+        }
+
+        .buttonMinus { 
+            cursor: pointer;
+            background-color: #343433;
+            border: none;
+            border-right: 1px solid #6F6E6A;
+            border-radius: 60px 0px 0px 60px;
+            padding: 5px 8px 3px 8px;
+            color: #6F6E6A;
+            }
+
+
+        .buttonPlus { 
+            cursor: pointer;
+            background-color: #343433;
+            border: none;
+            border-left: 1px solid #6F6E6A;
+            border-radius: 0px 60px 60px 0px;
+            padding: 4px 11px 4px 8px;
+            color: #6F6E6A;
+        }
+    }
+}
