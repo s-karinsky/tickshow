@@ -67,3 +67,15 @@ export const isEqualSeats = (s1, s2) => {
   if (s2.section) s2.category = s2.section
   return ['row', 'seat', 'category'].reduce((acc, key) => acc && String(s1[key]) === String(s2[key]), true)
 }
+
+export const getSidesRatio = (el1, el2) => {
+  if (!el1 || !el2) return []
+  return [
+    el2.offsetWidth / el1.offsetWidth,
+    el2.offsetHeight / el1.offsetHeight
+  ]
+}
+
+export const intersect = (a, b) => a.filter(value => b.includes(value))
+
+export const path = (path, obj) => path.reduce((acc, key) => acc ? acc[key] : undefined, obj)

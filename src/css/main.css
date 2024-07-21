@@ -32,12 +32,7 @@
 .back-btn {
   position: absolute;
   top: 10px;
-  height: 34px;
-  padding: 0.5% 1%;
-  border: 1px solid #414140;
-  background: #212121;
-  border-radius: 5px;
-  color: #aaa;
+  height: 38px;
   z-index: 999;
 }
 
@@ -50,18 +45,50 @@
   width: 100%;
   left: 50%;
   transform: translateX(-50%);
+  background-color: #40403E;
+  border-radius: 6px;
+  padding: 0 22px;
+  color: #F8F5EC;
+  box-shadow: 0.95px 2.86px 6.68px 0px #0000001A,
+    4.77px 11.44px 12.4px 0px #00000017,
+    11.44px 24.8px 16.21px 0px #0000000D,
+    20.98px 43.87px 19.07px 0px #00000003,
+    32.43px 68.67px 20.98px 0px #00000000;
+}
+
+.timer-text, .time-box svg {
+  opacity: 0.5;
 }
 
 .back-btn {
-  width: 34px;
+  width: 38px;
+  height: 38px;
   right: 10px;
+}
+.back-btn > button {
+  width: 100%;
 }
 
 .zoom-box > button,
 .back-btn > button {
-  background: none;
-  border: none;
+  padding: 6px 3px;
+  border: 1px solid #414140;
+  background: #212121;
+  border-radius: 5px;
   color: #f8f5ec6e;
+  transition: ease .3s color;
+}
+.zoom-box > button:first-child {
+  padding-left: 8px;
+  border-right: none;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.zoom-box > button:last-child {
+  padding-right: 8px;
+  border-left: none;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
 .bottom-back-btn {
@@ -76,8 +103,9 @@
   color: #f8f5ec6e;
   z-index: 999;
 }
-
-.zoom-box > button :where(:active, :hover),
+.zoom-box > button:hover {
+  color: #f8f5ec;
+}
 .back-btn:where(:active, :hover) > button,
 .bottom-back-btn:hover {
   color: #f8f5ec;
@@ -105,6 +133,7 @@
 }
 
 .ccc {
+  position: relative;
   width: 100% !important;
   height: 100% !important;
   display: flex !important;
@@ -537,4 +566,11 @@
 
 .svg-seat {
   transition: ease .3s color;
+}
+
+.scheme-overlay {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  z-index: 1000;
 }

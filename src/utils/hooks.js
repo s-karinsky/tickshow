@@ -62,3 +62,15 @@ export function useIsMobile() {
 
   return isMobile;
 }
+
+export function useReadyState(onChange) {
+  const [ready, setReady] = useState([])
+  useEffect(() => {
+    onChange(ready)
+  }, [ready])
+
+  return [
+    ready,
+    name => ready.includes(name) ? ready : setReady([...ready, name]),
+  ]
+}
