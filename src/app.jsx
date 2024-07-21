@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy, useRef } from "react";
+import React, { useState, useEffect, useMemo, Suspense, lazy, useRef } from "react";
 import cn from 'classnames'
 import {
   calculateScale,
@@ -37,27 +37,14 @@ import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { useControls } from "react-zoom-pan-pinch";
 import { useSelector } from "react-redux";
 import arrow from "./images/Frame 6282.svg";
-import { useLocalStorage, useReadyState, useWindowSize } from "./utils/hooks.js";
-import { getSidesRatio, group, intersect, isEqualSeats } from "./tools/utils.js";
+import { useCategoryCounters, useLocalStorage } from "./utils/hooks.js";
+import { isEqualSeats } from "./tools/utils.js";
 import { useParams } from "react-router-dom";
 import SvgScheme from "./components/svg-scheme/svg-scheme.jsx";
 import SvgSchemeSeatPreview from "./components/svg-scheme/svg-scheme-preview.jsx";
-import { SEAT_CLASS, SEAT_CLASS_ACTIVE } from "./const.js";
-
-const currenciesSymbols = {
-  EUR: "€",
-  USD: "$",
-  GBP: "£",
-  RUB: "₽",
-  UAH: "₴",
-  BYR: "p",
-  KZT: "₸",
-  KGS: "₸",
-  CNY: "¥",
-  INR: "₹",
-  JPY: "¥",
-  TRY: "₺",
-};
+import { CURRENCY_SYMBOL_MAP } from "./const.js";
+import { InputNumber } from "antd";
+import TicketsCounter from "./components/tickets-counter/tickets-counter.jsx";
 
 const CartModal = lazy(() => import("./utility"));
 
@@ -67,10 +54,8 @@ export const App = () => {
   const schemeRef = useRef(null)
   const { id: schedule_id } = useParams()
   const [ cart, setCart ] = useLocalStorage(`cart-${schedule_id}`, [])
-  const screen = useWindowSize()
   
-  const [activeSeat, setActiveSeat] = useState(null)
-  // Видимость оверлея для блокировки событий схемы. Нужен для перехвата клика и зума
+  // Видимость оверлея для блокировки событий схемы. Нужен для перехвата клика
   // при маленьком масштабе
   const [showSchemeOverlay, setShowSchemeOverlay] = useState(false)
 
@@ -82,9 +67,8 @@ export const App = () => {
   const [openB, setOpenB] = useState(false)
   const [cartModal, setCartModal] = useState(false)
   const [mobile, setMobile] = useState(false)
-  const [zoom, setZoom] = useState(1)
+  const [zoom, setZoom] = useState(0)
   let [categoriesF, setCategoriesF] = useState([])
-  const [firstZ, setFirstZ] = useState(true)
   const discount = useSelector((state) => state.discount)
 
   const [tickets, setTickets] = useState([])
@@ -92,7 +76,7 @@ export const App = () => {
   const [currentCategory, setCurrentCategory] = useState("all")
   const [ScheduleFee, setScheduleFee] = useState(0)
   const [LimitTime, setLimitTime] = useState()
-  var { data, isLoading: isTicketsLoading } = useTickets({ event_id: schedule_id, skip: 0, limit: 30 }, {})
+  const { data, isLoading: isTicketsLoading } = useTickets({ event_id: schedule_id, skip: 0, limit: 30 }, {})
 
   useEffect(() => {
     if (isTicketsLoading || !data) return
@@ -131,6 +115,8 @@ export const App = () => {
     }
   },[])
 
+  const initialZoom = useRef(0)
+
   const toggleInCart = useCallback(async (item, count) => {
     const { seat, row, section, category: cat } = item
     // Мешанина с category и section, как-то так вышло что одно значение в разных
@@ -147,7 +133,6 @@ export const App = () => {
       tickets.filter(item => item.section === category) :
       tickets.find(item => isEqualSeats(item, { seat, row, category }))
     if (!ticket) return Promise.resolve()
-
     // Для категории без мест используем аргумент count как абсолютное количество билетов,
     // которое должно быть в корзине. Если count не передан, то добавляем или удаляем один билет
     if (isSeatWithoutNumber) {
@@ -196,7 +181,6 @@ export const App = () => {
             onClick={(e) => {
               e.stopPropagation();
               zoomOut();
-              setZoom(zoom - 1);
             }}>
             <RiZoomOutLine />
           </button>
@@ -205,7 +189,6 @@ export const App = () => {
             onClick={(e) => {
               e.stopPropagation();
               zoomIn();
-              setZoom(zoom + 1);
             }}>
             <RiZoomInLine />
           </button>
@@ -246,15 +229,13 @@ export const App = () => {
             }
           </div>
         )}
-        {(zoom > 1 || categoriesF[selected].type !== "all") && (
+        {(zoom > initialZoom.current || categoriesF[selected].type !== "all") && (
           <div
             className="df aic jcc back-btn cp"
             onClick={(e) => {
               e.stopPropagation();
               setOpen(false);
               resetTransform();
-              setZoom(1);
-              setFirstZ(true);
               setCurrentCategory("all");
               setSelected(0);
             }}
@@ -396,8 +377,16 @@ export const App = () => {
   useEffect(() => {
     build_totalC_V();
     makeUpCategoriesF();
-  }, [tickets, stadiumData]);
-  
+  }, [tickets, stadiumData])
+
+
+  const nonSeats = useMemo(() => {
+    if (!stadiumData || !stadiumData["scheme"]) return
+    const parser = new DOMParser()
+    const dom = parser.parseFromString(stadiumData["scheme"], "text/html")
+    return Array.from(dom.querySelectorAll(['*[data-category][data-count]'])).map(el => el.getAttribute('data-category'))
+  }, [stadiumData])
+
   // if (!isReady) {
   if (categoriesF.length === 0) {
     return (
@@ -412,9 +401,8 @@ export const App = () => {
       </div>
     )
   }
-
   const total = calculateTotal(cart, ScheduleFee, discount)
-  
+
   return (
     <div className="w100 gap15 wrapper">
       <TransformWrapper
@@ -422,8 +410,17 @@ export const App = () => {
           activationKeys: ['Control'],
           step: 0.25
         }}
-        onInit={ref => ref.zoomToElement(schemeRef.current, undefined, 0)}
-        onTransformed={({ state }) => setShowSchemeOverlay(state.scale < 1.5)}
+        doubleClick={{
+          disabled: true
+        }}
+        onInit={ref => {
+          ref.zoomToElement(schemeRef.current, undefined, 0)
+          initialZoom.current = ref.state.scale
+        }}
+        onTransformed={({ state }) => {
+          setShowSchemeOverlay(state.scale < 1.5)
+          if (state.scale !== zoom) setZoom(state.scale )
+        }}
         onPanningStart={({ instance }) => {
           const el = instance.contentComponent.firstChild
           el.style.cursor = 'grabbing'
@@ -434,10 +431,18 @@ export const App = () => {
           el.style.cursor = 'grab'
         }}
       >
-        {({ zoomToElement }) => (
-          <div className={cn('df', 'aic', 'jcc', 'chairs-container', { 'show-off': activeSeat })}>
+        {({ zoomToElement, ...rest }) => (
+          <div className={cn('df', 'aic', 'jcc', 'chairs-container')}>
             <Controls />
             <TransformComponent>
+              {nonSeats.map((category) => (
+                <TicketsCounter
+                  value={cart.filter(x => x.section === category).length}
+                  count={tickets.filter(x => x.section === category).length}
+                  onChange={toggleInCart}
+                  name={category}
+                />
+              ))}
               <div className="ccc" style={{ cursor: 'grab' }}>
                 <div
                   className="df fdc aic gap10 chairs-body"
@@ -579,7 +584,7 @@ export const App = () => {
                       {category?.old_price && (
                         <del className="fs12">
                           {category.old_price}{" "}
-                          {currenciesSymbols[category?.currency]}
+                          {CURRENCY_SYMBOL_MAP[category?.currency]}
                         </del>
                       )}
                       <b
@@ -591,7 +596,7 @@ export const App = () => {
                         className="fs14">
                         {category.price}{" "}
                         {category.price &&
-                          currenciesSymbols[category?.currency]}
+                          CURRENCY_SYMBOL_MAP[category?.currency]}
                       </b>
                     </i>
                   </label>
@@ -606,7 +611,7 @@ export const App = () => {
               </span>
             )}
           </div>
-        </div>
+        </div>  
         {!mobile && (
           <span
             className="df aic jcc fs18 cp mobile-arrow"

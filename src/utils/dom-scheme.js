@@ -1,12 +1,14 @@
-import { CHECK_PATH_ID } from "../const"
+import { CATEGORY_CHECK_PATH_ID, CHECK_PATH_ID, SEAT_CLASS } from "../const"
 import { isEqualStr } from "./string"
 
 const xmlType = "http://www.w3.org/2000/svg"
 
-export const createCheckElement = ({ x = 0, y = 0 } = {}) => {
+export const createCheckElement = ({ x = 0, y = 0, className, d = 'M 1.5 3.5 L 3 5 L 6 2' } = {}) => {
   const check = document.createElementNS(xmlType, 'path')
-  check.setAttribute('d', 'M5.3023 0.656738C5.39993 0.754369 5.39993 0.91266 5.3023 1.01029L2.5591 3.7535C2.46209 3.85051 2.30502 3.85121 2.20714 3.75508L0.660761 2.23631C0.562254 2.13957 0.560828 1.98128 0.657576 1.88277L0.832753 1.70441C0.9295 1.60591 1.08778 1.60448 1.18629 1.70123L2.37915 2.87278L4.77197 0.479962C4.8696 0.382331 5.02789 0.38233 5.12553 0.479962L5.3023 0.656738Z')
-  check.setAttribute('style', 'pointer-events: none;')
+  check.setAttribute('d', d)
+  check.setAttribute('stroke-linecap', 'round')
+  check.setAttribute('stroke-linejoin', 'round')
+  check.setAttribute('class', className)
   if (x || y) {
     check.setAttribute('style', `transform: translate(${(x || 0)}px, ${(y || 0)}px)`)
   }
@@ -15,6 +17,14 @@ export const createCheckElement = ({ x = 0, y = 0 } = {}) => {
 
 export const createUse = (attrs) => {
   const el = document.createElementNS(xmlType, 'use')
+  Object.entries(attrs).forEach(([ attr, val ]) => {
+    el.setAttribute(attr, val)
+  })
+  return el
+}
+
+export const createSvgElement = (tag, attrs) => {
+  const el = document.createElementNS(xmlType, tag)
   Object.entries(attrs).forEach(([ attr, val ]) => {
     el.setAttribute(attr, val)
   })
@@ -74,20 +84,30 @@ export const svgSeat = (el, details = {}) => {
     has: (attribute) => el.hasAttribute(`data-${attribute}`),
     // Проверка наличия галочки у места (выводится если билет в корзине)
     hasCheck: () => {
-      const next = el.nextElementSibling
-      return !!next && isEqualStr(next.tagName, 'use') && next.getAttribute('href') === `#${CHECK_PATH_ID}`
+      const next = (seat.isMultiple() ? seat.getTitleNode() : el)?.nextElementSibling
+      return !!next && isEqualStr(next.tagName, 'use') && [`#${CHECK_PATH_ID}`, `#${CATEGORY_CHECK_PATH_ID}`].includes(next.getAttribute('href'))
     },
     // Добавить галочку, если ее нет
     addCheck: () => {
       if (seat.hasCheck()) return
-      insertAfter(el, createUse({ x: x + 2, y: y + 3, href: `#${CHECK_PATH_ID}`, class: 'seat-check' }))
+      if (seat.isMultiple()) {
+        const node = seat.getTitleNode()
+        if (!node) return
+        const { x, y } = node.getBBox()
+        insertAfter(node, createUse({ x: x - 15, y: y + 6, class: 'category-check', href: `#${CATEGORY_CHECK_PATH_ID}` }))
+        el.style.cursor = 'auto'
+      } else {
+        insertAfter(el, createUse({ x: x + 1.5, y: y + 1.8, class: 'seat-check', href: `#${CHECK_PATH_ID}` }))
+      }
       return seat
     },
     // Удалить галочку, если она есть
     removeCheck: () => {
       if (!seat.hasCheck()) return
-      const check = el.nextElementSibling
-      el.parentNode.removeChild(check)
+      const check = (seat.isMultiple() ? seat.getTitleNode() : el)?.nextElementSibling
+      check.classList.add('seat-check-out')
+      check.addEventListener('transitionend', () => check.remove())
+      if (seat.isMultiple()) el.removeAttribute('style')
       return seat
     },
     // Переключить галочку
@@ -111,6 +131,8 @@ export const svgSeat = (el, details = {}) => {
     },
     // Проверка множественности места (танцпол - множественное место)
     isMultiple: () => !seat.get('seat') && !seat.get('row'),
+    // Получить элемент с названием категории (только для множественных)
+    getTitleNode: () => seat.isMultiple() ? el.ownerSVGElement.querySelector(`#${seat.get('category').toUpperCase()}`) : null,
     // Получить уникалный ключ места
     getKey: () => seat.isMultiple() ? seat.get('category') : seat.get(['row', 'seat']).join('-'),
     // Проверка на соответствие объекту. Например, чтобы проверить соответствие ряду A и месту 2
@@ -139,4 +161,11 @@ export const svgSeat = (el, details = {}) => {
   }
 
   return seat
+}
+
+svgSeat.from = obj => {
+  const el = (!obj.row || obj.row === '-1' || obj.row === '0') ?
+    document.querySelector(`.${SEAT_CLASS}[data-category="${obj.category}"]`) :
+    document.querySelector(`.${SEAT_CLASS}[data-row="${obj.row}"][data-seat="${obj.seat}"]`)
+  return el ? svgSeat(el) : null
 }

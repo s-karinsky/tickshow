@@ -1,4 +1,6 @@
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { combineBy, filterSeats, getDiff, isEmptyObject } from '../tools/utils';
 
 export function useLocalStorage(key, defaultValue) {
   const serialize = () => {
@@ -61,16 +63,4 @@ export function useIsMobile() {
   }, [size.width]);
 
   return isMobile;
-}
-
-export function useReadyState(onChange) {
-  const [ready, setReady] = useState([])
-  useEffect(() => {
-    onChange(ready)
-  }, [ready])
-
-  return [
-    ready,
-    name => ready.includes(name) ? ready : setReady([...ready, name]),
-  ]
 }

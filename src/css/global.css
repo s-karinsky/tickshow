@@ -6,6 +6,18 @@
   font-family: 'Articulat CF', sans-serif;
 }
 
+html {
+  --color-light: #F8F5EC;
+  --color-gray-5: #6F6E6B;
+  --color-success: #53BC6B;
+  --color-success-dark: #4BAB62;
+  --color-failure: #F66969;
+
+  --color-dark-5: #6F6E6A;
+  --color-dark-8: #363635;
+  --color-dark-9: #212121;
+}
+
 html,
 body {
   -webkit-touch-callout: none; /* iOS Safari */
