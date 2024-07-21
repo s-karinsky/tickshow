@@ -1,27 +1,20 @@
-import React, { useState, useMemo, useRef, useImperativeHandle, Suspense, lazy } from "react";
-import { useEffect } from "react";
+import React, { useState, useEffect, Suspense, lazy, useRef } from "react";
+import cn from 'classnames'
 import {
   calculateScale,
   calculateTotal,
   CountdownTimer,
-  findMinMaxPrices,
   getSeats,
   PromoCode,
 } from "./utility";
 import { getUniqueCategory } from "./utility";
-// import { generateSeat } from "./generate-fileld";
-// import { mainData, data, categories, generateIcon } from "./generate-fileld";
-
-// import { FaCheck } from "react-icons/fa6";
 import {
-  RiCheckboxBlankCircleFill,
   RiZoomInLine,
   RiZoomOutLine,
 } from "react-icons/ri";
 import {
   IoIosArrowDown,
   IoIosArrowUp,
-  IoIosCheckmarkCircle,
 } from "react-icons/io";
 import { RiArrowGoBackLine } from "react-icons/ri";
 import { RxPlus, RxMinus, RxCross2 } from "react-icons/rx";
@@ -29,34 +22,27 @@ import birds from "./images/EARLY BIRDS.svg";
 import "./progress-bar.css";
 import {
   AuthUser,
-  CartSeat,
   ClearSeats,
-  GetCart,
   GetLimitTime,
   GetStadium,
   GetStadiumScheme,
   RegisterPhantomUser,
   updateCart,
 } from "./tools/Ibronevik_API.jsx";
-import { forwardRef, useCallback } from "react";
+import { useCallback } from "react";
 import s from "./svg-scheme.module.scss";
-import { Tooltip } from "antd";
-import { renderToStaticMarkup, renderToString } from "react-dom/server";
-import { reRendering } from "antd/es/watermark/utils";
-import fetchTickets, { useTickets } from "./tools/tickets";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import tickets from "./tools/tickets";
-import { MdOutlineAccessTime, MdOutlineCheckCircle } from "react-icons/md";
+import { useTickets } from "./tools/tickets";
+import { MdOutlineAccessTime } from "react-icons/md";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { useControls } from "react-zoom-pan-pinch";
 import { useSelector } from "react-redux";
 import arrow from "./images/Frame 6282.svg";
-import { addDef, createCheckElement, svgSeat } from "./utils/dom-scheme.js";
-import { useIsMobile, useLocalStorage } from "./utils/hooks.js";
-import { group, isEqualSeats } from "./tools/utils.js";
+import { useLocalStorage, useReadyState, useWindowSize } from "./utils/hooks.js";
+import { getSidesRatio, group, intersect, isEqualSeats } from "./tools/utils.js";
 import { useParams } from "react-router-dom";
-
-let test = {"row:": "-1", "seat": "0"};
+import SvgScheme from "./components/svg-scheme/svg-scheme.jsx";
+import SvgSchemeSeatPreview from "./components/svg-scheme/svg-scheme-preview.jsx";
+import { SEAT_CLASS, SEAT_CLASS_ACTIVE } from "./const.js";
 
 const currenciesSymbols = {
   EUR: "€",
@@ -73,426 +59,46 @@ const currenciesSymbols = {
   TRY: "₺",
 };
 
-export const CHECK_PATH_ID = 'checked-seat-path'
-const SEAT_CLASS = 'svg-seat'
-const SEAT_CLASS_ACTIVE = `${SEAT_CLASS}-active`
-
 const CartModal = lazy(() => import("./utility"));
 
-const byCategory = group('category')
+const readyAll = ['loadedScheme', 'loadedTickets', 'mountedScheme']
 
-const addStyles = (el, styles) => Object.assign(el.style, styles);
-
-export default function SvgSchemeTooltop({ for: el, className, children, scale, handleClick = null }) {
-  const inverseScale = 1 / scale;
-  const [styles, setStyles] = useState()
-  const [seat, setSeat] = useState(null)
-
-  useEffect(() => {
-    const isElem = el instanceof Element;
-    const isString = typeof el === "string";
-    if (!isElem && !isString) {
-      setStyles({ transform: `scale(${inverseScale})` });
-      return;
-    }
-    const target = isElem ? el : document.querySelector(el);
-    // first way with to use element position
-    const category = target?.getAttribute("data-category");
-    if (target && category !== "Dancefloor") {
-      setSeat(target)
-      const { x, y, } = target.getBBox();
-      const scaledLeft = (x - 305) * scale;
-      const scaledTop = (y + 13) * scale;
-
-      const left = x - 240;
-      const top = y + 118;
-      setStyles({ position: "absolute", left: `${left}px`, top: `${top}px`, opacity: 1 });
-    }
-    // second way with to use mouse position by scale
-    // const handleMouseMove = (event) => {
-    //   const category = target?.getAttribute("data-category");
-    //   if (target && category !== "Dancefloor") {
-    //     const left = event.clientX - 410;
-    //     const top = event.clientY - 30;
-    //     setStyles({ position: "absolute", left: `${left}px`, top: `${top}px`, opacity: 1, transform: `scale(${inverseScale})` });
-    //   }
-    // };
-
-    // document.addEventListener('mousemove', handleMouseMove);
-
-    // return () => {
-    //   document.removeEventListener('mousemove', handleMouseMove);
-    // };
-  }, [el, inverseScale]);
-  return (
-    <div className={s.svgSchemeTooltip + " " + className} style={styles} onClick={handleClick && seat ? () => handleClick({ target: seat }) : null}>
-      {children}
-    </div>
-  );
-}
-const SvgScheme = forwardRef(
-  (
-    {
-      categories = [],
-      seatSelector = `.${SEAT_CLASS}`,
-      src,
-      tickets,
-      cart,
-      currentCategory = "all",
-      tooltip,
-      onSeatClick,
-      onSeatOver,
-      onSeatOut,
-      categoriesF = [],
-      active = "all",
-      zoom = 1,
-    },
-    ref
-  ) => {
-    const innerRef = useRef(null)
-    useImperativeHandle(ref, () => innerRef.current, [])
-
-    // console.log("ON INPUT SVG_SCHEME:",!!tickets.find((x) => x?.row === test?.row && x?.seat === test?.seat))
-
-    //console.log("POINT: SvgScheme-01 :", currentCategory)
-    const [tooltipSeat, setTooltipSeat] = useState();
-    const [refresh, setRefresh] = useState(false);
-    const mobile = useIsMobile();
-    //console.log(tickets.filter((ticket) => ticket.row.toString() === "-1" || ticket.row.toString() === "0"),
-    //    tickets.filter((ticket) => ticket.category === "Dancefloor").length)
-    const dancefloor_category_name = categoriesF.find(
-      (cat) => cat.code_type === "Dancefloor"
-    )?.value;
-    //console.log("DCNAME",dancefloor_category_name)
-    const handleClick = useCallback(
-      async (e) => {
-        const { target: el } = e;
-        if (!el.matches(seatSelector)) return;
-
-        if (el.getAttribute("data-disabled") === "true") {
-          return;
-        }
-        const seatDataTransformer = {
-          seat: el.getAttribute("data-seat"),
-          row: el.getAttribute("data-row"),
-          id: el.getAttribute("data-seat") + "_" + el.getAttribute("data-row"),
-          price: undefined,
-          category: el.getAttribute("data-category"),
-          color: undefined,
-          icon: undefined,
-          el: el,
-        };
-        if (seatDataTransformer.category === dancefloor_category_name) {
-          var dancefloor_tickets = tickets.filter(
-            (ticket) => ticket.section === dancefloor_category_name
-          );
-          dancefloor_tickets.sort((a, b) => b.seat - a.seat);
-          seatDataTransformer.price = dancefloor_tickets[0].price;
-          seatDataTransformer.currency = dancefloor_tickets[0].currency;
-          seatDataTransformer.seat = dancefloor_tickets[0].seat;
-          seatDataTransformer.row = dancefloor_tickets[0].row;
-        } else {
-          for (const ticket of tickets) {
-            if (
-              ticket.row.toString() === seatDataTransformer.row.toString() &&
-              ticket.seat.toString() === seatDataTransformer.seat.toString()
-            ) {
-              seatDataTransformer.price = ticket.price;
-            }
-          }
-          for (const category of categories) {
-            if (category.value === seatDataTransformer.category) {
-              seatDataTransformer.color = category.color;
-              seatDataTransformer.img = category.icon;
-            }
-          }
-        }
-        setRefresh(!refresh);
-        onSeatClick && onSeatClick(seatDataTransformer);
-      },
-      [
-        seatSelector,
-        tickets,
-        dancefloor_category_name,
-        refresh,
-        onSeatClick,
-        categories,
-      ]
-    );
-
-    const handleMouseOver = useCallback(
-      (e) => {
-        const { target: el } = e;
-        if (!el.matches(seatSelector)) return;
-        if (tooltip) setTooltipSeat(el);
-        onSeatOver && onSeatOver(e);
-      },
-      [onSeatOver, seatSelector, tooltip]
-    );
-
-    const mobileOnlick = useCallback(
-      (e) => {
-        const { target: el } = e;
-        if (!el.matches(seatSelector)) return;
-        if (tooltip) setTooltipSeat(el);
-        onSeatOut && onSeatOut(e);
-      },
-      [onSeatOut, seatSelector, tooltip]
-    )
-
-    const handleMouseOut = useCallback(
-      (e) => {
-        const { target: el } = e;
-        if (!el.matches(seatSelector)) return;
-        if (tooltip) setTooltipSeat(null);
-        onSeatOut && onSeatOut(e);
-      },
-      [onSeatOut, seatSelector, tooltip]
-    );
-
-    useEffect(() => {
-      const root = innerRef.current
-      if (!root) return
-      const cat = currentCategory === 'all' ? null : currentCategory
-      addDef(root, CHECK_PATH_ID, createCheckElement())
-      const ticketMap = tickets.reduce((acc, { seat, row, section }) =>
-        ({ ...acc, [row === '-1' ? section : [row, seat].join('-')]: true })
-      , {})
-      const cartMap = (cart || []).reduce((acc, { seat, row, section }) =>
-        ({ ...acc, [row === '-1' ? section : [row, seat].join('-')]: true })
-      , {})
-      Array.from(root.querySelectorAll(`.${SEAT_CLASS}`)).forEach(el => {
-        const seat = svgSeat(el)
-        const inCart = !!cartMap[seat.getKey()]
-        seat.checked(inCart)
-        const ticket = ticketMap[seat.getKey()]
-        if (ticket && (!cat || cat === seat.get('category'))) {
-          el.classList.add(SEAT_CLASS_ACTIVE)
-          el.removeAttribute('data-disabled')
-          //seat.set('disabled', 'false')
-        } else {
-          if ((!cat || cat === seat.get('category')) && inCart) {
-            el.removeAttribute('data-disabled')
-          } else {
-            seat.set('disabled', 'true')
-          }
-        }
-      })
-    }, [cart, currentCategory])
-
-    const styles = useMemo(() => {
-      return categories.reduce(
-        (acc, cat) => {
-          acc += `
-        .${SEAT_CLASS}[data-category="${cat.value}"] { fill: ${cat.color}; stroke: ${cat.color}; stroke-width: 0; transition: ease-out .3s stroke-width; }
-        .${SEAT_CLASS}[data-category="${cat.value}"]:not([data-disabled]):hover { stroke-width: 2px; }
-        .${SEAT_CLASS}-icon-cat-${cat.value} { color: ${cat.color}; }
-        .${SEAT_CLASS}-bg-cat-${cat.value} { background-color: ${cat.color}; }
-      `;
-          return acc;
-        },
-        `
-      .${SEAT_CLASS}:not([data-disabled]) { cursor: pointer; }
-      .${SEAT_CLASS}[data-disabled] { fill: #666 !important; }
-    `
-      );
-    }, [categories]);
-    const eventHandlers = !mobile ? {
-      onClick: handleClick,
-      onMouseOver: handleMouseOver,
-      onMouseOut: handleMouseOut
-    } : {
-      onClick: mobileOnlick
-    };
-    return (
-      <div className={s.scheme} id="stage">
-        {!!tooltip && (
-          <SvgSchemeTooltop for={tooltipSeat} scale={zoom} handleClick={mobile ? handleClick : null}>
-            {!!tooltipSeat && tooltip(Object.assign({}, tooltipSeat.dataset))}
-          </SvgSchemeTooltop>
-        )}
-        <style>{styles}</style>
-        <div
-          ref={innerRef}
-          className={s.svgContainer}
-          dangerouslySetInnerHTML={{ __html: src }}
-          {...eventHandlers}
-        />
-      </div>
-    );
-  }
-);
-
-function SvgSchemeSeatPreview({
-  className,
-  category,
-  categories,
-  price,
-  tickets,
-  row,
-  seat,
-  text,
-  icon,
-  color,
-  footer,
-  categoriesF = [],
-  mobile = false
-}) {
-  var currency = "€";
-  var dancefloor_category_name = categoriesF.find(
-    (cat) => cat.code_type === "Dancefloor"
-  )?.value;
-  var dancefloor_flag = false;
-
-  var [ cart ] = useLocalStorage('cart', []);
-  if (
-    cart.filter((item) => item.category === dancefloor_category_name).length > 0
-  ) {
-    dancefloor_flag = true;
-  }
-  if (!row || !seat) {
-    currency = "";
-    price = "-";
-    if (category === dancefloor_category_name) {
-      var dancefloor_tickets = tickets.filter(
-        (ticket) => ticket.section === dancefloor_category_name
-      );
-      dancefloor_tickets.sort((a, b) => b.seat - a.seat);
-      if (!dancefloor_tickets[0]) {
-        dancefloor_tickets[0] = { price: 0, currency: "€" };
-      } else {
-        price = dancefloor_tickets[0].price;
-        currency = dancefloor_tickets[0].currency;
-      }
-    }
-  } else {
-    var suitableTicket;
-    suitableTicket = tickets.find(
-      (t) =>
-        t.row.toString() === row.toString() &&
-        t.seat.toString() === seat.toString()
-    );
-    if (!suitableTicket) {
-      price = "-";
-      currency = "";
-    } else {
-      price = suitableTicket.price;
-      currency = suitableTicket.currency;
-    }
-  }
-
-  if (!currenciesSymbols[currency]) {
-  } else {
-    currency = currenciesSymbols[currency];
-  }
-
-  const cat = categories.find((c) => c.value === category);
-  const svg = icon || cat?.icon;
-  const clr = color || cat?.color || "#fff";
-  var item = cart.find(
-    (i) => i.category === category && i.row === row && i.seat === seat
-  );
-
-  //console.log(cat.value,dancefloor_category_name,dancefloor_flag)
-
-  return (
-    <div className={s.preview + " " + className}>
-      <div className={s.block}>
-        <div className={s.price}>
-          {price}&nbsp;{currency}
-        </div>
-        {!svg ? (
-          <div />
-        ) : (
-          <div
-            className={s.icon}
-            style={{ color: clr }}
-            dangerouslySetInnerHTML={{ __html: svg }}
-          />
-        )}
-      </div>
-      <div className={s.block + " " + s.desc} style={{ color: clr }}>
-        <div className={s.category}>{cat?.label}</div>
-        <div className={s.text}>{text}</div>
-      </div>
-      <div className={s.container}>
-        <div className={s.row}>
-          <span>Row:</span>
-          {row || "-"}
-        </div>
-        <div className={s.seat}>
-          <span>Seat:</span>
-          {seat || "-"}
-        </div>
-      </div>
-      {!!footer && <div className={s.footer}>{footer}</div>}
-      <div
-        className={
-          s.footer +
-          " " +
-          (item || (cat.value === dancefloor_category_name && dancefloor_flag)
-            ? s["selected"]
-            : s["select"])
-        } style={
-        item || (cat.value === dancefloor_category_name && dancefloor_flag) ? {} : suitableTicket ? {background:clr} : {}
-      }>
-        {item || (cat.value === dancefloor_category_name && dancefloor_flag) ? (
-          <>
-            <MdOutlineCheckCircle style={{ marginRight: "3px" }} />
-            <span>Selected</span>
-          </>
-        ) : (
-          <span>{suitableTicket ? (mobile ? "Tap to select" : "Click To Select") : "Seat not avaible"}</span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export const App = (factory, deps) => {
-  const [activeSeat, setActiveSeat] = useState(null);
-  //const cart = useMemo(() => {
-  //  return JSON.parse(localStorage.getItem("cart")) || [];
-  //}, [update]);
+export const App = () => {
+  const schemeRef = useRef(null)
   const { id: schedule_id } = useParams()
   const [ cart, setCart ] = useLocalStorage(`cart-${schedule_id}`, [])
-  const [selected, setSelected] = useState(0);
-  const [active, setActive] = useState(0);
-  const [open, setOpen] = useState(false);
-  const [openB, setOpenB] = useState(false);
-  const [cartModal, setCartModal] = useState(false);
-  const [mobile, setMobile] = useState(false);
-  const [zoom, setZoom] = useState(1);
-  const [cursor, setCursor] = useState("grab");
-  let [categoriesF, setCategoriesF] = useState([]);
-  const [firstZ, setFirstZ] = useState(true);
-  const discount = useSelector((state) => state.discount);
-  // isLoading, error,
+  const screen = useWindowSize()
+  
+  const [activeSeat, setActiveSeat] = useState(null)
+  // Видимость оверлея для блокировки событий схемы. Нужен для перехвата клика и зума
+  // при маленьком масштабе
+  const [showSchemeOverlay, setShowSchemeOverlay] = useState(false)
+
+  const [stadiumData, setStadiumData] = useState({})
+  const [stadiumDataReceived, setStadiumDataReceived] = useState(false)
+  
+  const [selected, setSelected] = useState(0)
+  const [open, setOpen] = useState(false)
+  const [openB, setOpenB] = useState(false)
+  const [cartModal, setCartModal] = useState(false)
+  const [mobile, setMobile] = useState(false)
+  const [zoom, setZoom] = useState(1)
+  let [categoriesF, setCategoriesF] = useState([])
+  const [firstZ, setFirstZ] = useState(true)
+  const discount = useSelector((state) => state.discount)
 
   const [tickets, setTickets] = useState([])
-  const allTickets = useMemo(()=>{
-    return [...tickets, ...cart]
-  },[tickets])
 
-  const [currentCategory, setCurrentCategory] = useState("all");
-  const [ScheduleFee, setScheduleFee] = useState(0);
-  const [LimitTime, setLimitTime] = useState();
-  var { data, refetch } = useTickets({ event_id: schedule_id, skip: 0, limit: 30 }, {});
+  const [currentCategory, setCurrentCategory] = useState("all")
+  const [ScheduleFee, setScheduleFee] = useState(0)
+  const [LimitTime, setLimitTime] = useState()
+  var { data, isLoading: isTicketsLoading } = useTickets({ event_id: schedule_id, skip: 0, limit: 30 }, {})
 
   useEffect(() => {
-    if (data) {
-      setTickets(data);
-    } else {
-      refetch({
-        event_id: schedule_id,
-        skip: 0,
-        limit: 30,
-      }).then((data) => {
-        setTickets(data.data);
-      });
-    }
-    LoadStadiumData();
-  }, [LoadStadiumData, data]);
+    if (isTicketsLoading || !data) return
+    setTickets([ ...data, ...cart ])
+    LoadStadiumData()
+  }, [isTicketsLoading])
 
   useEffect(() => {
     const updateZoom = () => {
@@ -527,19 +133,27 @@ export const App = (factory, deps) => {
 
   const toggleInCart = useCallback(async (item, count) => {
     const { seat, row, section, category: cat } = item
+    // Мешанина с category и section, как-то так вышло что одно значение в разных
+    // местах называется по-разному. Пока такой хак дешевле, чем приводить все к одному виду
     const category = section || cat
-    const isMultiple = row === '-1' || row === '0'
-    const inCart = isMultiple ?
+    // Проверка на категорию без мест
+    const isSeatWithoutNumber = row === '-1' || row === '0'
+    // Для обычного места ищем билет в корзине, для категории без мест - все билеты
+    const inCart = isSeatWithoutNumber ?
       cart.filter(item => item.section === category) :
       cart.find(item => isEqualSeats(item, { seat, row, category }))
-    const ticket = isMultiple ?
-      allTickets.filter(item => item.section === category) :
-      allTickets.find(item => isEqualSeats(item, { seat, row, category }))
+    // Аналогично ищем билеты в наличии
+    const ticket = isSeatWithoutNumber ?
+      tickets.filter(item => item.section === category) :
+      tickets.find(item => isEqualSeats(item, { seat, row, category }))
     if (!ticket) return Promise.resolve()
 
-    if (isMultiple) {
+    // Для категории без мест используем аргумент count как абсолютное количество билетов,
+    // которое должно быть в корзине. Если count не передан, то добавляем или удаляем один билет
+    if (isSeatWithoutNumber) {
       count = count === undefined ? inCart.length + 1 : count
       if (count < inCart.length) {
+        // Если в корзине больше билетов, чем нужно, удаляем лишние
         const deleteCount = inCart.length - (count || 0)
         const toDelete = []
         setCart([ ...cart.filter(item => {
@@ -551,37 +165,32 @@ export const App = (factory, deps) => {
           }
           return true
         }) ])
+        setTickets([ ...tickets, ...toDelete ])
         return Promise.all(toDelete.map(item => updateCart(item, 0)))
       } else if (count > inCart.length) {
+        // Если меньше - добавляем недостающие
         const addCount = count - inCart.length
         const toAdd = ticket.slice(0, addCount)
         setCart([ ...cart, ...toAdd ])
         return Promise.all(toAdd.map(item => updateCart(item, 1)))
       }
     } else if (inCart) {
+      // Обычное место в корзине удаляем
+      setTickets([ ...tickets, inCart ])
       setCart([ ...cart.filter(item => !isEqualSeats(item, inCart)) ])
     } else {
+      // Или, если не в корзине, добавляем
       setCart([...cart, ticket])
     }
-    return updateCart(ticket, Number(!inCart)).then(res => {
-      
-    })
-  }, [cart, allTickets])
-
-  const handleMouseDown = useCallback((e) => {
-    setCursor("grabbing");
-  }, []);
-
-  const handleUp = useCallback(() => {
-    setCursor("grab");
-  }, []);
+    return updateCart(ticket, Number(!inCart))
+  }, [cart, tickets])
 
   const Controls = () => {
     const { zoomIn, zoomOut, resetTransform } = useControls();
     return (
       <>
         {" "}
-        <div className="df aic gap5 zoom-box cp">
+        <div className="df aic zoom-box cp">
           <button
             className="df aic jcc fs18"
             onClick={(e) => {
@@ -603,8 +212,9 @@ export const App = (factory, deps) => {
         </div>
         {cart.length !== 0 && (
           <div className="df aic jcc gap10 zoom-box time-box" id="action">
-            <MdOutlineAccessTime className="fs18" /> Time left to place your
-            order:{" "}
+            <MdOutlineAccessTime className="fs18" />
+            <span className="timer-text">Time left to place your
+            order:{" "}</span>
             {
               <CountdownTimer
                 initialTime={LimitTime}
@@ -647,7 +257,6 @@ export const App = (factory, deps) => {
               setFirstZ(true);
               setCurrentCategory("all");
               setSelected(0);
-              setActive(0);
             }}
             id="action">
             <button className="df aic jcc fs18">
@@ -662,7 +271,6 @@ export const App = (factory, deps) => {
               e.stopPropagation();
               setSelected(0);
               setCurrentCategory("all");
-              setActive(0);
               setOpen(false);
             }}
             id="action">
@@ -671,39 +279,6 @@ export const App = (factory, deps) => {
         )}
       </>
     );
-  };
-
-  const firstZoom = useCallback(
-    (e) => {
-      if (firstZ && zoom <= 1) {
-        const doubleClickEvent = new MouseEvent("dblclick", {
-          bubbles: true,
-          cancelable: true,
-          clientX: e.changedTouches?.[0]?.clientX || e?.clientX,
-          clientY: e.changedTouches?.[0]?.clientY || e?.clientY,
-        });
-        e?.currentTarget?.dispatchEvent(doubleClickEvent);
-        setFirstZ(false);
-        setZoom(zoom + 1);
-      }
-    },
-    [firstZ, zoom]
-  );
-
-  const closeModal = () => {
-    setOpenB(false);
-    setOpen(false);
-  };
-
-  const cancel = (e) => {
-    if (
-      e?.target?.offsetParent?.className === "ant-tooltip-content" ||
-      e.target.tagName === "path"
-    ) {
-      console.log("calismadi");
-    } else {
-      setActiveSeat(null);
-    }
   };
 
   const actionCtgy = (s) => {
@@ -729,22 +304,20 @@ export const App = (factory, deps) => {
       max: prices.reduce((a, b) => Math.max(a, b)),
     });
   };
-  const [stadiumData, setStadiumData] = useState({});
-  const [stadiumDataReceived, setStadiumDataReceived] = useState(false);
   function LoadStadiumData() {
-    if (!stadiumDataReceived) {
+    return stadiumDataReceived ?
+      Promise.resolve() :
       GetStadium(schedule_id).then((stadium_data) => {
         GetStadiumScheme(stadium_data["stadium"]["scheme_blob"]).then(
           (stadium_scheme) => {
             if (!stadiumDataReceived) {
-              setScheduleFee(stadium_data.schedule.fee * 1);
-              setStadiumData(stadium_scheme);
-              setStadiumDataReceived(true);
+              setScheduleFee(stadium_data.schedule.fee * 1)
+              setStadiumData(stadium_scheme)
+              setStadiumDataReceived(true)
             }
           }
-        );
-      });
-    }
+        )
+      })
   }
   const makeUpCategoriesF = () => {
     if (!tickets) {
@@ -824,7 +397,9 @@ export const App = (factory, deps) => {
     build_totalC_V();
     makeUpCategoriesF();
   }, [tickets, stadiumData]);
-  if (categoriesF.length === 0)
+  
+  // if (!isReady) {
+  if (categoriesF.length === 0) {
     return (
       <div className={"loading-screen"}>
         <div className="loader-wrapper-bg">
@@ -835,66 +410,62 @@ export const App = (factory, deps) => {
           </div>
         </div>
       </div>
-    );
-  const total = calculateTotal(cart, ScheduleFee, discount);
+    )
+  }
+
+  const total = calculateTotal(cart, ScheduleFee, discount)
   
   return (
     <div className="w100 gap15 wrapper">
       <TransformWrapper
-        initialScale={1}
-        initialPositionX={0}
-        initialPositionY={0}
-        wheel={{ wheelDisabled: true }}
+        wheel={{
+          activationKeys: ['Control'],
+          step: 0.25
+        }}
+        onInit={ref => ref.zoomToElement(schemeRef.current, undefined, 0)}
+        onTransformed={({ state }) => setShowSchemeOverlay(state.scale < 1.5)}
+        onPanningStart={({ instance }) => {
+          const el = instance.contentComponent.firstChild
+          el.style.cursor = 'grabbing'
+        }}
+        onPanningStop={({ instance }, e) => {
+          e.preventDefault()
+          const el = instance.contentComponent.firstChild
+          el.style.cursor = 'grab'
+        }}
       >
-        {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
-          <div
-            className={`df aic jcc chairs-container  ${activeSeat && "show-off"}`}
-            style={{ cursor: cursor }}
-            onMouseDown={closeModal}
-            onTouchStart={closeModal}
-            onTouchEndCapture={cancel}
-            onDoubleClick={() => setZoom(zoom + 1)}>
-            <>
-              <Controls />
-              <TransformComponent>
-                <div className="ccc">
-                  <div
-                    className="df fdc aic gap10 chairs-body"
-                    onClick={firstZoom}
-                    onTouchEnd={firstZoom}
-                    onTouchMove={firstZoom}
-                    onMouseDown={handleMouseDown}
-                    onMouseUp={handleUp}
-                    style={{
-                      transform: `scale(${mobile ? mobile + 0.02 : 1})`,
-                    }}
-                  >
-                    <SvgScheme
-                      src={stadiumData["scheme"]}
-                      categories={stadiumData["categories"]}
-                      tickets={allTickets}
-                      currentCategory={currentCategory}
-                      onSeatClick={toggleInCart}
-                      categoriesF={categoriesF}
-                      active={active}
-                      cart={cart}
-                      zoom={zoom}
-                      tooltip={(data) => (
-                        <SvgSchemeSeatPreview
-                          className={s.preview}
-                          categories={stadiumData["categories"]}
-                          price="16$"
-                          tickets={allTickets}
-                          categoriesF={categoriesF}
-                          mobile={mobile}
-                          {...data}
-                        />
-                      )}
-                    />
-                  </div>
+        {({ zoomToElement }) => (
+          <div className={cn('df', 'aic', 'jcc', 'chairs-container', { 'show-off': activeSeat })}>
+            <Controls />
+            <TransformComponent>
+              <div className="ccc" style={{ cursor: 'grab' }}>
+                <div
+                  className="df fdc aic gap10 chairs-body"
+                  style={{ position: 'relative' }}
+                >
+                  {showSchemeOverlay && <div className="scheme-overlay" onClick={() => zoomToElement(schemeRef.current)} />}
+                  <SvgScheme
+                    ref={schemeRef}
+                    src={stadiumData["scheme"]}
+                    categories={stadiumData["categories"]}
+                    tickets={tickets}
+                    currentCategory={currentCategory}
+                    onSeatClick={toggleInCart}
+                    cart={cart}
+                    tooltip={(data) => (
+                      <SvgSchemeSeatPreview
+                        className={s.preview}
+                        categories={stadiumData["categories"]}
+                        tickets={tickets}
+                        mobile={mobile}
+                        cart={cart}
+                        {...data}
+                      />
+                    )}
+                  />
                 </div>
-              </TransformComponent>
-            </>
+              </div>
+            </TransformComponent>
           </div>
         )}
       </TransformWrapper>

@@ -1,4 +1,4 @@
-import { CHECK_PATH_ID } from "../app"
+import { CHECK_PATH_ID } from "../const"
 import { isEqualStr } from "./string"
 
 const xmlType = "http://www.w3.org/2000/svg"
@@ -16,6 +16,22 @@ export const createCheckElement = ({ x = 0, y = 0 } = {}) => {
 export const createUse = (attrs) => {
   const el = document.createElementNS(xmlType, 'use')
   Object.entries(attrs).forEach(([ attr, val ]) => {
+    el.setAttribute(attr, val)
+  })
+  return el
+}
+
+export const createOverlay = () => {
+  const el = document.createElementNS(xmlType, 'rect')
+  Object.entries({
+    id: 'scheme-overlay',
+    class: "scheme-overlay",
+    x: 0,
+    y: 0,
+    width: '100%',
+    height: '100%',
+    fill: '#21212199',
+  }).forEach(([ attr, val ]) => {
     el.setAttribute(attr, val)
   })
   return el
@@ -55,6 +71,7 @@ export const svgSeat = (el, details = {}) => {
       el?.getAttribute(`data-${attribute}`) || defaultValue,
     // Изменение значения атрибута data-${attribute}
     set: (attribute, value) => el?.setAttribute(`data-${attribute}`, value) || seat,
+    has: (attribute) => el.hasAttribute(`data-${attribute}`),
     // Проверка наличия галочки у места (выводится если билет в корзине)
     hasCheck: () => {
       const next = el.nextElementSibling
@@ -85,6 +102,13 @@ export const svgSeat = (el, details = {}) => {
       val ? seat.addCheck() : seat.removeCheck()
       return seat
     },
+    // Вызов без аргументов вернет текущее значение
+    // Вызов с аргументом установит или снимет дизейбл
+    disabled: val => {
+      if (val === undefined) return seat.has('disabled')
+      val ? el.setAttribute('data-disabled', '') : el.removeAttribute('data-disabled')
+      return seat
+    },
     // Проверка множественности места (танцпол - множественное место)
     isMultiple: () => !seat.get('seat') && !seat.get('row'),
     // Получить уникалный ключ места
@@ -92,14 +116,26 @@ export const svgSeat = (el, details = {}) => {
     // Проверка на соответствие объекту. Например, чтобы проверить соответствие ряду A и месту 2
     // вызывается svgSeat(el).matches({ row: 'A', seat: 2 })
     matches: obj => Object.entries(obj).reduce((acc, [key, value]) => acc && isEqualStr(seat.get(key), value), true),
+    // Поиск первого соответствующего места в массиве
     findMatches: (seats) => seats.find(s => seat.matches(s)),
+    // Сравнение с объектом. Места считаются равными, если совпадает ряд и место,
+    // а при их отсутствии если совпадает категория
     isEqual: item => {
       const cat = item.section || item.category
       if (seat.isMultiple()) {
         return seat.get('category') === cat
       }
       return seat.get('category') === cat && seat.get(['row', 'seat']).join('-') === [item.row, item.seat].join('-')
-    }
+    },
+    // Преобразование места в объект
+    toObject: () => {
+      return {
+        category: seat.get('category'),
+        row: seat.get('row', '-1'),
+        seat: seat.get('seat'),
+        price: seat.get('price'),
+      }
+    },
   }
 
   return seat

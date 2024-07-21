@@ -103,6 +103,10 @@
   transition: ease 0.01s opacity;
   box-shadow: 0px 4px 4px 0px #0000000d;
   pointer-events: none;
+
+  :global(.drag-scheme) & {
+    display: none;
+  }
 }
 
 .scheme {
@@ -134,5 +138,31 @@
 @media (max-width: 800px) {
   .svgSchemeTooltip {
     pointer-events: all;
+  }
+}
+
+.readonly {
+  pointer-events: none;
+}
+
+@keyframes showOpacity {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.hoverOverlay {
+  position: absolute;
+  inset: 0;
+  background: #21212199;
+  pointer-events: none;
+  animation: ease-out 0.3s showOpacity;
+
+  & > div {
+    border-radius: 100%;
+    position: fixed;
   }
 }
