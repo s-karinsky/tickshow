@@ -543,25 +543,44 @@
   }
 }
 
-@keyframes scaleIn {
+@keyframes strokeOffset {
   0% {
-    opacity: 0;
+    stroke-dashoffset: 20px;
   }
 
   100% {
-    opacity: 1;
+    stroke-dashoffset: 0;
   }
 }
 
 .seat-check {
-  stroke-width: 0.5px;
-  width: 16px;
-  height: 12px;
-  fill: #323232;
+  stroke-width: 2px;
   stroke: #323232;
-  animation-name: scaleIn;
-  animation-duration: 0.3s;
+  stroke-dasharray: 15px;
+  animation-name: strokeOffset;
+  animation-duration: 0.25s;
   animation-timing-function: cubic-bezier(0.445, 0.05, 0.55, 0.95);
+  pointer-events: none;
+}
+
+.seat-check-out {
+  transition: stroke-dashoffset 0.3s ease-in 0s;
+  stroke-dashoffset: 20px;
+}
+
+.category-check {
+  stroke-width: 2px;
+  stroke: #F8F5EC;
+  stroke-dasharray: 20px;
+  animation-name: strokeOffset;
+  animation-duration: 0.25s;
+  animation-timing-function: cubic-bezier(0.445, 0.05, 0.55, 0.95);
+  pointer-events: none;
+}
+
+.category-check-out {
+  transition: stroke-dashoffset 0.3s ease-in 0s;
+  stroke-dashoffset: 20px;
 }
 
 .svg-seat {
@@ -573,4 +592,31 @@
   inset: 0;
   cursor: pointer;
   z-index: 1000;
+}
+
+.icon-sign {
+  width: 9px;
+  height: 9px;
+  transition: ease .3s color;
+  color: var(--color);
+}
+.icon-sign line {
+  stroke-width: 1px;
+  fill: rgb(46, 25, 25);
+  stroke-linecap: round;
+}
+
+.svg-counter {
+  position: absolute;
+  z-index: 50;
+  margin-top: -25px;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: ease .3s;
+  transition-property: opacity, margin-top;
+}
+.svg-counter.visible {
+  margin-top: -5px;
+  transform: translateX(-50%);
+  opacity: 1;
 }

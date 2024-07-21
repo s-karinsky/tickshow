@@ -1,0 +1,39 @@
+.group { 
+  display: flex;
+  align-items: stretch;
+}
+
+.textField {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--color-dark-8);
+  border-right: 1px solid #6F6E6A;
+  border-left: 1px solid #6F6E6A;
+  padding: 0 8px;
+}
+
+.input,
+.fakeValue {
+  font-size: 12px;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--color-light);
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  color: transparent;
+  border: none;
+  caret-color: #fff;
+  padding: 0;
+  text-align: center;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}

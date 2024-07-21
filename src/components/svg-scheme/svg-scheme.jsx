@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import cn from 'classnames'
-import { CHECK_PATH_ID, SEAT_CLASS, SEAT_CLASS_ACTIVE } from "../../const"
+import { CHECK_PATH_ID, SEAT_CLASS, SEAT_CLASS_ACTIVE, CATEGORY_CHECK_PATH_ID } from "../../const"
 import { addDef, createCheckElement, svgSeat } from "../../utils/dom-scheme"
 import { useIsMobile } from "../../utils/hooks"
 import s from './svg-scheme.module.scss'
@@ -31,16 +31,24 @@ const SvgScheme = forwardRef(
     const checkTarget = (cb, customCondition) => e => {
       if (!e.target.matches(seatSelector)) return
       const seat = svgSeat(e.target)
-      if (customCondition !== undefined && (!customCondition?.(seat, e) && !customCondition)) return
+      if (customCondition !== undefined && (!customCondition?.(seat, e) || !customCondition)) return
       cb(seat, e)
     }
 
     const handleClick = useCallback(
       checkTarget(
         (seat) => onSeatClick(seat.toObject()),
-        (seat) => !!onSeatClick && !seat.disabled()
+        (seat) => !!onSeatClick && !seat.disabled() && !(seat.isMultiple() && seat.checked())
       ),
       [onSeatClick]
+    )
+
+    const handleMouseDown = useCallback(
+      checkTarget(
+        (seat, e) => e.stopPropagation(),
+        (seat) => !seat.disabled() && !seat.isMultiple()
+      ),
+      []
     )
 
     const handleMouseOver = useCallback(
@@ -71,15 +79,17 @@ const SvgScheme = forwardRef(
     useEffect(() => {
       const root = innerRef.current
       if (!root) return
+      const svg = root.querySelector('svg')
       const cat = currentCategory === 'all' ? null : currentCategory
-      addDef(root, CHECK_PATH_ID, createCheckElement())
+      addDef(svg, CHECK_PATH_ID, createCheckElement({ className: 'seat-check' }))
+      addDef(svg, CATEGORY_CHECK_PATH_ID, createCheckElement({ d: 'M 1 3 L 4.25 6.25 L 10 0.5', className: 'category-check' }))
       const ticketMap = tickets.reduce((acc, { seat, row, section }) =>
-        ({ ...acc, [row === '-1' ? section : [row, seat].join('-')]: true })
+        ({ ...acc, [row === '-1' || row === '0' ? section : [row, seat].join('-')]: true })
       , {})
       const cartMap = (cart || []).reduce((acc, { seat, row, section }) =>
-        ({ ...acc, [row === '-1' ? section : [row, seat].join('-')]: true })
+        ({ ...acc, [row === '-1' || row === '0' ? section : [row, seat].join('-')]: true })
       , {})
-      Array.from(root.querySelectorAll(`.${SEAT_CLASS}`)).forEach(el => {
+      Array.from(svg.querySelectorAll(`.${SEAT_CLASS}`)).forEach(el => {
         const seat = svgSeat(el)
         const inCart = !!cartMap[seat.getKey()]
         seat.checked(inCart)
@@ -113,6 +123,7 @@ const SvgScheme = forwardRef(
     }, [categories])
     const eventHandlers = !mobile ? {
       onClick: handleClick,
+      onMouseDown: handleMouseDown,
       onMouseOver: handleMouseOver,
       onMouseOut: handleMouseOut
     } : {

@@ -2,6 +2,7 @@ import cn from 'classnames'
 import { MdOutlineCheckCircle } from 'react-icons/md';
 import { isEqualSeats } from '../../tools/utils';
 import s from './svg-scheme.module.scss'
+import { CURRENCY_SYMBOL_MAP } from '../../const';
 
 export default function SvgSchemeSeatPreview({
   className,
@@ -29,7 +30,7 @@ export default function SvgSchemeSeatPreview({
     <div className={cn(s.preview, { [className]: !!className })}>
       <div className={s.block}>
         <div className={s.price}>
-          {ticket?.price || '-'}&nbsp;{ticket?.currency || ''}
+          {ticket?.price || '-'}&nbsp;{CURRENCY_SYMBOL_MAP[ticket?.currency] || ''}
         </div>
         {!!svg && (
           <div

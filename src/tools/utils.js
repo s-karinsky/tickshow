@@ -78,4 +78,41 @@ export const getSidesRatio = (el1, el2) => {
 
 export const intersect = (a, b) => a.filter(value => b.includes(value))
 
+export const uniq = arr => [...new Set(arr)]
+
+export const diff = (a, b) => uniq([
+  ...a.filter(value => !b.includes(value)),
+  ...b.filter(value => !a.includes(value))
+])
+
 export const path = (path, obj) => path.reduce((acc, key) => acc ? acc[key] : undefined, obj)
+
+export const indexBy = (key, obj) => obj.reduce((acc, item) => ({ ...acc, [item[key]]: item }), {})
+
+export const isEmptyObject = val => typeof val === 'object' && Object.keys(val).length === 0
+
+export const combineBy = (key, valuesMap) => Object.entries(valuesMap).reduce((acc, [name, value]) => {
+  Array.isArray(value) ? 
+    value.forEach((item) => {
+      acc[item[key]] = { ...acc[item[key]], [name]: (acc[name] || 0) + 1 }
+    }) :
+    Object.entries(acc).forEach(([k, v]) => acc[k] = { ...v, [name]: value })
+
+  return acc
+}, {})
+
+export const filterSeats = arr => arr.filter(item => item.section && (item.row === '-1' || item.row === '0'))
+
+export const getDiff = (obj1, obj2, comparator) => {
+  const keys1 = Object.keys(obj1)
+  const keys2 = Object.keys(obj2)
+  const diffKeys = diff(keys1, keys2)
+  const res = intersect(keys1, keys2).reduce((acc, key) => {
+    if (comparator(obj1[key], obj2[key])) return acc
+    return { ...acc, [key]: obj1[key] }
+  }, {})
+  return diffKeys.reduce((acc, key) => ({
+    ...acc,
+    [key]: obj1[key] || obj2[key]
+  }), res)
+}
