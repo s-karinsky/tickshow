@@ -19,7 +19,7 @@
   background-color: var(--bg-color);
   text-align: center;
   cursor: pointer;
-  color: var(--text-color);
+  color: var(--color);
   box-sizing: border-box;
   transition: ease .3s;
   transition-property: background-color, color, box-shadow, opacity, border-color;
@@ -50,13 +50,14 @@
         --bg-color: var(--color-success);
         --color: var(--color-dark-9);
         border-color: var(--color-success);
+        box-shadow: none;
       }
   
       &:not(:disabled):active {
         --bg-color: #4BAB62;
-        max-height: calc(var(--height) - 4px);
-        height: calc(var(--height) - 4px);
-        margin: 2px;
+        position: relative;
+        top: 1px;
+        box-shadow: inset 0 0 2px #00000033
       }
     }
   

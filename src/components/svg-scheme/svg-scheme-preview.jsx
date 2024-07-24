@@ -1,8 +1,8 @@
 import cn from 'classnames'
 import { MdOutlineCheckCircle } from 'react-icons/md';
 import { isEqualSeats } from '../../tools/utils';
-import s from './svg-scheme.module.scss'
 import { CURRENCY_SYMBOL_MAP } from '../../const';
+import s from './svg-scheme.module.scss'
 
 export default function SvgSchemeSeatPreview({
   className,
@@ -16,6 +16,7 @@ export default function SvgSchemeSeatPreview({
   color,
   footer,
   mobile = false,
+  toggleInCart,
   cart
 }) {
   const cat = categories.find((c) => c.value === category);
@@ -27,7 +28,12 @@ export default function SvgSchemeSeatPreview({
   const isMultiple = row === '-1' || row === '0'
 
   return (
-    <div className={cn(s.preview, { [className]: !!className })}>
+    <div
+      className={cn(s.preview, { [className]: !!className })}
+      onTouchStart={e => {
+        e.stopPropagation()
+      }}
+    >
       <div className={s.block}>
         <div className={s.price}>
           {ticket?.price || '-'}&nbsp;{CURRENCY_SYMBOL_MAP[ticket?.currency] || ''}
@@ -61,6 +67,9 @@ export default function SvgSchemeSeatPreview({
           [s.select]: !isInCart && !isMultiple
         })}
         style={isMultiple || !isInCart ? { background: clr } : {}}
+        onTouchStart={(e) => {
+          toggleInCart?.({ seat, row, category })
+        }}
       >
         {isInCart ? (
           <>
