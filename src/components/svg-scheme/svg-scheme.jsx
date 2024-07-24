@@ -1,22 +1,22 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import cn from 'classnames'
-import { CHECK_PATH_ID, SEAT_CLASS, SEAT_CLASS_ACTIVE, CATEGORY_CHECK_PATH_ID } from "../../const"
-import { addDef, createCheckElement, svgSeat } from "../../utils/dom-scheme"
-import { useIsMobile } from "../../utils/hooks"
-import s from './svg-scheme.module.scss'
 import SvgSchemeTooltop from "./svg-scheme-tooltip"
+import { CHECK_PATH_ID, SEAT_CLASS, SEAT_CLASS_ACTIVE, CATEGORY_CHECK_PATH_ID, SEAT_CLASS_SELECTED } from "../../const"
+import { addDef, createCheckElement, svgSeat } from "../../utils/dom-scheme"
+import { useSeatEvent } from "../../utils/hooks"
+import s from './svg-scheme.module.scss'
 
 const SvgScheme = forwardRef(
   (
     {
       categories = [],
-      seatSelector = `.${SEAT_CLASS}`,
       src,
       tickets,
       cart,
       currentCategory = "all",
       tooltip,
+      onSeatTap,
       onSeatClick,
       onSeatOver,
       onSeatOut,
@@ -26,54 +26,50 @@ const SvgScheme = forwardRef(
     const innerRef = useRef(null)
     useImperativeHandle(ref, () => innerRef.current, [])
     const [ tooltipSeat, setTooltipSeat ] = useState()
-    const mobile = useIsMobile()
 
-    const checkTarget = (cb, customCondition) => e => {
-      if (!e.target.matches(seatSelector)) return
-      const seat = svgSeat(e.target)
-      if (customCondition !== undefined && (!customCondition?.(seat, e) || !customCondition)) return
-      cb(seat, e)
-    }
+    useEffect(() => {
+      const selected = innerRef.current.querySelector(`.${SEAT_CLASS_SELECTED}`)
+      if (selected && tooltipSeat !== selected) {
+        selected.classList.remove(SEAT_CLASS_SELECTED)
+      }
+      if (tooltipSeat && !tooltipSeat.classList.contains(SEAT_CLASS_SELECTED)) {
+        tooltipSeat.classList.add(SEAT_CLASS_SELECTED)
+      }
+    }, [tooltipSeat])
 
-    const handleClick = useCallback(
-      checkTarget(
-        (seat) => onSeatClick(seat.toObject()),
-        (seat) => !!onSeatClick && !seat.disabled() && !(seat.isMultiple() && seat.checked())
-      ),
-      [onSeatClick]
-    )
+    const handleClick = useSeatEvent(({ el, seat, isMobile }) => {
+      if (seat.disabled()) return false
+      if (isMobile) {
+        setTooltipSeat(el)
+        onSeatTap?.(seat.toObject())
+      } else {
+        onSeatClick?.(seat.toObject())
+      }
+    })
 
-    const handleMouseDown = useCallback(
-      checkTarget(
-        (seat, e) => e.stopPropagation(),
-        (seat) => !seat.disabled() && !seat.isMultiple()
-      ),
-      []
-    )
+    const handleMouseDown = useSeatEvent(({ seat, event, isMobile }) => {
+      if (seat.disabled() || isMobile) return false
+      event.preventDefault()
+      event.stopPropagation()
+    })
 
-    const handleMouseOver = useCallback(
-      checkTarget((seat, e) => {
-        if (tooltip) setTooltipSeat(e.target)
-        onSeatOver && onSeatOver(e)
-      }),
-      [onSeatOver, tooltip]
-    )
+    const handleActivate = useSeatEvent(({ el, seat, event, isMobile }) => {
+      if (seat.disabled()) return false
+      if (!event.defaultPrevented) {
+        setTooltipSeat(el)
+        !isMobile && onSeatOver?.(event)
+      }
+    })
 
-    const mobileOnlick = useCallback(
-      checkTarget((seat, e) => {
-        if (tooltip) setTooltipSeat(e.target)
-        onSeatOut && onSeatOut(e)
-      })
-      [onSeatOut, tooltip]
-    )
+    const handleMouseOut = useSeatEvent(({ seat, event }) => {
+      if (seat.disabled()) return false
+      setTooltipSeat(null)
+      onSeatOut?.(event)
+    })
 
-    const handleMouseOut = useCallback(
-      checkTarget((seat, e) => {
-        if (tooltip) setTooltipSeat(null)
-        onSeatOut && onSeatOut(e)
-      }),
-      [onSeatOut, tooltip]
-    )
+    const handleTouchStart = useCallback((event) => {
+      setTooltipSeat(null)
+    })
 
     // Раскраска мест в зависимости от наличия билета и выбранной категории
     useEffect(() => {
@@ -109,7 +105,9 @@ const SvgScheme = forwardRef(
         (acc, cat) => {
           acc += `
         .${SEAT_CLASS}[data-category="${cat.value}"] { fill: ${cat.color}; stroke: ${cat.color}; stroke-width: 0; transition: ease-out .3s stroke-width; }
-        .${SEAT_CLASS}[data-category="${cat.value}"]:not([data-disabled]):hover { stroke-width: 2px; }
+        @media (hover: hover) {
+          .${SEAT_CLASS}[data-category="${cat.value}"]:not([data-disabled]):hover { stroke-width: 2px; }
+        }
         .${SEAT_CLASS}-icon-cat-${cat.value} { color: ${cat.color}; }
         .${SEAT_CLASS}-bg-cat-${cat.value} { background-color: ${cat.color}; }
       `
@@ -121,19 +119,11 @@ const SvgScheme = forwardRef(
     `
       )
     }, [categories])
-    const eventHandlers = !mobile ? {
-      onClick: handleClick,
-      onMouseDown: handleMouseDown,
-      onMouseOver: handleMouseOver,
-      onMouseOut: handleMouseOut
-    } : {
-      onClick: mobileOnlick
-    }
 
     return (
       <div className={cn(s.scheme)} id='stage'>
         {!!tooltip && !!tooltipSeat && createPortal(
-          <SvgSchemeTooltop for={tooltipSeat} handleClick={mobile ? handleClick : null}>
+          <SvgSchemeTooltop for={tooltipSeat}>
             {tooltip(Object.assign({}, tooltipSeat.dataset))}
           </SvgSchemeTooltop>,
           document.body
@@ -143,7 +133,12 @@ const SvgScheme = forwardRef(
           ref={innerRef}
           className={s.svgContainer}
           dangerouslySetInnerHTML={{ __html: src }}
-          {...eventHandlers}
+          onClick={handleClick}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleActivate}
+          onMouseDown={handleMouseDown}
+          onMouseOver={handleActivate}
+          onMouseOut={handleMouseOut}
         />
       </div>
     )

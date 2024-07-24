@@ -1,20 +1,20 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { combineBy, filterSeats, getDiff, isEmptyObject } from '../tools/utils';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
+import { SEAT_CLASS } from '../const'
+import { svgSeat } from './dom-scheme'
 
 export function useLocalStorage(key, defaultValue) {
   const serialize = () => {
-    let currentValue;
+    let currentValue
     try {
       currentValue = JSON.parse(
         localStorage.getItem(key) || String(defaultValue)
-      );
+      )
     } catch (error) {
-      currentValue = defaultValue;
+      currentValue = defaultValue
     }
-    return currentValue;
+    return currentValue
   }
-  const [value, setValue] = useState(serialize);
+  const [value, setValue] = useState(serialize)
   const handleChange = () => setValue(serialize)
 
   useEffect(() => {
@@ -23,44 +23,54 @@ export function useLocalStorage(key, defaultValue) {
   })
 
   useEffect(() => {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  }, [value, key]);
+    window.localStorage.setItem(key, JSON.stringify(value))
+  }, [value, key])
 
-  return [value, setValue];
+  return [value, setValue]
 }
 
 export function useWindowSize() {
   const [size, setSize] = useState({
     width: null,
     height: null,
-  });
+  })
 
   useLayoutEffect(() => {
     const handleResize = () => {
       setSize({
         width: window.innerWidth,
         height: window.innerHeight,
-      });
-    };
+      })
+    }
 
-    handleResize();
-    window.addEventListener("resize", handleResize);
+    handleResize()
+    window.addEventListener("resize", handleResize)
 
     return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
+      window.removeEventListener("resize", handleResize)
+    }
+  }, [])
 
-  return size;
+  return size
 }
 
 export function useIsMobile() {
-  const [ isMobile, setIsMobile ] = useState(false);
-  const size = useWindowSize();
+  const [ isMobile, setIsMobile ] = useState(false)
+  const size = useWindowSize()
 
   useEffect(() => {
-    setIsMobile(size.width < 768);
-  }, [size.width]);
+    setIsMobile(size.width < 768)
+  }, [size.width])
 
-  return isMobile;
+  return isMobile
+}
+
+export function useSeatEvent(cb, { selector = `.${SEAT_CLASS}` } = {}) {
+  const isMobile = useIsMobile()
+  return useCallback(event => {
+    const el = event.target
+    if (!el.matches(selector)) return
+    const seat = svgSeat(el)
+    cb({ event, el, seat, isMobile })
+  }, [cb, isMobile])
 }

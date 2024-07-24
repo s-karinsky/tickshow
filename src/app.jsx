@@ -37,18 +37,16 @@ import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { useControls } from "react-zoom-pan-pinch";
 import { useSelector } from "react-redux";
 import arrow from "./images/Frame 6282.svg";
-import { useCategoryCounters, useLocalStorage } from "./utils/hooks.js";
+import { useCategoryCounters, useIsMobile, useLocalStorage } from "./utils/hooks.js";
 import { isEqualSeats } from "./tools/utils.js";
 import { useParams } from "react-router-dom";
 import SvgScheme from "./components/svg-scheme/svg-scheme.jsx";
 import SvgSchemeSeatPreview from "./components/svg-scheme/svg-scheme-preview.jsx";
-import { CURRENCY_SYMBOL_MAP } from "./const.js";
-import { InputNumber } from "antd";
+import { CURRENCY_SYMBOL_MAP, MAX_SCALE } from "./const.js";
 import TicketsCounter from "./components/tickets-counter/tickets-counter.jsx";
+import Button from "./components/button/button.jsx";
 
 const CartModal = lazy(() => import("./utility"));
-
-const readyAll = ['loadedScheme', 'loadedTickets', 'mountedScheme']
 
 export const App = () => {
   const schemeRef = useRef(null)
@@ -62,11 +60,12 @@ export const App = () => {
   const [stadiumData, setStadiumData] = useState({})
   const [stadiumDataReceived, setStadiumDataReceived] = useState(false)
   
+  const isMobile = useIsMobile()
   const [selected, setSelected] = useState(0)
   const [open, setOpen] = useState(false)
   const [openB, setOpenB] = useState(false)
   const [cartModal, setCartModal] = useState(false)
-  const [mobile, setMobile] = useState(false)
+
   const [zoom, setZoom] = useState(0)
   let [categoriesF, setCategoriesF] = useState([])
   const discount = useSelector((state) => state.discount)
@@ -90,7 +89,7 @@ export const App = () => {
       if (stageElement) {
         const c_w = stageElement.clientWidth;
         const s = calculateScale(c_w, c_w);
-        setMobile(s);
+        // setMobile(s);
       }
     };
     updateZoom();
@@ -379,6 +378,8 @@ export const App = () => {
     makeUpCategoriesF();
   }, [tickets, stadiumData])
 
+  const [touchDownPos, setTouchDownPos ] = useState()
+
 
   const nonSeats = useMemo(() => {
     if (!stadiumData || !stadiumData["scheme"]) return
@@ -413,34 +414,44 @@ export const App = () => {
         doubleClick={{
           disabled: true
         }}
+        panning={{
+          excluded: ['scheme-overlay']
+          // lockAxisY: isMobile
+        }}
         onInit={ref => {
           ref.zoomToElement(schemeRef.current, undefined, 0)
           initialZoom.current = ref.state.scale
         }}
         onTransformed={({ state }) => {
-          setShowSchemeOverlay(state.scale < 1.5)
-          if (state.scale !== zoom) setZoom(state.scale )
+          setShowSchemeOverlay(state.scale < 1.3)
+          if (Math.abs(state.scale - zoom) > 0.01) setZoom(state.scale)
         }}
-        onPanningStart={({ instance }) => {
+        onPanningStart={({ instance, state }) => {
+          setTouchDownPos({ x: state.positionX, y: state.positionY })
           const el = instance.contentComponent.firstChild
           el.style.cursor = 'grabbing'
         }}
-        onPanningStop={({ instance }, e) => {
-          e.preventDefault()
+        onPanningStop={({ instance, state }, e) => {
+          const pos = { x: state.positionX, y: state.positionY }
+          if (touchDownPos && (Math.abs(pos.x - touchDownPos.x) > 5 || Math.abs(pos.y - touchDownPos.y) > 5)) {
+            e.preventDefault()
+            setTouchDownPos(null)
+          }
           const el = instance.contentComponent.firstChild
           el.style.cursor = 'grab'
         }}
       >
-        {({ zoomToElement, ...rest }) => (
+        {({ zoomToElement, setTransform }) => (
           <div className={cn('df', 'aic', 'jcc', 'chairs-container')}>
             <Controls />
             <TransformComponent>
               {nonSeats.map((category) => (
                 <TicketsCounter
+                  key={category}
+                  name={category}
                   value={cart.filter(x => x.section === category).length}
                   count={tickets.filter(x => x.section === category).length}
                   onChange={toggleInCart}
-                  name={category}
                 />
               ))}
               <div className="ccc" style={{ cursor: 'grab' }}>
@@ -448,7 +459,18 @@ export const App = () => {
                   className="df fdc aic gap10 chairs-body"
                   style={{ position: 'relative' }}
                 >
-                  {showSchemeOverlay && <div className="scheme-overlay" onClick={() => zoomToElement(schemeRef.current)} />}
+                  {showSchemeOverlay && <div
+                    className="scheme-overlay"
+                    onClick={() => !isMobile && zoomToElement(schemeRef.current)}
+                    onTouchEnd={e => {
+                      const diffScale = MAX_SCALE - initialZoom.current
+                      const rect = e.target.getBoundingClientRect()
+                      const touchLeft = e.changedTouches[0]?.clientX
+                      const touchTop = e.changedTouches[0]?.clientY
+                      const [x, y] = [rect.x - touchLeft, rect.y - touchTop].map(v => v * diffScale)
+                      setTransform(x, y - window.innerHeight, MAX_SCALE)
+                    }}
+                  />}
                   <SvgScheme
                     ref={schemeRef}
                     src={stadiumData["scheme"]}
@@ -462,8 +484,9 @@ export const App = () => {
                         className={s.preview}
                         categories={stadiumData["categories"]}
                         tickets={tickets}
-                        mobile={mobile}
                         cart={cart}
+                        mobile={isMobile}
+                        toggleInCart={toggleInCart}
                         {...data}
                       />
                     )}
@@ -515,12 +538,12 @@ export const App = () => {
               <i
                 className="df aic fs12 gap5"
                 style={{ color: "#f8f5ec4d", fontWeight: "bold" }}>
-                {!mobile && "from"}
+                {!isMobile && "from"}
                 <b className="fs14" style={{ color: "#F8F5EC" }}>
                   {totalC_V?.min} €
                 </b>{" "}
-                {!mobile && "to"}
-                {mobile && <b>-</b>}
+                {!isMobile && "to"}
+                {isMobile && <b>-</b>}
                 <b className="fs14" style={{ color: "#F8F5EC" }}>
                   {totalC_V?.max} €
                 </b>
@@ -547,72 +570,78 @@ export const App = () => {
               </p>
             )}
           </div>
-          <div className={`w100 df fdc component-body ${!open && "close"}`}>
-            {categoriesF.map(
-              (category, ind) =>
-                categoriesF[selected].id !== category.id && (
-                  <label
-                    key={category.id}
-                    className={`w100 df aic jcsb gap5 component-option ${category?.type === "all" && "all"}`}
-                    onClick={() => {
-                      actionCtgy(ind);
-                      setSelected(ind);
-                    }}
-                    onMouseEnter={() => actionCtgy(ind)}
-                    onMouseLeave={() => actionCtgy(selected)}>
-                    <p className="df aife gap5 fs14">
-                      <span
-                        className="df aic gap5 drop-down-title option"
-                        style={{ textTransform: "uppercase" }}>
-                        <div
-                          dangerouslySetInnerHTML={{ __html: category?.img }}
-                        />
-                        {category.name}{" "}
-                      </span>
+          <div
+            className={cn('catListWrapper', {
+              'open': open
+            })}
+          >
+            <div className={cn('w100', 'df', 'fdc', 'component-body')}>
+              {categoriesF.map(
+                (category, ind) =>
+                  categoriesF[selected].id !== category.id && (
+                    <label
+                      key={category.id}
+                      className={`w100 df aic jcsb gap5 component-option ${category?.type === "all" && "all"}`}
+                      onClick={() => {
+                        actionCtgy(ind);
+                        setSelected(ind);
+                      }}
+                      onMouseEnter={() => actionCtgy(ind)}
+                      onMouseLeave={() => actionCtgy(selected)}>
+                      <p className="df aife gap5 fs14">
+                        <span
+                          className="df aic gap5 drop-down-title option"
+                          style={{ textTransform: "uppercase" }}>
+                          <div
+                            dangerouslySetInnerHTML={{ __html: category?.img }}
+                          />
+                          {category.name}{" "}
+                        </span>
+                        <i
+                          className="fs12"
+                          style={{ color: "#f8f5ec4d", fontWeight: "bold" }}>
+                          {category.seats} left
+                        </i>
+                      </p>
                       <i
-                        className="fs12"
+                        className="df aife gap10"
                         style={{ color: "#f8f5ec4d", fontWeight: "bold" }}>
-                        {category.seats} left
+                        {category?.early_bird && (
+                          <img src={birds} alt="birds" className="early-birds" />
+                        )}
+                        {category?.old_price && (
+                          <del className="fs12">
+                            {category.old_price}{" "}
+                            {CURRENCY_SYMBOL_MAP[category?.currency]}
+                          </del>
+                        )}
+                        <b
+                          style={{
+                            color: "#f8f5ec80",
+                            width: "60px",
+                            textAlign: "end",
+                          }}
+                          className="fs14">
+                          {category.price}{" "}
+                          {category.price &&
+                            CURRENCY_SYMBOL_MAP[category?.currency]}
+                        </b>
                       </i>
-                    </p>
-                    <i
-                      className="df aife gap10"
-                      style={{ color: "#f8f5ec4d", fontWeight: "bold" }}>
-                      {category?.early_bird && (
-                        <img src={birds} alt="birds" className="early-birds" />
-                      )}
-                      {category?.old_price && (
-                        <del className="fs12">
-                          {category.old_price}{" "}
-                          {CURRENCY_SYMBOL_MAP[category?.currency]}
-                        </del>
-                      )}
-                      <b
-                        style={{
-                          color: "#f8f5ec80",
-                          width: "60px",
-                          textAlign: "end",
-                        }}
-                        className="fs14">
-                        {category.price}{" "}
-                        {category.price &&
-                          CURRENCY_SYMBOL_MAP[category?.currency]}
-                      </b>
-                    </i>
-                  </label>
-                )
-            )}
-            {mobile && (
-              <span
-                className="df aic fs18 select-arrow"
-                style={{ color: "#f8f5ec4d" }}
-                onClick={() => setOpen(!open)}>
-                {open ? <IoIosArrowUp /> : <IoIosArrowDown />}
-              </span>
-            )}
+                    </label>
+                  )
+              )}
+              {isMobile && (
+                <span
+                  className="df aic fs18 select-arrow"
+                  style={{ color: "#f8f5ec4d" }}
+                  onClick={() => setOpen(!open)}>
+                  {open ? <IoIosArrowUp /> : <IoIosArrowDown />}
+                </span>
+              )}
+            </div>
           </div>
         </div>  
-        {!mobile && (
+        {!isMobile && (
           <span
             className="df aic jcc fs18 cp mobile-arrow"
             style={{ color: "#f8f5ec4d" }}
@@ -622,7 +651,7 @@ export const App = () => {
         )}
       </div>
       <div
-        className={`df fdc basket-box ${mobile && openB ? "open" : ""}`}
+        className={`df fdc basket-box ${isMobile && openB ? "open" : ""}`}
         onClick={(e) => {
           if (e.target.tagName !== "BUTTON") {
             setOpenB(true);
@@ -793,14 +822,13 @@ export const App = () => {
               </i>
             </p>
           </div>
-          <button
-            className={`w100 fs16 basket-btn ${getUniqueCategory(cart)?.length ? "active" : ""}`}
-            id="buy-ticket"
-            onClick={() => {
-              if (getUniqueCategory(cart).length) setCartModal(true);
-            }}>
+          <Button
+            color='bordered'
+            size='large'
+            disabled={!getUniqueCategory(cart)?.length}
+          >
             BUY TICKET
-          </button>
+          </Button>
         </div>
         <label
           className="df aic jcc gap5 fs12 cp basket-arrow"

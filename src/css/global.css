@@ -32,12 +32,11 @@ body {
 body {
   background-color: #212121;
   color: #fff;
-  touch-action: none;
 }
 
 #root {
   width: 100%;
-  height: 100dvh;
+  min-height: 100dvh;
 }
 
 a {

@@ -251,6 +251,9 @@
   padding: 0 2%;
 }
 
+.price-info {
+  margin-bottom: 20px;
+}
 .price-info > p {
   padding: 0 3%;
 }
