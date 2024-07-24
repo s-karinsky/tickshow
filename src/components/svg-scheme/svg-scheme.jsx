@@ -4,7 +4,7 @@ import cn from 'classnames'
 import SvgSchemeTooltop from "./svg-scheme-tooltip"
 import { CHECK_PATH_ID, SEAT_CLASS, SEAT_CLASS_ACTIVE, CATEGORY_CHECK_PATH_ID, SEAT_CLASS_SELECTED } from "../../const"
 import { addDef, createCheckElement, svgSeat } from "../../utils/dom-scheme"
-import { useSeatEvent } from "../../utils/hooks"
+import { useIsMobile, useSeatEvent } from "../../utils/hooks"
 import s from './svg-scheme.module.scss'
 
 const SvgScheme = forwardRef(
@@ -26,16 +26,17 @@ const SvgScheme = forwardRef(
     const innerRef = useRef(null)
     useImperativeHandle(ref, () => innerRef.current, [])
     const [ tooltipSeat, setTooltipSeat ] = useState()
+    const isMobile = useIsMobile()
 
     useEffect(() => {
       const selected = innerRef.current.querySelector(`.${SEAT_CLASS_SELECTED}`)
       if (selected && tooltipSeat !== selected) {
         selected.classList.remove(SEAT_CLASS_SELECTED)
       }
-      if (tooltipSeat && !tooltipSeat.classList.contains(SEAT_CLASS_SELECTED)) {
+      if (isMobile && tooltipSeat && !tooltipSeat.classList.contains(SEAT_CLASS_SELECTED)) {
         tooltipSeat.classList.add(SEAT_CLASS_SELECTED)
       }
-    }, [tooltipSeat])
+    }, [tooltipSeat, isMobile])
 
     const handleClick = useSeatEvent(({ el, seat, isMobile }) => {
       if (seat.disabled()) return false
