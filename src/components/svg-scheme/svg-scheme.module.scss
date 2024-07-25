@@ -10,7 +10,7 @@
     &:has(:global(.svg-seat_selected)) *:not(:has(> *)):not(:global(.svg-seat_selected)) {
       transition-duration: 0.3s;
       transition-timing-function: ease-in-out;
-      transition-property: filter, opacity;
+      transition-property: opacity;
       filter: blur(2px);
       opacity: 0.5;
     }
@@ -106,7 +106,7 @@
 @keyframes slideUp {
   0% {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(10px);
   }
   100% {
     opacity: 1;

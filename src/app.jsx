@@ -244,7 +244,7 @@ export const App = () => {
             </button>
           </div>
         )}
-        {categoriesF[selected].type !== "all" && (
+        {categoriesF[selected].type !== "all" && !isMobile && (
           <span
             className="df aic jcc fs12 cp bottom-back-btn"
             onClick={(e) => {
@@ -630,16 +630,16 @@ export const App = () => {
                     </label>
                   )
               )}
-              {isMobile && (
-                <span
-                  className="df aic fs18 select-arrow"
-                  style={{ color: "#f8f5ec4d" }}
-                  onClick={() => setOpen(!open)}>
-                  {open ? <IoIosArrowUp /> : <IoIosArrowDown />}
-                </span>
-              )}
             </div>
           </div>
+          {isMobile && (
+            <div
+              className="df aic fs18 select-arrow"
+              style={{ color: "#f8f5ec4d" }}
+              onClick={() => setOpen(!open)}>
+              {open ? <IoIosArrowUp /> : <IoIosArrowDown />}
+            </div>
+          )}
         </div>  
         {!isMobile && (
           <span
@@ -825,6 +825,7 @@ export const App = () => {
           <Button
             color='bordered'
             size='large'
+            className={'buy-btn'}
             disabled={!getUniqueCategory(cart)?.length}
           >
             BUY TICKET

@@ -308,10 +308,20 @@
   .select-component {
     border: none;
     overflow: visible;
+    min-height: 60px;
+    transition: ease .3 all;
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+  }
+
+  .select-component:has(.shadow-none) {
+    min-height: 300px;
   }
 
   .component-label {
-    height: 60px;
+    height: 40px;
     padding: 1% 5%;
     border: none;
     border-radius: 0;
@@ -329,9 +339,6 @@
   }
 
   .catListWrapper {
-    position: absolute;
-    left: 0;
-    top: 50px;
     border: none;
     border-radius: 0;
     box-shadow: 0px 8px 10px 0px #2121214d;

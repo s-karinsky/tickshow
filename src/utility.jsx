@@ -16,6 +16,7 @@ import { acTimer } from "./context/timer";
 import { acDiscount } from "./context/action.js";
 import { BsCheckLg } from "react-icons/bs";
 import { FiArrowRight } from "react-icons/fi";
+import Button from "./components/button/button.jsx";
 
 const CartModal = ({ setOpen, open, ScheduleFee, categoriesF }) => {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
@@ -335,19 +336,13 @@ export const PromoCode = () => {
               value={code}
               onChange={(e) => setCode(e.target.value)}
           />
-          <button
-              className={`df aic jcc cp ${
-                  (status === 0 || code?.length === 0) && "passive"
-              } ${status === 1 && "success"}`}
-              disabled={status === 1 || code?.length === 0}>
-            {loading ? (
-                <BiLoaderCircle className="svg-loader fs16" />
-            ) : status === 1 ? (
-                <BsCheckLg className="fs18" />
-            ) : (
-                <FiArrowRight className="fs16" />
-            )}
-          </button>
+          <Button
+            disabled={status === 1 || code?.length === 0}
+          >
+            {loading ? <BiLoaderCircle className="svg-loader fs16" /> :
+              (status === 1 ? <BsCheckLg className="fs18" /> : <FiArrowRight className="fs16" />)
+            }
+          </Button>
         </form>
         {status === 0 && (
             <p className="fs10" style={{ color: "#F66969" }}>
