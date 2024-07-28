@@ -2,9 +2,10 @@
   --color-gray-2: #F8F5EC;
   --color-gray-9: #2C2C2B;
 
-  --sidebar-width: 450px;
+  --sidebar-width: 540px;
   --sidebar-padding-x: 25px;
   --sidebar-padding-y: 25px;
   
   --layout-radius: 12px;
+  --blocks-radius: 16px;
 }

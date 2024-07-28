@@ -48,10 +48,12 @@
     width: 100%;
     text-align: center;
     opacity: 0.5;
-    transition: ease .3s opacity;
+    transform: rotate(0);
+    transition: ease .3s;
+    transition-property: opacity, transform;
 
     &_opened {
-      transform: rotate(180deg);
+      transform: rotate(-180deg);
     }
   
     &:hover {
@@ -61,7 +63,6 @@
     svg {
       width: 13px;
       height: 6px;
-      transform: rotate(0);
       transition: ease .3s transform;
     }
   }
