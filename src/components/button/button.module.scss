@@ -84,6 +84,18 @@
         outline: 1px solid #ffffff11;
       }
     }
+
+    &_ghost {
+      --color: ;
+      --shadow: none;
+      --bg-color: none;
+
+      &:not(:disabled):active,
+      &:not(:disabled):hover,
+      &:not(:disabled):focus {
+        --shadow: none;
+      }
+    }
   }
 
   &_size {

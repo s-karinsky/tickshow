@@ -14,16 +14,16 @@ export function getFormData(data, formData = new FormData(), parentKey) {
 }
 
 export const renameKeys = (keysMap, obj, skipOtherKeys) =>
-    Object.keys(obj).reduce(
-        (acc, key) => {
-          if (skipOtherKeys && !keysMap[key]) return acc
-          return {
-            ...acc,
-            ...{ [keysMap[key] || key]: obj[key] }
-          }
-        },
-        {}
-    )
+  Object.keys(obj).reduce(
+    (acc, key) => {
+      if (skipOtherKeys && !keysMap[key]) return acc
+      return {
+        ...acc,
+        ...{ [keysMap[key] || key]: obj[key] }
+      }
+    },
+    {}
+  )
 
 export const pipe = (...fns) => x => fns.filter(f => typeof f === 'function').reduce((v, f) => typeof f === 'function' ? f(v) : v, x)
 
@@ -92,7 +92,7 @@ export const indexBy = (key, obj) => obj.reduce((acc, item) => ({ ...acc, [item[
 export const isEmptyObject = val => typeof val === 'object' && Object.keys(val).length === 0
 
 export const combineBy = (key, valuesMap) => Object.entries(valuesMap).reduce((acc, [name, value]) => {
-  Array.isArray(value) ? 
+  Array.isArray(value) ?
     value.forEach((item) => {
       acc[item[key]] = { ...acc[item[key]], [name]: (acc[name] || 0) + 1 }
     }) :
@@ -116,3 +116,9 @@ export const getDiff = (obj1, obj2, comparator) => {
     [key]: obj1[key] || obj2[key]
   }), res)
 }
+
+export const groupBy = (array, key) => array.reduce((acc, item) => {
+  const group = item[key]
+  acc[group] = (acc[group] || []).concat(item)
+  return acc
+}, {})
