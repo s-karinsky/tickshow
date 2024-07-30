@@ -6,8 +6,6 @@ import SvgSchemeTooltop from "./svg-scheme-tooltip"
 import { CHECK_PATH_ID, SEAT_CLASS, SEAT_CLASS_ACTIVE, CATEGORY_CHECK_PATH_ID, SEAT_CLASS_SELECTED } from "../../const"
 import { addDef, createCheckElement, svgSeat } from "../../utils/dom-scheme"
 import { useIsMobile, useSeatEvent } from "../../utils/hooks"
-import { useSpring, animated } from "@react-spring/web"
-import { useGesture } from "@use-gesture/react"
 import s from './svg-scheme.module.scss'
 
 const SvgScheme = forwardRef(
@@ -46,47 +44,6 @@ const SvgScheme = forwardRef(
     const svgEl = useMemo(() =>
       innerRef.current && innerRef.current.querySelector('svg'),
     [innerRef])
-
-    useGesture({
-      // onHover: ({ active, event }) => console.log('hover', event, active),
-      // onMove: ({ event }) => console.log('move', event),
-      onDrag: ({ pinching, cancel, offset: [x, y], ...rest }) => {
-        console.log(svgEl);
-        if (pinching) return cancel()
-        console.log('drag', x, y, pinching, rest);
-        /// setStyle(style => ({ ...style, x, y }))
-        svgEl.setAttribute('transform', `translate3d(${x}px, ${y}px, 0)`)
-      },
-      onPinch: ({ origin: [ox, oy], first, movement: [ms], offset: [s, a], memo }) => {
-        if (first) {
-          const { width, height, x, y } = svgEl.getBoundingClientRect()
-          const tx = ox - (x + width / 2)
-          const ty = oy - (y + height / 2)
-          memo = [0, 0, tx, ty]
-        }
-        console.log('pinch', first, ox, oy, ms, s, a, memo);
-        const x = memo[0] - (ms - 1) * memo[2]
-        const y = memo[1] - (ms - 1) * memo[3]
-        const width = 800 * s
-        const height = 696 * s
-        svgEl.style.transform = `translate3d(${x}px, ${y}px, 0)`
-        svgEl.style.width = `${width}px`
-        svgEl.style.height = `${height}px`
-        return memo
-      },
-    },
-    {
-      target: svgEl,
-      drag: {
-        delay: 50,
-        filterTaps: true,
-        from: () => [0, 0],
-        // bounds: innerRef
-      },
-      pinch: {
-        scaleBounds: { min: 0.5, max: 2 }
-      },
-    })
 
     const handleClick = useSeatEvent(({ el, seat, isMobile }) => {
       if (seat.disabled()) return false

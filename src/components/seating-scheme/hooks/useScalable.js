@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
+import Hammer from "hammerjs"
 
-export function useScalable({ fitToScreen: fit, min = 1, max = 4, step = 0.5 } = {}) {
+export function useScalable({ fitToScreen: fit, min = 0.5, max = 4, step = 0.5 } = {}) {
   const [scale, setScale] = useState(1)
   const [rect, setRect] = useState({ width: 0, height: 0 })
   const [node, setNode] = useState(null)
@@ -10,7 +11,7 @@ export function useScalable({ fitToScreen: fit, min = 1, max = 4, step = 0.5 } =
   }, [])
   
   const handleWheel = useCallback((event) => {
-    if (!event.ctrlKey) return
+    if (!event.ctrlKey && event.type !== 'pinch') return
     event.preventDefault()
     const { deltaY } = event
     setScale((prev) => {
@@ -24,6 +25,14 @@ export function useScalable({ fitToScreen: fit, min = 1, max = 4, step = 0.5 } =
     const { width, height } = node.getBoundingClientRect()
     setRect({ width, height })
     node.addEventListener('wheel', handleWheel)
+    
+    const hammer = new Hammer(node, {
+      domEvents: true
+    });
+
+    hammer.get('pinch').set({ enable: true})
+
+    Hammer(node).on('pinch', handleWheel)
     return () => node.removeEventListener('wheel', handleWheel)
   }, [node])
 
