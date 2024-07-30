@@ -654,3 +654,20 @@
   transform: translateX(-50%);
   opacity: 1;
 }
+
+.only-mobile {
+  position: fixed;
+  left: -9999px;
+  top: -9999px;
+}
+
+@media (max-width: 1023px) {
+  .only-mobile {
+    position: static;
+  }
+  .only-desktop {
+    position: fixed;
+    left: -9999px;
+    top: -9999px;
+  }
+}

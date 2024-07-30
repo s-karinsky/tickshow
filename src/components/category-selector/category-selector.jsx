@@ -58,8 +58,9 @@ export default function SelectCategory({
           <span className={bem('price')}>
             {!!price && (
               Array.isArray(price) ? <>
-                <span>from</span> {price[0]}{`${getCurrency(option)} `}
-                <span>to</span> {price[1]}{getCurrency(option)}
+                <span className='only-desktop'>from</span> {price[0]}{`${getCurrency(option)} `}
+                <span className={classNames(bem('price-del'), 'only-mobile')}>–</span>
+                <span className='only-desktop'>to</span> {price[1]}{getCurrency(option)}
               </> :
               `${price}${getCurrency(option)}`
             )}

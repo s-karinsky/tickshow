@@ -21,8 +21,9 @@ const bem = cn('event')
 
 export default function Event() {
   const { cart, categories, config, scheme, tickets } = useOutletContext()
+  const isMobile = useIsMobile()
   const [ selectValue, setSelectValue ] = useState(null)
-  const [ selectOpened, setSelectOpened ] = useState(true)
+  const [ selectOpened, setSelectOpened ] = useState(isMobile)
 
   return (
     <div className={bem('layout')}>
@@ -30,6 +31,9 @@ export default function Event() {
         <SeatingScheme
           src={scheme}
           categories={categories}
+          categoryValue={selectValue}
+          cart={cart}
+          tickets={tickets}
         />
         {/* <SvgScheme
           src={scheme}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
-import { SEAT_CLASS } from '../const'
+import debounce from './debounce'
 import { svgSeat } from './dom-scheme'
+import { SEAT_CLASS } from '../const'
 
 export function useLocalStorage(key, defaultValue) {
   const serialize = () => {
@@ -59,7 +60,7 @@ export function useIsMobile() {
   const size = useWindowSize()
 
   useEffect(() => {
-    setIsMobile(size.width < 768)
+    setIsMobile(size.width < 1024)
   }, [size.width])
 
   return isMobile
@@ -73,4 +74,47 @@ export function useSeatEvent(cb, { selector = `.${SEAT_CLASS}` } = {}) {
     const seat = svgSeat(el)
     cb({ event, el, seat, isMobile })
   }, [cb, isMobile])
+}
+
+export function useDimensions(liveMeasure = true, delay = 250, initialDimensions = {}, effectDeps = []) {
+  const [dimensions, setDimensions] = useState(initialDimensions)
+  const [node, setNode] = useState(null)
+
+  const ref = useCallback((newNode) => {
+    setNode(newNode)
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!node) return
+
+    const measure = () => {
+      window.requestAnimationFrame(() => {
+        const newDimensions = node.getBoundingClientRect()
+        setDimensions(newDimensions)
+      })
+    }
+    measure()
+
+    if (liveMeasure) {
+      const debounceMeasure = debounce(measure, delay)
+      if ('ResizeObserver' in window) {
+        const resizeObserver = new ResizeObserver(debounceMeasure)
+        resizeObserver.observe(node)
+        window.addEventListener('scroll', debounceMeasure)
+        return () => {
+          resizeObserver.disconnect()
+          window.removeEventListener('scroll', debounceMeasure)
+        }
+      }
+      window.addEventListener('resize', debounceMeasure)
+      window.addEventListener('scroll', debounceMeasure)
+
+      return () => {
+        window.removeEventListener('resize', debounceMeasure)
+        window.removeEventListener('scroll', debounceMeasure)
+      }
+    }
+  }, [node, liveMeasure, ...effectDeps])
+
+  return [ref, dimensions, node]
 }

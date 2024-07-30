@@ -10,6 +10,10 @@
   position: relative;
   transition: ease-in-out .3s height;
 
+  @media (max-width: 1023px) {
+    border: none;
+  }
+
   &-option {
     position: absolute;
     left: 0;
@@ -84,6 +88,11 @@
     span {
       font-size: 12px;
       color: #f8f5ec4d;
+    }
+
+    &-del {
+      font-size: 14px !important;
+      color: white !important;
     }
   }
 }
