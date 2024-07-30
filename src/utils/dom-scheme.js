@@ -143,7 +143,7 @@ export const svgSeat = (el, details = {}) => {
     // Сравнение с объектом. Места считаются равными, если совпадает ряд и место,
     // а при их отсутствии если совпадает категория
     isEqual: item => {
-      const cat = item.section || item.category
+      const cat = item.category
       if (seat.isMultiple()) {
         return seat.get('category') === cat
       }

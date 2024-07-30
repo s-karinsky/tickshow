@@ -1,7 +1,16 @@
 .svgContainer {
+  touch-action: none;
+  will-change: transform;
+  cursor: grab;
+  user-select: none;
+  overflow: hidden;
+
   svg {
-    width: 100%;
+    width: auto;
     height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    pointer-events: none;
 
     * {
       font-family: 'Articulat CF', sans-serif;
@@ -130,7 +139,10 @@
 }
 
 .scheme {
-  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 
 .selected {

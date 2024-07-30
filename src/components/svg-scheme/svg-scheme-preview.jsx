@@ -1,7 +1,6 @@
 import cn from 'classnames'
-import { MdOutlineCheckCircle } from 'react-icons/md';
-import { isEqualSeats } from '../../tools/utils';
-import { CURRENCY_SYMBOL_MAP } from '../../const';
+import { isEqualSeats } from 'utils';
+import { CURRENCY_SYMBOL_MAP } from 'const';
 import s from './svg-scheme.module.scss'
 
 export default function SvgSchemeSeatPreview({
@@ -73,7 +72,7 @@ export default function SvgSchemeSeatPreview({
       >
         {isInCart ? (
           <>
-            <MdOutlineCheckCircle style={{ marginRight: "3px" }} />
+            {/* <MdOutlineCheckCircle style={{ marginRight: "3px" }} /> */}
             <span>Selected</span>
           </>
         ) : (

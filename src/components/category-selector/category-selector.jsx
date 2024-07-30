@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { cn } from '@bem-react/classname'
+import classNames from 'classnames'
 import { CURRENCY_SYMBOL_MAP } from 'const'
 import './category-selector.scss'
 
@@ -10,9 +11,11 @@ export default function SelectCategory({
   options = [],
   valueKey = 'value',
   value,
-  isOpen,
-  onClick,
+  opened,
   onChange,
+  className,
+  style,
+  ...rest
 }) {
   const getCurrency = useCallback((item) => {
     const def = CURRENCY_SYMBOL_MAP[defaultCurrency] || defaultCurrency
@@ -23,9 +26,9 @@ export default function SelectCategory({
 
   return (
     <ul
-      className={bem({ opened: isOpen })}
-      style={{ height: isOpen ? (options.length - 1) * 24 + 46 : 30 }}
-      onClick={onClick}
+      className={classNames(bem({ opened }), { [className]: className })}
+      style={{ ...style, height: opened ? (options.length - 1) * 24 + 46 : 30 }}
+      {...rest}
     >
       {options.map(({ price, ...option }, i) => (
         <li
@@ -50,7 +53,7 @@ export default function SelectCategory({
             }
             <span className={bem('label')}>{option.label}</span>
           </span>
-          <span className={bem('count')}>{!!option.ticketsCount && `${option.ticketsCount} left`}</span>
+          <span className={bem('count')}>{!!option.count && `${option.count} left`}</span>
           {!!option.sale && <span className={bem('old_price')}>{option.sale}</span>}
           <span className={bem('price')}>
             {!!price && (

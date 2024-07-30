@@ -101,7 +101,7 @@ export const combineBy = (key, valuesMap) => Object.entries(valuesMap).reduce((a
   return acc
 }, {})
 
-export const filterSeats = arr => arr.filter(item => item.section && (item.row === '-1' || item.row === '0'))
+export const filterSeats = arr => arr.filter(item => item.category && (item.row === '-1' || item.row === '0'))
 
 export const getDiff = (obj1, obj2, comparator) => {
   const keys1 = Object.keys(obj1)

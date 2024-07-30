@@ -1,51 +1,59 @@
 import { useCallback, useState, useEffect, useMemo, Suspense, lazy, useRef } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import birds from "images/EARLY BIRDS.svg";
-import arrow from "images/Frame 6282.svg";
-import { useIsMobile, useLocalStorage } from "utils/hooks";
 import { isEqualSeats } from "utils";
-import SvgScheme from "components/svg-scheme";
-import SvgSchemeSeatPreview from "components/svg-scheme";
-import { CURRENCY_SYMBOL_MAP, MAX_SCALE } from "const";
-import TicketsCounter from "components/tickets-counter";
-import Button from "components/button";
 
 import { useQuery } from "@tanstack/react-query";
-import { useCart } from "api/cart";
 import { getEventQuery } from "api/event";
 
 import classNames from "classnames"
 import { cn } from '@bem-react/classname'
-import { ReactComponent as IconArrow } from 'icons/arrow.svg'
+import Button from "components/button";
+import SvgScheme from "components/svg-scheme";
+import TicketsCounter from "components/tickets-counter";
 import CategorySelector from "components/category-selector";
+import { useIsMobile, useLocalStorage } from "utils/hooks";
+import { ReactComponent as IconArrow } from 'icons/arrow.svg'
 import './event.scss'
+import SeatingScheme from "components/seating-scheme";
 
 const bem = cn('event')
 
 export default function Event() {
-  const { categories, config } = useOutletContext()
-  const [ filterCategory, setFilterCategory ] = useState(null)
-  const [ categorySelectOpened, setCategorySelectOpened ] = useState(true)
+  const { cart, categories, config, scheme, tickets } = useOutletContext()
+  const [ selectValue, setSelectValue ] = useState(null)
+  const [ selectOpened, setSelectOpened ] = useState(true)
 
   return (
     <div className={bem('layout')}>
       <div className={bem('scheme')}>
-
+        <SeatingScheme
+          src={scheme}
+          categories={categories}
+        />
+        {/* <SvgScheme
+          src={scheme}
+          tickets={tickets}
+          currentCategory={selectValue}
+          cart={cart}
+        /> */}
       </div>
       <div className={classNames(bem('sidebar'), bem('categories'))}>
         <h2 className={bem('title')}>select a category:</h2>
         <CategorySelector
-          value={filterCategory}
-          options={categories}
           defaultCurrency={config.currency}
-          isOpen={categorySelectOpened}
-          onClick={e => setCategorySelectOpened(!categorySelectOpened)}
-          onChange={setFilterCategory}
+          value={selectValue}
+          options={categories}
+          opened={selectOpened}
+          onChange={(val) => {
+            if (selectOpened) setSelectValue(val)
+              setSelectOpened(!selectOpened)
+          }}
         />
         <Button
           color='ghost'
-          className={bem('toggle-cat', { opened: categorySelectOpened })}
-          onClick={() => setCategorySelectOpened(!categorySelectOpened)}
+          className={bem('toggle-cat', { opened: selectOpened })}
+          onClick={() => setSelectOpened(!selectOpened)}
         >
           <IconArrow />
         </Button>
@@ -54,7 +62,7 @@ export default function Event() {
       </div>
     </div>
   )
-  // const schemeRef = useRef(null)
+  // 
 
   // const [stadiumData, setStadiumData] = useState({})
   // const [stadiumDataReceived, setStadiumDataReceived] = useState(false)

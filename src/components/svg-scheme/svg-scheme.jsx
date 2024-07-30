@@ -1,10 +1,13 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import cn from 'classnames'
+import SvgSchemeSeatPreview from "./svg-scheme-preview"
 import SvgSchemeTooltop from "./svg-scheme-tooltip"
 import { CHECK_PATH_ID, SEAT_CLASS, SEAT_CLASS_ACTIVE, CATEGORY_CHECK_PATH_ID, SEAT_CLASS_SELECTED } from "../../const"
 import { addDef, createCheckElement, svgSeat } from "../../utils/dom-scheme"
 import { useIsMobile, useSeatEvent } from "../../utils/hooks"
+import { useSpring, animated } from "@react-spring/web"
+import { useGesture } from "@use-gesture/react"
 import s from './svg-scheme.module.scss'
 
 const SvgScheme = forwardRef(
@@ -15,7 +18,7 @@ const SvgScheme = forwardRef(
       tickets,
       cart,
       currentCategory = "all",
-      tooltip,
+      tooltip = props => (<SvgSchemeSeatPreview {...props} />),
       onSeatTap,
       onSeatClick,
       onSeatOver,
@@ -23,6 +26,7 @@ const SvgScheme = forwardRef(
     },
     ref
   ) => {
+    const outerRef = useRef(null)
     const innerRef = useRef(null)
     useImperativeHandle(ref, () => innerRef.current, [])
     const [ tooltipSeat, setTooltipSeat ] = useState()
@@ -37,6 +41,52 @@ const SvgScheme = forwardRef(
         tooltipSeat.classList.add(SEAT_CLASS_SELECTED)
       }
     }, [tooltipSeat, isMobile])
+    const [ style, setStyle ] = useState({ s: 1, x: 0, y: 0 })
+
+    const svgEl = useMemo(() =>
+      innerRef.current && innerRef.current.querySelector('svg'),
+    [innerRef])
+
+    useGesture({
+      // onHover: ({ active, event }) => console.log('hover', event, active),
+      // onMove: ({ event }) => console.log('move', event),
+      onDrag: ({ pinching, cancel, offset: [x, y], ...rest }) => {
+        console.log(svgEl);
+        if (pinching) return cancel()
+        console.log('drag', x, y, pinching, rest);
+        /// setStyle(style => ({ ...style, x, y }))
+        svgEl.setAttribute('transform', `translate3d(${x}px, ${y}px, 0)`)
+      },
+      onPinch: ({ origin: [ox, oy], first, movement: [ms], offset: [s, a], memo }) => {
+        if (first) {
+          const { width, height, x, y } = svgEl.getBoundingClientRect()
+          const tx = ox - (x + width / 2)
+          const ty = oy - (y + height / 2)
+          memo = [0, 0, tx, ty]
+        }
+        console.log('pinch', first, ox, oy, ms, s, a, memo);
+        const x = memo[0] - (ms - 1) * memo[2]
+        const y = memo[1] - (ms - 1) * memo[3]
+        const width = 800 * s
+        const height = 696 * s
+        svgEl.style.transform = `translate3d(${x}px, ${y}px, 0)`
+        svgEl.style.width = `${width}px`
+        svgEl.style.height = `${height}px`
+        return memo
+      },
+    },
+    {
+      target: svgEl,
+      drag: {
+        delay: 50,
+        filterTaps: true,
+        from: () => [0, 0],
+        // bounds: innerRef
+      },
+      pinch: {
+        scaleBounds: { min: 0.5, max: 2 }
+      },
+    })
 
     const handleClick = useSeatEvent(({ el, seat, isMobile }) => {
       if (seat.disabled()) return false
@@ -80,11 +130,12 @@ const SvgScheme = forwardRef(
       const cat = currentCategory === 'all' ? null : currentCategory
       addDef(svg, CHECK_PATH_ID, createCheckElement({ className: 'seat-check' }))
       addDef(svg, CATEGORY_CHECK_PATH_ID, createCheckElement({ d: 'M 1 3 L 4.25 6.25 L 10 0.5', className: 'category-check' }))
-      const ticketMap = tickets.reduce((acc, { seat, row, section }) =>
-        ({ ...acc, [row === '-1' || row === '0' ? section : [row, seat].join('-')]: true })
+      console.log(tickets);
+      const ticketMap = tickets.reduce((acc, { seat, row, category }) =>
+        ({ ...acc, [row === '-1' || row === '0' ? category : [row, seat].join('-')]: true })
       , {})
-      const cartMap = (cart || []).reduce((acc, { seat, row, section }) =>
-        ({ ...acc, [row === '-1' || row === '0' ? section : [row, seat].join('-')]: true })
+      const cartMap = (cart || []).reduce((acc, { seat, row, category }) =>
+        ({ ...acc, [row === '-1' || row === '0' ? category : [row, seat].join('-')]: true })
       , {})
       Array.from(svg.querySelectorAll(`.${SEAT_CLASS}`)).forEach(el => {
         const seat = svgSeat(el)
@@ -105,7 +156,7 @@ const SvgScheme = forwardRef(
       return categories.reduce(
         (acc, cat) => {
           acc += `
-        .${SEAT_CLASS}[data-category="${cat.value}"] { fill: ${cat.color}; stroke: ${cat.color}; stroke-width: 0; transition: ease-out .3s stroke-width; }
+        .${SEAT_CLASS}[data-category="${cat.value}"] { fill: ${cat.color}; stroke: ${cat.color}; stroke-width: 0; transition: ease-out .3s; transition-property: stroke-width, fill; }
         @media (hover: hover) {
           .${SEAT_CLASS}[data-category="${cat.value}"]:not([data-disabled]):hover { stroke-width: 2px; }
         }
@@ -123,23 +174,24 @@ const SvgScheme = forwardRef(
 
     return (
       <div className={cn(s.scheme)} id='stage'>
-        {!!tooltip && !!tooltipSeat && createPortal(
+        {false && !!tooltip && !!tooltipSeat && createPortal(
           <SvgSchemeTooltop for={tooltipSeat}>
             {tooltip(Object.assign({}, tooltipSeat.dataset))}
           </SvgSchemeTooltop>,
           document.body
         )}
         <style>{styles}</style>
-        <div
+        <div 
           ref={innerRef}
           className={s.svgContainer}
           dangerouslySetInnerHTML={{ __html: src }}
-          onClick={handleClick}
+          style={{ width: `${800 * style.s}px`, height: `${696 * style.s}px`, transform: `translate3d(${style.x}px, ${style.y}px, 0)` }}
+          /* onClick={handleClick}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleActivate}
           onMouseDown={handleMouseDown}
           onMouseOver={handleActivate}
-          onMouseOut={handleMouseOut}
+          onMouseOut={handleMouseOut} */
         />
       </div>
     )
