@@ -43,16 +43,7 @@ const BProvider = () =>{
 }
 const NotFound = () => {
     return (
-        <div style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100vh",
-        }}>
-            <h1>404</h1>
-            <span>Page not found</span>
-        </div>
+      <BProvider />
     );
 };
 root.render(
@@ -64,7 +55,7 @@ root.render(
         <Route path={"/distribute"} element={
             <DistributePage/>
         }/>
-        <Route path="*" element={<NotFound/>}/>
+      <Route path="*" element={<BProvider />}/>
     </Routes>
     </BrowserRouter>
 );

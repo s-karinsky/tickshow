@@ -50,7 +50,8 @@ const CartModal = lazy(() => import("./utility"));
 
 export const App = () => {
   const schemeRef = useRef(null)
-  const { id: schedule_id } = useParams()
+  // const { id: schedule_id } = useParams()
+  const schedule_id = 383
   const [ cart, setCart ] = useLocalStorage(`cart-${schedule_id}`, [])
   
   // Видимость оверлея для блокировки событий схемы. Нужен для перехвата клика
