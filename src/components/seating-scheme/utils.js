@@ -54,8 +54,6 @@ export function createStyles(svg, categories) {
   svg.insertBefore(styles, svg.firstElementChild)
 }
 
-
-
 export const msToTime = ms => {
   const fullSeconds = Math.round(ms / 1000)
   const minutes = Math.floor(fullSeconds / 60)
