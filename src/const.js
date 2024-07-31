@@ -19,3 +19,16 @@ export const CURRENCY_SYMBOL_MAP = {
   TRY: "₺",
 }
 export const MAX_SCALE = 8
+
+export const STORAGE_KEY_USER_TOKEN = 'phantom_user_token'
+export const STORAGE_KEY_USER_EMAIL = 'phantom_user_email'
+export const STORAGE_KEY_USER_HASH = 'phantom_user_u_hash'
+
+export const getPhantomUser = () => ({
+  u_name: `Phantom-${Date.now()}`,
+  u_role: '1',
+  u_email: `${Date.now()}@client`,
+  data: JSON.stringify({
+    password: '123456',
+  }),
+})

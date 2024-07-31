@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import cn from 'classnames'
 import InputNumber from '../input-number/input-number'
 import { svgSeat } from '../../utils/dom-scheme'
-import { useTransformEffect } from 'react-zoom-pan-pinch'
 
 export default function TicketsCounter({ value, name, count, onChange }) {
   const [pos, setPos] = useState(null)
@@ -16,9 +15,6 @@ export default function TicketsCounter({ value, name, count, onChange }) {
     setPos({ left: rect.x + rect.width / 2, top: rect.y })
   }, [name])
 
-  useTransformEffect(({ state: { scale } }) => {
-    setScale(Math.min(1, 1 / scale))
-  })
 
   return (
     <div

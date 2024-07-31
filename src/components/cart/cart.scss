@@ -1,0 +1,145 @@
+.cart {
+  position: absolute;
+  top: 78px;
+  left: 25px;
+  right: 10px;
+  padding-right: 10px;
+  bottom: 204px;
+  overflow: auto;
+  color: var(--color-gray-2);
+
+  &-category {
+    margin-bottom: 8px;
+  }
+
+  &-title {
+    padding: 12px 0;
+    border-bottom: 1px solid;
+    font-size: 14px;
+    display: flex;
+    gap: 15px;
+    text-transform: uppercase;
+  }
+
+  &-icon {
+    height: 14px;
+    svg {
+      width: 14px;
+    }
+  }
+
+  &-label {
+    font-size: 14px;
+    color: var(--color-gray-2);
+  }
+
+  &-count {
+    color: var(--color-gray-2);
+    opacity: 0.3;
+  }
+
+  &-price {
+    margin-left: auto;
+    font-style: italic;
+  }
+
+  &-remove {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    color: var(--color-gray-2);
+    opacity: .3;
+    width: 14px;
+    height: 14px;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  &-form {
+    position: absolute;
+    bottom: 16px;
+    left: 25px;
+    right: 25px;
+  }
+
+  &-item {
+    display: flex;
+    gap: 14px;
+    color: var(--color-gray-2);
+    align-items: center;
+    margin-top: 8px;
+  }
+
+  &-name {
+    font-size: 12px;
+    opacity: 0.3;
+  }
+
+  &-value {
+    font-size: 14px;
+  }
+
+  &-value + .cart-price {
+    font-size: 12px;
+    opacity: 0.3;
+  }
+
+  &-promo {
+    background: #393939;
+    padding: 4px;
+    border-radius: 38px;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  &-input {
+    background-color: transparent;
+    border: none;
+    margin-left: 12px;
+    flex: 1 1 auto;
+    color: var(--color-gray-2);
+    opacity: 0.3;
+  }
+
+  &-applyPromo {
+    width: 74px;
+    text-align: center;
+  }
+
+  &-total {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &-fee {
+    font-size: 10px;
+    line-height: 12px;
+    opacity: 0.3;
+    margin-bottom: 12px;
+
+    &:last-child {
+      font-style: italic;
+    }
+  }
+
+  &-cost {
+    font-size: 14px;
+    line-height: 16px;
+    margin-bottom: 24px;
+
+    &:last-child {
+      font-style: italic;
+    }
+  }
+
+  &-submit {
+    display: block;
+    width: 100%;
+    text-transform: uppercase;
+  }
+}

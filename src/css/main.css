@@ -13,7 +13,7 @@
   position: relative;
   grid-column: span 2;
   grid-row: span 9;
-rder-radius: 15px;
+  border-radius: 15px;
   border: 1px solid #414140;
   overflow: auto;
   -webkit-user-select: none;
@@ -653,4 +653,21 @@ rder-radius: 15px;
   margin-top: -5px;
   transform: translateX(-50%);
   opacity: 1;
+}
+
+.only-mobile {
+  position: fixed;
+  left: -9999px;
+  top: -9999px;
+}
+
+@media (max-width: 1023px) {
+  .only-mobile {
+    position: static;
+  }
+  .only-desktop {
+    position: fixed;
+    left: -9999px;
+    top: -9999px;
+  }
 }

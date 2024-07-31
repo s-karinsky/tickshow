@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
-import { SEAT_CLASS } from '../const'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useMemo } from 'react'
+import debounce from './debounce'
 import { svgSeat } from './dom-scheme'
+import { SEAT_CLASS } from '../const'
 
 export function useLocalStorage(key, defaultValue) {
   const serialize = () => {
@@ -59,7 +60,7 @@ export function useIsMobile() {
   const size = useWindowSize()
 
   useEffect(() => {
-    setIsMobile(size.width < 768)
+    setIsMobile(size.width < 1024)
   }, [size.width])
 
   return isMobile
@@ -73,4 +74,160 @@ export function useSeatEvent(cb, { selector = `.${SEAT_CLASS}` } = {}) {
     const seat = svgSeat(el)
     cb({ event, el, seat, isMobile })
   }, [cb, isMobile])
+}
+
+export function useDimensions(liveMeasure = true, delay = 250, initialDimensions = {}, effectDeps = []) {
+  const [dimensions, setDimensions] = useState(initialDimensions)
+  const [node, setNode] = useState(null)
+
+  const ref = useCallback((newNode) => {
+    setNode(newNode)
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!node) return
+
+    const measure = () => {
+      window.requestAnimationFrame(() => {
+        const newDimensions = node.getBoundingClientRect()
+        setDimensions(newDimensions)
+      })
+    }
+    measure()
+
+    if (liveMeasure) {
+      const debounceMeasure = debounce(measure, delay)
+      if ('ResizeObserver' in window) {
+        const resizeObserver = new ResizeObserver(debounceMeasure)
+        resizeObserver.observe(node)
+        window.addEventListener('scroll', debounceMeasure)
+        return () => {
+          resizeObserver.disconnect()
+          window.removeEventListener('scroll', debounceMeasure)
+        }
+      }
+      window.addEventListener('resize', debounceMeasure)
+      window.addEventListener('scroll', debounceMeasure)
+
+      return () => {
+        window.removeEventListener('resize', debounceMeasure)
+        window.removeEventListener('scroll', debounceMeasure)
+      }
+    }
+  }, [node, liveMeasure, ...effectDeps])
+
+  return [ref, dimensions, node]
+}
+
+export const useCountdown = (timeToCount = 60 * 1000, interval = 1000) => {
+  const [timeLeft, setTimeLeft] = useState(0)
+  const timer = useRef({})
+
+  const run = (ts) => {
+    if (!timer.current.started) {
+      timer.current.started = ts
+      timer.current.lastInterval = ts
+    }
+
+    const localInterval = Math.min(interval, (timer.current.timeLeft || Infinity))
+    if ((ts - timer.current.lastInterval) >= localInterval) {
+      timer.current.lastInterval += localInterval
+      setTimeLeft((timeLeft) => {
+        timer.current.timeLeft = timeLeft - localInterval
+        return timer.current.timeLeft
+      })
+    }
+
+    if (ts - timer.current.started < timer.current.timeToCount) {
+      timer.current.requestId = window.requestAnimationFrame(run)
+    } else {
+      timer.current = {}
+      setTimeLeft(0)
+    }
+  }
+
+  const start = useCallback(
+    (ttc) => {
+      window.cancelAnimationFrame(timer.current.requestId)
+
+      const newTimeToCount = ttc !== undefined ? ttc : timeToCount
+      timer.current.started = null
+      timer.current.lastInterval = null
+      timer.current.timeToCount = newTimeToCount
+      timer.current.requestId = window.requestAnimationFrame(run)
+
+      setTimeLeft(newTimeToCount)
+    },
+    [],
+  )
+
+  const pause = useCallback(
+    () => {
+      window.cancelAnimationFrame(timer.current.requestId)
+      timer.current.started = null
+      timer.current.lastInterval = null
+      timer.current.timeToCount = timer.current.timeLeft
+    },
+    [],
+  )
+
+  const resume = useCallback(
+    () => {
+      if (!timer.current.started && timer.current.timeLeft > 0) {
+        window.cancelAnimationFrame(timer.current.requestId)
+        timer.current.requestId = window.requestAnimationFrame(run)
+      }
+    },
+    [],
+  )
+
+  const reset = useCallback(
+    () => {
+      if (timer.current.timeLeft) {
+        window.cancelAnimationFrame(timer.current.requestId)
+        timer.current = {}
+        setTimeLeft(0)
+      }
+    },
+    [],
+  )
+
+  const actions = useMemo(
+    () => ({ start, pause, resume, reset }),
+    [],
+  )
+
+  useEffect(() => {
+    return () => window.cancelAnimationFrame(timer.current.requestId)
+  }, [])
+
+  return [timeLeft, actions]
+}
+
+export function useClickAway(cb) {
+  const ref = useRef(null)
+  const refCb = useRef(cb)
+
+  useLayoutEffect(() => {
+    refCb.current = cb
+  })
+
+  useEffect(() => {
+    const handler = (e) => {
+      const element = ref.current
+      if (element && !element.contains(e.target)) {
+        refCb.current(e)
+      }
+    }
+
+    document.addEventListener("mousedown", handler)
+    document.addEventListener("touchstart", handler)
+
+    return () => {
+      document.removeEventListener("mousedown", handler)
+      document.removeEventListener("touchstart", handler)
+    }
+  }, [])
+
+  return ref
 }

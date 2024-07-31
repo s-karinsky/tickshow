@@ -1,0 +1,125 @@
+.event {
+  &-layout {
+    width: 100vw;
+    height: 100vh;
+    padding: 15px;
+    align-items: stretch;
+    gap: 15px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+
+    @media (max-width: 1023px) {
+      flex-direction: row-reverse;
+      position: relative;
+      padding: 0;
+    }
+  }
+
+  &-scheme {
+    width: calc(100vw - var(--sidebar-width) - 45px);
+    flex-basis: 100%;
+    border: 1px solid #F8F5EC1A;
+    border-radius: var(--layout-radius);
+    position: relative;
+    overflow: hidden;
+
+    @media (max-width: 1023px) {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  }
+
+  &-sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--color-gray-9);
+    border-radius: var(--layout-radius);
+    padding: var(--sidebar-padding-x) var(--sidebar-padding-y);
+
+    @media (max-width: 1023px) {
+      position: fixed;
+      left: 0;
+      top: 0;
+      right: 0;
+      width: auto;
+
+      h2 {
+        display: none;
+      }
+    }
+  }
+
+  &-categories {
+    flex-grow: 0;
+    flex-shrink: 0;
+    padding: 25px 25px 0;
+    @media (max-width: 1023px) {
+      padding: 15px 15px 0;
+    }
+  }
+
+  &-order {
+    flex-grow: 1;
+    flex-shrink: 0;
+    position: relative;
+
+    @media (max-width: 1023px) {
+      top: auto;
+      bottom: 0;
+    }
+  }
+
+  &-title {
+    font-size: 22px;
+    font-weight: 400;
+    margin: 0 0 16px 0;
+    text-transform: uppercase;
+  }
+
+  &-toggle-cat {
+    display: block;
+    width: 100%;
+    text-align: center;
+    opacity: 0.5;
+    transform: rotate(0);
+    transition: ease .3s;
+    transition-property: opacity, transform;
+
+    &_opened {
+      transform: rotate(-180deg);
+    }
+  
+    &:hover {
+      opacity: 1;
+    }
+
+    svg {
+      width: 13px;
+      height: 6px;
+      transition: ease .3s transform;
+    }
+  }
+
+  &-countdown {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    z-index: 100;
+    transform: translateX(-50%);
+  }
+
+  &-delimiter {
+    height: 1px;
+    background: #F8F5EC0D;
+    margin: -5px -25px 4px;
+
+    &_bottom {
+      position: absolute;
+      bottom: 190px;
+      left: 0;
+      right: 0;
+      margin: 0;
+    }
+  }
+}
