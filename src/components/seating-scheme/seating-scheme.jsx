@@ -2,9 +2,14 @@ import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'r
 import Hammer from 'hammerjs'
 import { useDimensions, useIsMobile } from 'utils/hooks'
 import { createDefs, createStyles, stringToSvg } from './utils'
-import './seating-scheme.scss'
 import SeatingTooltip from 'components/seating-tooltip'
+import Button from 'components/button'
+import { ReactComponent as ResetIcon } from 'icons/reset.svg'
+import { ReactComponent as ZoomIn } from 'icons/zoom-in.svg'
+import { ReactComponent as ZoomOut } from 'icons/zoom-out.svg'
 import { svgSeat } from 'utils/dom-scheme'
+import './seating-scheme.scss'
+import classNames from 'classnames'
 
 const SeatingScheme = forwardRef((props, ref) => {
   const [log, setLog] = useState([])
@@ -166,6 +171,29 @@ const SeatingScheme = forwardRef((props, ref) => {
     >
       <div style={{ position: 'fixed', left: 0, top: 0, background: '#333', color: '#fff', zIndex:10000 }}>
         {log.map(msg => <>{msg}<br /></>)}
+      </div>
+      
+      <div className='scheme-zoom'>
+        <button
+          className={classNames('scheme-control')}
+          onClick={() => zoomOut()}
+        >
+          <ZoomOut style={{ width: 23 }} />
+        </button>
+        <button
+          className={classNames('scheme-control')}
+          onClick={() => zoomIn()}
+        >
+          <ZoomIn style={{ width: 23 }} />
+        </button>
+      </div>
+      <div className='scheme-reset'>
+        <button
+          className={classNames('scheme-control', { 'scheme-control_hidden': scaleFactor <= 1.2 })}
+          onClick={() => zoom(1.01)}
+        >
+          <ResetIcon style={{ width: 23 }} />
+        </button>
       </div>
       <div
         className='scheme-draggable'
