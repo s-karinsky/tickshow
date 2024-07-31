@@ -20,6 +20,7 @@ import './event.scss'
 import Countdown from "components/countdown/countdown";
 import { getFromLocalStorage } from "utils/common";
 import { STORAGE_KEY_USER_EMAIL } from "const";
+import Cart from "components/cart";
 
 const bem = cn('event')
 
@@ -97,6 +98,14 @@ export default function Event() {
         </Button>
       </div>
       <div className={classNames(bem('sidebar'), bem('order'))}>
+        <h2 className={bem('title')}>Your order:</h2>
+        <div className={bem('delimiter')} />
+        <Cart
+          categories={categories}
+          list={cart}
+          toggleInCart={toggleInCart.mutate}
+        />
+        <div className={bem('delimiter', { bottom: true })} />
       </div>
     </div>
   )
