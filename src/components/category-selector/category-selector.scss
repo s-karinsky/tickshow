@@ -26,6 +26,11 @@
     transition: ease .3s;
     transition-property: top, height;
 
+    &_disabled {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
     &_selected {
       position: absolute;
       top: 0;

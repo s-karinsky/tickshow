@@ -3,6 +3,7 @@ import { cn } from '@bem-react/classname'
 import classNames from 'classnames'
 import { CURRENCY_SYMBOL_MAP } from 'const'
 import './category-selector.scss'
+import { useClickAway } from 'utils/hooks'
 
 const bem = cn('category-selector')
 
@@ -14,6 +15,7 @@ export default function SelectCategory({
   opened,
   className,
   style,
+  setOpened,
   onChange,
   onMouseOver,
   onMouseOut,
@@ -25,18 +27,21 @@ export default function SelectCategory({
   }, [defaultCurrency])
 
   const selectedIndex = useMemo(() => options.findIndex(option => option[valueKey] === value), [options, value, valueKey])
+  const ref = useClickAway(() => setOpened(false))
 
   return (
     <ul
       className={classNames(bem({ opened }), { [className]: className })}
       style={{ ...style, height: opened ? (options.length - 1) * 24 + 46 : 30 }}
+      ref={ref}
       {...rest}
     >
       {options.map(({ price, ...option }, i) => (
         <li
           key={option[valueKey]}
           className={bem('option', {
-            selected: option[valueKey] === value
+            selected: option[valueKey] === value,
+            disabled: !option.count
           })}
           style={option[valueKey] === value ?
             undefined : {
@@ -45,9 +50,9 @@ export default function SelectCategory({
           }
           onClick={() => onChange(option[valueKey])}
           onMouseOver={e => {
-            onMouseOver && onMouseOver(e, option)
+            onMouseOver && option.count && onMouseOver(e, option)
           }}
-          onMouseOut={() => onMouseOut && onMouseOut()}
+          onMouseOut={() => onMouseOut && option.count && onMouseOut()}
         >
           <span className={bem('column')}>
             {!!option.icon &&

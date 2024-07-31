@@ -3,7 +3,7 @@ import { useOutletContext, useParams } from "react-router-dom";
 import birds from "images/EARLY BIRDS.svg";
 import { isEqualSeats } from "utils";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getEventQuery } from "api/event";
 
 import classNames from "classnames"
@@ -18,15 +18,17 @@ import { ReactComponent as IconArrow } from 'icons/arrow.svg'
 import { updateCart } from "api/cart";
 import './event.scss'
 import Countdown from "components/countdown/countdown";
+import { getFromLocalStorage } from "utils/common";
+import { STORAGE_KEY_USER_EMAIL } from "const";
 
 const bem = cn('event')
 
 export default function Event() {
-  const { cart: serverCart, cartExpired, bookingLimit, categories, config, scheme, tickets } = useOutletContext()
+  const queryClient = useQueryClient()
+  const { cart, cartExpired, bookingLimit, categories, config, scheme, tickets, event } = useOutletContext()
   const isMobile = useIsMobile()
   const [ selectValue, setSelectValue ] = useState(null)
   const [ selectOpened, setSelectOpened ] = useState(!isMobile)
-  const [cart, setCart] = useState({ list: serverCart, limit: bookingLimit })
   const [ highlightCat, setHighlightCat ] = useState(null)
 
   useEffect(() => {
@@ -34,30 +36,41 @@ export default function Event() {
     cartExpired.forEach(item => updateCart(item, 0))
   }, [cartExpired])
 
-  const toggleInCart = useCallback(async (item) => {
-    if (item.inCart) {
-      const limit = cart.list.length === 1 ? 0 : cart.limit
-      console.log(cart.list, item);
-      setCart({ limit, list: cart.list.filter(i => isEqualSeats(i, item)) })
-      return updateCart(item, 0)
+  const toggleInCart = useMutation({
+    mutationFn: (item) => updateCart(item, Number(!item.inCart)),
+    onMutate: async (item) => {
+      const queryKey = ['cart', getFromLocalStorage(STORAGE_KEY_USER_EMAIL)]
+      await queryClient.cancelQueries({ queryKey })
+      const previousCart = queryClient.getQueryData(queryKey)
+      queryClient.setQueryData(['cart', getFromLocalStorage(STORAGE_KEY_USER_EMAIL)], response => {
+        const currentCart = response.data?.cart || []
+        const prop = [item.hall_id, item.category, item.row, item.seat].join(';')
+        let cart = [...currentCart]
+        if (item.inCart) {
+          cart = cart.filter(p => p.prop === prop)
+        } else {
+          const booking_limit = cart.find(
+            p => p.booking_limit > Date.now()
+          )?.booking_limit || (Date.now() + 900 * 1000)
+          cart.push({ prop, prod: item.t_id, price: item.price, count: 1, sc_id: item.event_id, booking_limit })
+        }
+        return { ...response, data: { ...response.data, cart } }
+      })
+      return { previousCart }
     }
-    const limit = cart.limit || Date.now() + 900 * 1000
-    console.log(cart.limit, limit)
-    setCart({ limit, list: [...cart.list, item] })
-    return updateCart(item, 1)
-  }, [cart])
+  })
 
   return (
     <div className={bem('layout')}>
       <div className={bem('scheme')}>
-        <Countdown to={cart.limit} className={bem('countdown')} />
+        {!!bookingLimit && <Countdown to={bookingLimit} className={bem('countdown')} />}
         <SeatingScheme
           src={scheme}
           categories={categories}
           highlight={highlightCat || selectValue}
-          cart={cart.list}
+          cart={cart}
           tickets={tickets}
-          toggleInCart={toggleInCart}
+          toggleInCart={toggleInCart.mutate}
         />
       </div>
       <div className={classNames(bem('sidebar'), bem('categories'))}>
@@ -67,6 +80,7 @@ export default function Event() {
           value={selectValue}
           options={categories}
           opened={selectOpened}
+          setOpened={setSelectOpened}
           onChange={(val) => {
             if (selectOpened) setSelectValue(val)
               setSelectOpened(!selectOpened)

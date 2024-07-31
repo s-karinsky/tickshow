@@ -22,7 +22,7 @@ export default function Loader() {
     ],
     combine: combineQueries
   })
-  
+  console.log(data.cart);
   return (
     <>
       <div

@@ -21,6 +21,8 @@ const SeatingScheme = forwardRef((props, ref) => {
   const dragRef = useRef(null)
   const svgRef = useRef(null)
 
+  const [ state, setState ] = useState({ x: 0, y: 0 })
+
   const scale = useRef({ value: 1.01, initialWidth: 0, initialHeight: 0 })
   const [scaleFactor, setScaleFactor] = useState(1.01)
   const pos = useRef({ x: 0, y: 0 })
@@ -178,13 +180,13 @@ const SeatingScheme = forwardRef((props, ref) => {
           className={classNames('scheme-control')}
           onClick={() => zoomOut()}
         >
-          <ZoomOut style={{ width: 23 }} />
+          <ZoomOut style={{ width: 17 }} />
         </button>
         <button
           className={classNames('scheme-control')}
           onClick={() => zoomIn()}
         >
-          <ZoomIn style={{ width: 23 }} />
+          <ZoomIn style={{ width: 17 }} />
         </button>
       </div>
       <div className='scheme-reset'>

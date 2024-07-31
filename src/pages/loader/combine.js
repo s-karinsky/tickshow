@@ -10,15 +10,17 @@ const combineQueries = (results) => {
     const tickets = respTickets.map(item => {
       const inCart = respCart.find(cartItem => isEqualSeats(cartItem, item))
       if (inCart) {
-        item.bookingLimit = new Date(inCart.booking_limit).getTime()
         // Время окончания брони приходит с сервера с отставанием на час,
         // пока так компенсируем
-        if (item.bookingLimit - Date.now() + 60 * 60 * 1000 < 0) {
+        item.bookingLimit = typeof inCart.booking_limit === 'number' ?
+          inCart.booking_limit : new Date(inCart.booking_limit).getTime() + 60 * 60 * 1000
+        
+        if (item.bookingLimit < Date.now()) {
           cartExpired.push(item)
         } else {
           item.inCart = !!inCart
           cart.push(item)
-          bookingLimit = item.bookingLimit + 60 * 60 * 1000
+          bookingLimit = item.bookingLimit
         }
       }
       return item
