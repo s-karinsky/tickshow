@@ -12,9 +12,11 @@ export default function SelectCategory({
   valueKey = 'value',
   value,
   opened,
-  onChange,
   className,
   style,
+  onChange,
+  onMouseOver,
+  onMouseOut,
   ...rest
 }) {
   const getCurrency = useCallback((item) => {
@@ -42,6 +44,10 @@ export default function SelectCategory({
             }
           }
           onClick={() => onChange(option[valueKey])}
+          onMouseOver={e => {
+            onMouseOver && onMouseOver(e, option)
+          }}
+          onMouseOut={() => onMouseOut && onMouseOut()}
         >
           <span className={bem('column')}>
             {!!option.icon &&

@@ -1,6 +1,6 @@
 .button {
-  --bg-color: var(--color-light);
-  --color: var(--color-dark-8);
+  --bg-color: var(--color-gray-2);
+  --color: var(--color-gray-8);
   --height: 30px;
   --radius: 24px;
   --font-size: 10px;
@@ -43,8 +43,8 @@
   &_color {
     &_bordered {
       --bg-color: transparent;
-      --color: var(--color-light);
-      border: 1px solid var(--color-light);
+      --color: var(--color-gray-2);
+      border: 1px solid var(--color-gray-2);
   
       &:not(:disabled):hover {
         --bg-color: var(--color-success);
@@ -62,7 +62,7 @@
     }
   
     &_dark {
-      --bg-color: var(--color-dark-8);
+      --bg-color: var(--color-gray-8);
       --color: var(--color-gray-5);
       border: 1px solid #ffffff00;
       border-left: none;
@@ -102,6 +102,12 @@
     &_large {
       --height: 40px;
       --radius: 16px;
+      --font-size: 12px;
+    }
+
+    &_medium {
+      --height: 30px;
+      --radius: 12px;
       --font-size: 12px;
     }
 

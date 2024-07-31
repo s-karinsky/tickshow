@@ -12,35 +12,53 @@ import Button from "components/button";
 import SvgScheme from "components/svg-scheme";
 import TicketsCounter from "components/tickets-counter";
 import CategorySelector from "components/category-selector";
-import { useIsMobile, useLocalStorage } from "utils/hooks";
-import { ReactComponent as IconArrow } from 'icons/arrow.svg'
-import './event.scss'
 import SeatingScheme from "components/seating-scheme";
+import { useCountdown, useIsMobile, useLocalStorage } from "utils/hooks";
+import { ReactComponent as IconArrow } from 'icons/arrow.svg'
+import { updateCart } from "api/cart";
+import './event.scss'
+import Countdown from "components/countdown/countdown";
 
 const bem = cn('event')
 
 export default function Event() {
-  const { cart, categories, config, scheme, tickets } = useOutletContext()
+  const { cart: serverCart, cartExpired, bookingLimit, categories, config, scheme, tickets } = useOutletContext()
   const isMobile = useIsMobile()
   const [ selectValue, setSelectValue ] = useState(null)
-  const [ selectOpened, setSelectOpened ] = useState(isMobile)
+  const [ selectOpened, setSelectOpened ] = useState(!isMobile)
+  const [cart, setCart] = useState({ list: serverCart, limit: bookingLimit })
+  const [ highlightCat, setHighlightCat ] = useState(null)
+
+  useEffect(() => {
+    if (!cartExpired || !cartExpired.length) return
+    cartExpired.forEach(item => updateCart(item, 0))
+  }, [cartExpired])
+
+  const toggleInCart = useCallback(async (item) => {
+    if (item.inCart) {
+      const limit = cart.list.length === 1 ? 0 : cart.limit
+      console.log(cart.list, item);
+      setCart({ limit, list: cart.list.filter(i => isEqualSeats(i, item)) })
+      return updateCart(item, 0)
+    }
+    const limit = cart.limit || Date.now() + 900 * 1000
+    console.log(cart.limit, limit)
+    setCart({ limit, list: [...cart.list, item] })
+    return updateCart(item, 1)
+  }, [cart])
 
   return (
     <div className={bem('layout')}>
       <div className={bem('scheme')}>
+        <Countdown to={cart.limit} className={bem('countdown')} />
         <SeatingScheme
           src={scheme}
           categories={categories}
-          categoryValue={selectValue}
-          cart={cart}
+          highlight={highlightCat || selectValue}
+          cart={cart.list}
           tickets={tickets}
+          toggleInCart={toggleInCart}
         />
-        {/* <SvgScheme
-          src={scheme}
-          tickets={tickets}
-          currentCategory={selectValue}
-          cart={cart}
-        /> */}
       </div>
       <div className={classNames(bem('sidebar'), bem('categories'))}>
         <h2 className={bem('title')}>select a category:</h2>
@@ -53,6 +71,8 @@ export default function Event() {
             if (selectOpened) setSelectValue(val)
               setSelectOpened(!selectOpened)
           }}
+          onMouseOver={(e, val) => setHighlightCat(val.value)}
+          onMouseOut={() => setHighlightCat(null)}
         />
         <Button
           color='ghost'

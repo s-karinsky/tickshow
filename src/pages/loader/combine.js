@@ -1,9 +1,28 @@
 import event from "pages/event"
+import { isEqualSeats } from "utils"
 
 const combineQueries = (results) => {
   if (results.every(item => item.status === 'success')) {
     const [config, respCart, respEvent, respTickets] = results.map(item => item.data)
-    const tickets = [...respTickets, ...respCart]
+    const cartExpired = []
+    const cart = []
+    let bookingLimit = 0
+    const tickets = respTickets.map(item => {
+      const inCart = respCart.find(cartItem => isEqualSeats(cartItem, item))
+      if (inCart) {
+        item.bookingLimit = new Date(inCart.booking_limit).getTime()
+        // Время окончания брони приходит с сервера с отставанием на час,
+        // пока так компенсируем
+        if (item.bookingLimit - Date.now() + 60 * 60 * 1000 < 0) {
+          cartExpired.push(item)
+        } else {
+          item.inCart = !!inCart
+          cart.push(item)
+          bookingLimit = item.bookingLimit + 60 * 60 * 1000
+        }
+      }
+      return item
+    })
     const ticketsMap = tickets.reduce((map, { category, price }) => ({
       ...map,
       [category]: {
@@ -31,7 +50,9 @@ const combineQueries = (results) => {
       }))
 
     return {
-      cart: respCart,
+      cart,
+      cartExpired,
+      bookingLimit,
       categories,
       config,
       event,

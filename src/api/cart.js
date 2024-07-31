@@ -7,15 +7,27 @@ export const getCartQuery = options => ({
   queryFn: async () => axios.post('cart'),
   cacheTime: Infinity,
   staleTime: Infinity,
-  select: data => (data.cart || []).map(item => {
-    const [hall_id, category, row, seat] = item.split(';')
+  select: ({ data }) => (data.cart || []).map(item => {
+    const [hall_id, category, row, seat] = item.prop?.split(';')
     return {
       hall_id,
       category,
       row,
       seat,
+      inCart: true,
       booking_limit: item.booking_limit
     }
   }),
   ...options,
 })
+
+export async function updateCart(item, count) {
+  const resp = await axios.post('cart', {}, {
+    params: {
+      prod: item.t_id,
+      prop: ['hall_id', 'category', 'row', 'seat'].map(key => item[key]).join(';'),
+      count
+    }
+  })
+  return resp
+}

@@ -21,6 +21,7 @@
     flex-basis: 100%;
     border: 1px solid #F8F5EC1A;
     border-radius: var(--layout-radius);
+    position: relative;
     overflow: hidden;
 
     @media (max-width: 1023px) {
@@ -37,7 +38,7 @@
     padding: var(--sidebar-padding-x) var(--sidebar-padding-y);
 
     @media (max-width: 1023px) {
-      position: sticky;
+      position: fixed;
       left: 0;
       top: 0;
       right: 0;
@@ -97,5 +98,13 @@
       height: 6px;
       transition: ease .3s transform;
     }
+  }
+
+  &-countdown {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    z-index: 100;
+    transform: translateX(-50%);
   }
 }

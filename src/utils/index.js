@@ -63,8 +63,6 @@ export const group = grouper => data => grouper ? data.reduce((acc, item) => {
 }, {}) : data
 
 export const isEqualSeats = (s1, s2) => {
-  if (s1.section) s1.category = s1.section
-  if (s2.section) s2.category = s2.section
   return ['row', 'seat', 'category'].reduce((acc, key) => acc && String(s1[key]) === String(s2[key]), true)
 }
 
