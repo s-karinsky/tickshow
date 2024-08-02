@@ -13,7 +13,7 @@
     pointer-events: none;
 
     * {
-      font-family: 'Articulat CF', sans-serif;
+      font-family: 'articulat', sans-serif;
     }
     
     &:has(:global(.svg-seat_selected)) *:not(:has(> *)):not(:global(.svg-seat_selected)) {
