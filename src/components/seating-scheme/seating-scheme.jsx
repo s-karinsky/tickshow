@@ -89,8 +89,9 @@ const SeatingScheme = forwardRef((props, ref) => {
       } else {
         const hasInCart = seat.isMultiple() ? seatTicket.some(ticket => ticket.inCart) : seatTicket.inCart
         seat.checked(hasInCart)
-        if (!seat.isMultiple() && !isMobile) {
+        if (!seat.isMultiple()) {
           el.addEventListener('mouseover', (e) => {
+            if (isMobile) return false
             const pos = el.getBBox()
             setTooltipSeat({
               visible: true,
@@ -100,6 +101,7 @@ const SeatingScheme = forwardRef((props, ref) => {
             })
           })
           el.addEventListener('mouseout', (e) => {
+            if (isMobile) return false
             setTooltipSeat({ visible: false, ticketId: seatTicket.id })
           })
         }
@@ -215,6 +217,7 @@ const SeatingScheme = forwardRef((props, ref) => {
           y={tooltipSeat.y}
           hideDelay={500}
           scaleFactor={scaleFactor}
+          toggleInCart={toggleInCart}
         />}
         <svg
           className='scheme-svg'

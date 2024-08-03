@@ -15,6 +15,7 @@ import CategorySelector from "components/category-selector";
 import SeatingScheme from "components/seating-scheme";
 import { useCountdown, useIsMobile, useLocalStorage } from "utils/hooks";
 import { ReactComponent as IconArrow } from 'icons/arrow.svg'
+import { ReactComponent as IconArrowDouble } from 'icons/arrow_2_down.svg'
 import { updateCart } from "api/cart";
 import './event.scss'
 import Countdown from "components/countdown/countdown";
@@ -30,8 +31,13 @@ export default function Event() {
   const { bookingExpired, bookingLimit, cart, categories, config, scheme, tickets, event } = useOutletContext()
   const isMobile = useIsMobile()
   const [ selectValue, setSelectValue ] = useState(null)
-  const [ selectOpened, setSelectOpened ] = useState(!isMobile)
+  const [ selectOpened, setSelectOpened ] = useState(false)
   const [ highlightCat, setHighlightCat ] = useState(null)
+  const [ orderExpanded, setOrderExpanded ] = useState(false)
+
+  useEffect(() => {
+    setSelectOpened(!isMobile)
+  }, [])
 
   useEffect(() => {
     if (!bookingExpired || !bookingExpired.length) return
@@ -44,13 +50,12 @@ export default function Event() {
       const queryKey = ['tickets', id]
       await queryClient.cancelQueries({ queryKey })
       const previousCart = queryClient.getQueryData(queryKey)
-      queryClient.setQueryData(queryKey, items =>  console.log(items, ticket) ||
+      queryClient.setQueryData(queryKey, items =>
         items.map(item => item.id === ticket.id ? { ...item, inCart: !item.inCart } : item)
       )
       return { previousCart }
     }
   })
-  console.log(cart);
   
   return (
     <div className={bem('layout')}>
@@ -72,10 +77,13 @@ export default function Event() {
           value={selectValue}
           options={categories}
           opened={selectOpened}
-          setOpened={setSelectOpened}
+          setOpened={val => {
+            setSelectOpened(val)
+            setOrderExpanded(false)
+          }}
           onChange={(val) => {
             if (selectOpened) setSelectValue(val)
-              setSelectOpened(!selectOpened)
+            setSelectOpened(!selectOpened)
           }}
           onMouseOver={(e, val) => setHighlightCat(val.value)}
           onMouseOut={() => setHighlightCat(null)}
@@ -88,9 +96,16 @@ export default function Event() {
           <IconArrow />
         </Button>
       </div>
-      <div className={classNames(bem('sidebar'), bem('order'))}>
-        <h2 className={bem('title')}>Your order:</h2>
-        <div className={bem('delimiter')} />
+      <div className={classNames(bem('sidebar'), bem('order', { expanded: orderExpanded }))}>
+        <button
+          className={classNames(bem('toggleCart'), 'only-mobile')}
+          onClick={() => {
+            setOrderExpanded(!orderExpanded)
+            setSelectOpened(false)
+          }}
+        >
+          <IconArrowDouble style={{ width: 16 }} /> More details
+        </button>
         <Cart
           categories={categories}
           cart={cart}
