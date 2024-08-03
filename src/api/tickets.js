@@ -14,6 +14,7 @@ const selectFlatArray = data =>
     entries(seats_sold).forEach(([category, rows]) => {
       entries(rows).forEach(([row, seats]) => {
         entries(seats).forEach(([seat, seatOptions]) => {
+          const key = [category, row]
           const priceString = pricesList[isArray(seatOptions) ? seatOptions[0] : null]
           const [price, currency] = typeof priceString === 'string' ? priceString.split(' ') : []
           const range = seat.split(';').map(Number).filter(Boolean)
@@ -29,6 +30,9 @@ const selectFlatArray = data =>
             price: Number(price),
             currency,
             t_id: group.t_id,
+            bookingLimit: seatOptions[3] ? new Date(seatOptions[3]).getTime() : null,
+            inCart: !!seatOptions[3],
+            id: `seat-${[...key, seat].join('-')}`
           }))
         })
       })
@@ -44,7 +48,6 @@ async function fetchTickets(id) {
 
 export const getTicketsQuery = (id, options) => ({
   queryKey: ['tickets', id],
-  queryFn: () => fetchTickets(id),
-  select: selectFlatArray,
+  queryFn: () => fetchTickets(id).then(selectFlatArray),
   ...options
 })

@@ -25,42 +25,33 @@ import Cart from "components/cart";
 const bem = cn('event')
 
 export default function Event() {
+  const { id } = useParams()
   const queryClient = useQueryClient()
-  const { cart, cartExpired, bookingLimit, categories, config, scheme, tickets, event } = useOutletContext()
+  const { bookingExpired, bookingLimit, cart, categories, config, scheme, tickets, event } = useOutletContext()
   const isMobile = useIsMobile()
   const [ selectValue, setSelectValue ] = useState(null)
   const [ selectOpened, setSelectOpened ] = useState(!isMobile)
   const [ highlightCat, setHighlightCat ] = useState(null)
 
   useEffect(() => {
-    if (!cartExpired || !cartExpired.length) return
-    cartExpired.forEach(item => updateCart(item, 0))
-  }, [cartExpired])
+    if (!bookingExpired || !bookingExpired.length) return
+    bookingExpired.forEach(item => updateCart(item, 0))
+  }, [bookingExpired])
 
   const toggleInCart = useMutation({
     mutationFn: (item) => updateCart(item, Number(!item.inCart)),
-    onMutate: async (item) => {
-      const queryKey = ['cart', getFromLocalStorage(STORAGE_KEY_USER_EMAIL)]
+    onMutate: async (ticket) => {
+      const queryKey = ['tickets', id]
       await queryClient.cancelQueries({ queryKey })
       const previousCart = queryClient.getQueryData(queryKey)
-      queryClient.setQueryData(['cart', getFromLocalStorage(STORAGE_KEY_USER_EMAIL)], response => {
-        const currentCart = response.data?.cart || []
-        const prop = [item.hall_id, item.category, item.row, item.seat].join(';')
-        let cart = [...currentCart]
-        if (item.inCart) {
-          cart = cart.filter(p => p.prop === prop)
-        } else {
-          const booking_limit = cart.find(
-            p => p.booking_limit > Date.now()
-          )?.booking_limit || (Date.now() + 900 * 1000)
-          cart.push({ prop, prod: item.t_id, price: item.price, count: 1, sc_id: item.event_id, booking_limit })
-        }
-        return { ...response, data: { ...response.data, cart } }
-      })
+      queryClient.setQueryData(queryKey, items =>  console.log(items, ticket) ||
+        items.map(item => item.id === ticket.id ? { ...item, inCart: !item.inCart } : item)
+      )
       return { previousCart }
     }
   })
-
+  console.log(cart);
+  
   return (
     <div className={bem('layout')}>
       <div className={bem('scheme')}>
@@ -102,10 +93,9 @@ export default function Event() {
         <div className={bem('delimiter')} />
         <Cart
           categories={categories}
-          list={cart}
+          cart={cart}
           toggleInCart={toggleInCart.mutate}
         />
-        <div className={bem('delimiter', { bottom: true })} />
       </div>
     </div>
   )

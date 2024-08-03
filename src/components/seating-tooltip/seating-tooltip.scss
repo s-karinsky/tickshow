@@ -4,7 +4,7 @@
   padding: 12px;
   min-width: 150px;
   opacity: 0;
-  transform: translate(-100%, 15px);
+  transform: translate(-100%, 0);
   transition: ease-in-out .3s;
   padding-bottom: 30px;
   transition-property: transform, left, top, opacity;
@@ -16,7 +16,7 @@
     5px 12px 13px 0px #00000017,
     12px 26px 17px 0px #0000000D,
     22px 46px 20px 0px #00000003,
-    34px 72px 22px 0px #00000000;
+    34px 72px 22px 0px hsla(0, 0%, 0%, 0);
 
   &_visible {
     // pointer-events: all;
@@ -80,6 +80,7 @@
   }
 
   &-button {
+    border: none;
     border-top: 1px solid #696865;
     position: absolute;
     inset: auto 0 0 0;
@@ -89,5 +90,18 @@
     font-size: 12px;
     color: var(--color-gray-2);
     opacity: 0.3;
+    height: 30px;
+    background-color: transparent;
+    transition: ease-in-out .3s;
+    transition-property: color, background-color, opacity;
+
+    &_selected {
+      opacity: 1;
+      color: var(--color-gray-9);
+    }
+
+    svg {
+      vertical-align: top;
+    }
   }
 }

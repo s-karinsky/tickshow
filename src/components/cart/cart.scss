@@ -104,6 +104,7 @@
     flex: 1 1 auto;
     color: var(--color-gray-2);
     opacity: 0.3;
+    font-family: 'articulat', sans-serif;
   }
 
   &-applyPromo {
@@ -141,5 +142,17 @@
     display: block;
     width: 100%;
     text-transform: uppercase;
+  }
+  &-delimiter {
+    height: 1px;
+    background: #F8F5EC0D;
+    margin: -5px -25px 16px;
+  }
+
+  &-empty {
+    text-align: center;
+    padding-top: 16px;
+    font-size: 10px;
+    opacity: 0.5;
   }
 }
