@@ -587,6 +587,24 @@
   }
 }
 
+@keyframes circle {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.check {
+  stroke-dasharray: 15px;
+  animation-name: strokeOffset;
+  animation-duration: 1.5s;
+}
+
+.circle {
+  stroke-dasharray: 27;
+  stroke-dashoffset: 27;
+  animation: circle 0.5s linear forwards;
+}
+
 .seat-check {
   stroke-width: 2px;
   stroke: #323232;

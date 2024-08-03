@@ -12,7 +12,7 @@
   max-height: var(--height);
   border-radius: var(--radius);
   border: none;
-  font-family: 'Articulat CF', sans-serif;
+  font-family: 'articulat', sans-serif;
   font-size: var(--font-size);
   font-weight: 700;
   font-style: italic;
@@ -101,7 +101,7 @@
   &_size {
     &_large {
       --height: 40px;
-      --radius: 16px;
+      --radius: 20px;
       --font-size: 12px;
     }
 

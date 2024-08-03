@@ -14,7 +14,7 @@ import classNames from 'classnames'
 const SeatingScheme = forwardRef((props, ref) => {
   const [log, setLog] = useState([])
 
-  const { src, categories, tickets, cart, toggleInCart, highlight } = props
+  const { src, categories, tickets, toggleInCart, highlight } = props
   const [ tooltipSeat, setTooltipSeat ] = useState({ visible: false })
 
   const [ viewportRef, viewport ] = useDimensions()
@@ -77,32 +77,32 @@ const SeatingScheme = forwardRef((props, ref) => {
       node.setAttribute(name, value))
     Array.from(svg.children).forEach(child => node.appendChild(child))
     Array.from(node.querySelectorAll('.svg-seat')).forEach(el => {
-      const [category, row, seat] = ['category', 'row', 'seat'].map(attr => el.getAttribute(`data-${attr}`))
-      let seatTicket = category && !row ? tickets.filter(item => item.category === category) :
-        tickets.find(item =>
-          item.category === category &&
-          String(item.row) === String(row) &&
-          String(item.seat) === String(seat)
-        )
+      const [category, row, num] = ['category', 'row', 'seat'].map(attr => el.getAttribute(`data-${attr}`))
+      el.id = `seat-${[category, row, num].join('-')}`
+      const seat = svgSeat(el)
+      let seatTicket = seat.isMultiple() ?
+        tickets.filter(item => item.category === category) :
+        tickets.find(item => item.id === el.id)
+      
       if (!seatTicket || (Array.isArray(seatTicket) && !seatTicket.length)) {
         el.setAttribute('data-disabled', '')
       } else {
-        el.ticket = seatTicket
-        const seat = svgSeat(el)
-        
-        seat.checked(el.ticket.inCart)
-        if (!seat.isMultiple() && !isMobile) {
+        const hasInCart = seat.isMultiple() ? seatTicket.some(ticket => ticket.inCart) : seatTicket.inCart
+        seat.checked(hasInCart)
+        if (!seat.isMultiple()) {
           el.addEventListener('mouseover', (e) => {
+            if (isMobile) return false
             const pos = el.getBBox()
             setTooltipSeat({
               visible: true,
               x: pos.x + pos.width,
               y: pos.y + pos.height,
-              ticket: el.ticket
+              ticketId: seatTicket.id
             })
           })
           el.addEventListener('mouseout', (e) => {
-            setTooltipSeat({ visible: false, ticket: el.ticket })
+            if (isMobile) return false
+            setTooltipSeat({ visible: false, ticketId: seatTicket.id })
           })
         }
       }
@@ -149,10 +149,10 @@ const SeatingScheme = forwardRef((props, ref) => {
         return
       }
 
-      const el = event.target
-      if (el.ticket && event.pointerType === 'mouse') {
-        toggleInCart(el.ticket)
-        svgSeat(el).toggleChecked()
+      const el = event.target      
+      const ticket = tickets.find(t => t.id === el.id)
+      if (ticket && event.pointerType === 'mouse') {
+        toggleInCart(ticket)
       }
     }
     hammer.on('tap', handleTap)
@@ -165,6 +165,14 @@ const SeatingScheme = forwardRef((props, ref) => {
       hammer.destroy()
     }
   }, [])
+
+  useEffect(() => {
+    tickets.forEach(ticket => {
+      const el = svgRef.current.querySelector(`#${ticket.id}`)
+      if (!el) return
+      svgSeat(el).checked(ticket.inCart)
+    })
+  }, [tickets])
   
   return (
     <div
@@ -201,14 +209,15 @@ const SeatingScheme = forwardRef((props, ref) => {
         className='scheme-draggable'
         ref={dragRef}
       >
-        {tickets?.[0] && <SeatingTooltip
-          {...tooltipSeat.ticket}
+        {tickets?.length > 0 && <SeatingTooltip
+          {...tickets.find(ticket => ticket.id === tooltipSeat.ticketId)}
           categories={categories}
           visible={tooltipSeat.visible}
           x={tooltipSeat.x}
           y={tooltipSeat.y}
           hideDelay={500}
           scaleFactor={scaleFactor}
+          toggleInCart={toggleInCart}
         />}
         <svg
           className='scheme-svg'

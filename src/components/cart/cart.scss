@@ -1,18 +1,32 @@
-.cart {
-  position: absolute;
-  top: 78px;
-  left: 25px;
-  right: 10px;
-  padding-right: 10px;
-  bottom: 204px;
-  overflow: auto;
-  color: var(--color-gray-2);
+@import '../../../mixins.scss';
 
-  &-category {
-    margin-bottom: 8px;
+.cart {
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+
+  @include bp(device) {
+    flex-direction: column-reverse;
   }
 
-  &-title {
+  &-list {
+    position: absolute;
+    top: 78px;
+    left: 25px;
+    right: 10px;
+    padding-right: 10px;
+    bottom: 204px;
+    overflow: auto;
+    color: var(--color-gray-2);
+
+    @include bp(device) {
+      position: static;
+    }
+  }
+
+  &-category-title {
     padding: 12px 0;
     border-bottom: 1px solid;
     font-size: 14px;
@@ -59,10 +73,20 @@
   }
 
   &-form {
-    position: absolute;
-    bottom: 16px;
-    left: 25px;
-    right: 25px;
+    @include bp(device) {
+      background-color: var(--color-gray-9);
+      display: flex;
+      flex-direction: column-reverse;
+    }
+  }
+
+  &-group {
+    display: flex;
+    gap: 20px;
+
+    @include bp(device) {
+      margin-bottom: 32px;
+    }
   }
 
   &-item {
@@ -95,6 +119,10 @@
     align-items: stretch;
     justify-content: space-between;
     margin-bottom: 24px;
+
+    @include bp(device) {
+      padding: 6px;
+    }
   }
 
   &-input {
@@ -104,11 +132,17 @@
     flex: 1 1 auto;
     color: var(--color-gray-2);
     opacity: 0.3;
+    font-family: 'articulat', sans-serif;
   }
 
   &-applyPromo {
     width: 74px;
     text-align: center;
+
+    @include bp(device) {
+      max-height: none;
+      height: 42px;
+    }
   }
 
   &-total {
@@ -120,7 +154,7 @@
     font-size: 10px;
     line-height: 12px;
     opacity: 0.3;
-    margin-bottom: 12px;
+    margin-bottom: 4px;
 
     &:last-child {
       font-style: italic;
@@ -130,16 +164,60 @@
   &-cost {
     font-size: 14px;
     line-height: 16px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 
     &:last-child {
       font-style: italic;
+    }
+
+    @include bp(device) {
+      margin-bottom: 0;
     }
   }
 
   &-submit {
     display: block;
     width: 100%;
+    text-transform: uppercase;
+
+    @include bp(device) {
+      flex: 0 0 120px;
+      height: 70px;
+      max-height: none;
+      border-radius: 35px;
+    }
+  }
+
+  &-summary {
+    @include bp(device) {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+  }
+  
+  &-delimiter {
+    height: 1px;
+    background: #F8F5EC0D;
+    margin: -5px -25px 16px;
+
+    @include bp(device) {
+      display: none;
+    }
+  }
+
+  &-empty {
+    text-align: center;
+    padding-top: 16px;
+    font-size: 10px;
+    opacity: 0.5;
+  }
+
+  &-title {
+    font-size: 22px;
+    font-weight: 400;
+    margin: 0 0 16px 0;
     text-transform: uppercase;
   }
 }

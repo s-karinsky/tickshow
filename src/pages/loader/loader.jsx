@@ -16,13 +16,12 @@ export default function Loader() {
   const { loaded, ...data } = useQueries({
     queries: [
       getConfigQuery({ enabled: authorized }),
-      getCartQuery({ enabled: authorized }),
       getEventQuery(id, { enabled: authorized }),
       getTicketsQuery(id, { enabled: authorized })
     ],
     combine: combineQueries
   })
-  console.log(data.cart);
+  
   return (
     <>
       <div
