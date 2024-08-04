@@ -1,4 +1,4 @@
-import { Outlet, useParams } from "react-router-dom";
+import { Outlet, useParams, useSearchParams } from "react-router-dom";
 import { useQueries } from "@tanstack/react-query";
 import cn from "classnames"
 import { useUser } from "api/user";
@@ -10,14 +10,17 @@ import combineQueries from "./combine";
 import './loader.scss'
 
 export default function Loader() {
-  const { id } = useParams()
+  const routeParams = useParams()
+  const [ searchParams ] = useSearchParams()
+  const id = routeParams.event_id || searchParams.get('event_id')
   const { data: authorized } = useUser()
   
+  const enabled = authorized && !!id
   const { loaded, ...data } = useQueries({
     queries: [
-      getConfigQuery({ enabled: authorized }),
-      getEventQuery(id, { enabled: authorized }),
-      getTicketsQuery(id, { enabled: authorized })
+      getConfigQuery({ enabled }),
+      getEventQuery(id, { enabled }),
+      getTicketsQuery(id, { enabled })
     ],
     combine: combineQueries
   })
