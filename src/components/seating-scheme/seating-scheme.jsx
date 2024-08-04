@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Hammer from 'hammerjs'
 import { useDimensions, useIsMobile } from 'utils/hooks'
-import { createDefs, createStyles, stringToSvg } from './utils'
+import { createDefs, createStyles, getCursorOffsetToElementCenter, stringToSvg } from './utils'
 import SeatingTooltip from 'components/seating-tooltip'
 import Button from 'components/button'
 import { ReactComponent as ResetIcon } from 'icons/reset.svg'
@@ -17,14 +17,15 @@ const SeatingScheme = forwardRef((props, ref) => {
   const { src, categories, tickets, toggleInCart, highlight } = props
   const [ tooltipSeat, setTooltipSeat ] = useState({ visible: false })
 
-  const [ viewportRef, viewport ] = useDimensions()
+  // const [ viewportRef, viewport ] = useDimensions()
+  const viewportRef = useRef(null)
   const dragRef = useRef(null)
   const svgRef = useRef(null)
 
   const [ state, setState ] = useState({ x: 0, y: 0 })
 
-  const scale = useRef({ value: 1.01, initialWidth: 0, initialHeight: 0 })
-  const [scaleFactor, setScaleFactor] = useState(1.01)
+  const scale = useRef({ value: 1, initialWidth: 0, initialHeight: 0 })
+  const [scaleFactor, setScaleFactor] = useState(1)
   const pos = useRef({ x: 0, y: 0 })
 
   const zoomMin = 0.5
@@ -145,6 +146,13 @@ const SeatingScheme = forwardRef((props, ref) => {
 
     const handleTap = (event) => {
       if (scale.current.value < 1) {
+        const offset = getCursorOffsetToElementCenter(viewportRef.current, event.srcEvent)
+        const x = (pos.current.x + offset.x) / scale.current.value * 2
+        const y = (pos.current.y + offset.y) / scale.current.value * 2
+        dragEl.addEventListener('transitionend', () => dragEl.style.transition = null, { once: true })
+        dragEl.style.transition = `ease-in-out .2s transform`
+        dragEl.style.transform = `translate3d(${x}px, ${y}px, 0)`
+        pos.current = { x, y }
         zoom(2)
         return
       }
