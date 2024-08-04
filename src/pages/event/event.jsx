@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect, useMemo, Suspense, lazy, useRef } from "react";
-import { useOutletContext, useParams } from "react-router-dom";
+import { useOutletContext, useParams, useSearchParams } from "react-router-dom";
 import birds from "images/EARLY BIRDS.svg";
 import { isEqualSeats } from "utils";
 
@@ -26,7 +26,9 @@ import Cart from "components/cart";
 const bem = cn('event')
 
 export default function Event() {
-  const { id } = useParams()
+  const routeParams = useParams()
+  const [searchParams] = useSearchParams()
+  const id = routeParams.event_id || searchParams.get('event_id')
   const queryClient = useQueryClient()
   const { bookingExpired, bookingLimit, cart, categories, config, scheme, tickets, event } = useOutletContext()
   const isMobile = useIsMobile()

@@ -9,8 +9,9 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<Loader />}>
-          <Route path={"/event/:id"} element={<Event />} />
-          <Route path={"/distribute"} element={<Distribute />} />
+          <Route index element={<Event />} />
+          <Route path="/event/:event_id" element={<Event />} />
+          <Route path="/distribute" element={<Distribute />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
