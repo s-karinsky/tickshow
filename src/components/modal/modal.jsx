@@ -52,7 +52,9 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingL
     const [u_hash, setU_hash] = useState(null);
     let l = window.location.pathname;
     const [msLeft, countdown] = useCountdown(bookingLimit - Date.now())
-    const [correctUserData, setCorrectUserData] = useState(false);
+    const [correctUserData, setCorrectUserData] = useState(false)
+    const [transitionClose, setTransitionClose] = useState(false)
+
 
     const clearCart = useMutation({
         mutationFn: () => axios.post('cart/clear', {token: token, u_hash: u_hash,item: cart.forEach(i => i.prop)}),
@@ -179,6 +181,18 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingL
     }
 
 
+    const close = () => {
+      const modal = contentRef.current
+      const overlay = modal.parentNode
+      modal.classList.add('modal-content_closing')
+      overlay.style.opacity = 0;
+      modal.addEventListener('transitionend', () => {
+        setOpen(false)
+        modal.classList.remove('modal-content_closing')
+        overlay.style.opacity = null;
+      }, {})
+    }
+
     useEffect(() => {
         setLoad(false);
     }, [l]);
@@ -203,15 +217,12 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingL
         (x) => x.code_type === "Dancefloor"
     )?.img;
     const dancefloorCount = cart?.filter((x) => x.category === danceCtgy)?.length;
-    console.log(cart,categoriesF)
     return (
         <div
           className={`w100 df aic jcc modal-container ${open && "open"}`}
           onClick={e => {
-            console.log(e, e.target);
-            
-            if (contentRef.current && !contentRef.current.contains(e.target)) return
-            setOpen(false)
+            if (contentRef.current && contentRef.current.contains(e.target)) return
+            close()
           }}
         >
         <div className="df fdc aic gap10 modal-content" ref={contentRef}>
@@ -222,7 +233,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingL
                 <div className="w100 df fdc aic gap10 modal-info">
                     <div className="w100 df aic jcsb _info-title">
                         <p className="fs22">YOUR TICKETS</p>
-                        <span className="fs18 cp" onClick={() => setOpen(false)}>
+                        <span className="fs18 cp" onClick={() => close()}>
               <RxCross2 className="close-icon" />
             </span>
                     </div>
