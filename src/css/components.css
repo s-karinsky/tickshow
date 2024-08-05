@@ -235,8 +235,6 @@
   background: #2c2c2b;
   border-radius: 17px;
   box-shadow: 1.42px 4.26px 9.95px 0px #0000001a;
-  animation-name: fadeIn, zoomIn;
-  animation-duration: .3s;
 }
 
 ._info-title {
