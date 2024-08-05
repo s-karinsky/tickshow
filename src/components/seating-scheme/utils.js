@@ -60,3 +60,14 @@ export const msToTime = ms => {
   const seconds = fullSeconds % 60
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
+
+export const getCursorOffsetToElementCenter = (element, event) => {
+  const { clientX, clientY } = event
+  const { x: ex, y: ey, width, height } = element.getBoundingClientRect()
+  const centerLeft = width / 2 + ex
+  const centerTop = height / 2 + ey
+  const x = centerLeft - clientX
+  const y = centerTop - clientY
+  
+  return { x, y }
+}

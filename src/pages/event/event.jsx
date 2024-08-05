@@ -13,7 +13,7 @@ import SvgScheme from "components/svg-scheme";
 import TicketsCounter from "components/tickets-counter";
 import CategorySelector from "components/category-selector";
 import SeatingScheme from "components/seating-scheme";
-import { useCountdown, useIsMobile, useLocalStorage } from "utils/hooks";
+import { useClickAway, useCountdown, useIsMobile, useLocalStorage } from "utils/hooks";
 import { ReactComponent as IconArrow } from 'icons/arrow.svg'
 import { ReactComponent as IconArrowDouble } from 'icons/arrow_2_down.svg'
 import { updateCart } from "api/cart";
@@ -36,6 +36,8 @@ export default function Event() {
   const [ selectOpened, setSelectOpened ] = useState(false)
   const [ highlightCat, setHighlightCat ] = useState(null)
   const [ orderExpanded, setOrderExpanded ] = useState(false)
+
+  const ref = useClickAway(() => setSelectOpened(false))
 
   useEffect(() => {
     setSelectOpened(!isMobile)
@@ -72,17 +74,13 @@ export default function Event() {
           toggleInCart={toggleInCart.mutate}
         />
       </div>
-      <div className={classNames(bem('sidebar'), bem('categories'))}>
+      <div className={classNames(bem('sidebar'), bem('categories'))} ref={ref}>
         <h2 className={bem('title')}>select a category:</h2>
         <CategorySelector
           defaultCurrency={config.currency}
           value={selectValue}
           options={categories}
           opened={selectOpened}
-          setOpened={val => {
-            setSelectOpened(val)
-            setOrderExpanded(false)
-          }}
           onChange={(val) => {
             if (selectOpened) setSelectValue(val)
             setSelectOpened(!selectOpened)

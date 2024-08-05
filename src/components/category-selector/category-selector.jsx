@@ -15,7 +15,6 @@ export default function SelectCategory({
   opened,
   className,
   style,
-  setOpened,
   onChange,
   onMouseOver,
   onMouseOut,
@@ -27,13 +26,11 @@ export default function SelectCategory({
   }, [defaultCurrency])
 
   const selectedIndex = useMemo(() => options.findIndex(option => option[valueKey] === value), [options, value, valueKey])
-  const ref = useClickAway(() => setOpened(false))
 
   return (
     <ul
       className={classNames(bem({ opened }), { [className]: className })}
       style={{ ...style, height: opened ? (options.length - 1) * 24 + 46 : 30 }}
-      ref={ref}
       {...rest}
     >
       {options.map(({ price, ...option }, i) => (

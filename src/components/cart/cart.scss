@@ -82,9 +82,11 @@
 
   &-group {
     display: flex;
-    gap: 20px;
-
+    flex-direction: column;
+    
     @include bp(device) {
+      flex-direction: row;
+      gap: 20px;
       margin-bottom: 32px;
     }
   }
