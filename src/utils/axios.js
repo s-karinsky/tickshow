@@ -30,7 +30,8 @@ axios.interceptors.response.use(response => {
     return response
   }
   if (Number(code) >= 300 || status !== 'success') {
-    throw new Error(response)
+    //throw new Error(JSON.stringify(response))
+    return  response
   }
   return response?.data || response
 })
