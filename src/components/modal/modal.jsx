@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { Checkbox, ConfigProvider } from "antd";
 import { MdOutlineAccessTime } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
 import { BiLoaderCircle } from "react-icons/bi";
@@ -136,7 +137,6 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingL
                 ).length;
             }
         }
-
         CreateOrder(seats, getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH), DISTRIBUTE_PAGE_URL).then(
             (data) => {
                 console.log(data)
