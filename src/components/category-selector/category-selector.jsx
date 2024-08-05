@@ -15,7 +15,6 @@ export default function SelectCategory({
   opened,
   className,
   style,
-  setOpened,
   onChange,
   onMouseOver,
   onMouseOut,

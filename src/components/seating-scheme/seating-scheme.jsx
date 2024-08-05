@@ -32,6 +32,8 @@ const SeatingScheme = forwardRef((props, ref) => {
   const zoomMax = 4
   const zoomStep = 0.4
 
+  let activeEl = useRef(null)
+
   useEffect(() => {
     if (!highlight) {
       Array.from(svgRef.current.querySelectorAll(`.svg-seat`)).forEach(el => el.removeAttribute('style'))
@@ -92,7 +94,7 @@ const SeatingScheme = forwardRef((props, ref) => {
         seat.checked(hasInCart)
         if (!seat.isMultiple()) {
           el.addEventListener('mouseover', (e) => {
-            if (isMobile) return false
+            activeEl.current = el
             const pos = el.getBBox()
             setTooltipSeat({
               visible: true,
@@ -102,7 +104,6 @@ const SeatingScheme = forwardRef((props, ref) => {
             })
           })
           el.addEventListener('mouseout', (e) => {
-            if (isMobile) return false
             setTooltipSeat({ visible: false, ticketId: seatTicket.id })
           })
         }
@@ -159,7 +160,8 @@ const SeatingScheme = forwardRef((props, ref) => {
 
       const el = event.target      
       const ticket = tickets.find(t => t.id === el.id)
-      if (ticket && event.pointerType === 'mouse') {
+      const { visible, ticketId } = tooltipSeat
+      if (ticket && (event.pointerType === 'mouse' || activeEl.current === el)) {
         toggleInCart(ticket)
       }
     }

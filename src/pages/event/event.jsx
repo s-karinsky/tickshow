@@ -81,10 +81,6 @@ export default function Event() {
           value={selectValue}
           options={categories}
           opened={selectOpened}
-          setOpened={val => {
-            setSelectOpened(val)
-            setOrderExpanded(false)
-          }}
           onChange={(val) => {
             if (selectOpened) setSelectValue(val)
             setSelectOpened(!selectOpened)

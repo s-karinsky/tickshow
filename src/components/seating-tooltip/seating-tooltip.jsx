@@ -33,7 +33,11 @@ export default function SeatingTooltip(props) {
   const color = props.color || cat?.color || "#fff";
   
   return (
-    <div className={bem({ visible })} style={{ left: props.x * props.scaleFactor, top: props.y * props.scaleFactor }}>
+    <div
+      className={bem({ visible })}
+      style={{ left: props.x * props.scaleFactor, top: props.y * props.scaleFactor }}
+      onClick={() => props.toggleInCart(props, Number(!props.inCart))}
+    >
       <div className={bem('head')}>
         <div className={bem('price')}>
           {props?.price || '-'}&nbsp;{CURRENCY_SYMBOL_MAP[props?.currency] || ''}
@@ -62,7 +66,6 @@ export default function SeatingTooltip(props) {
           backgroundColor: props.inCart ? color : undefined,
           borderColor: props.inCart ? color : undefined
         }}
-        onClick={() => props.toggleInCart(props, Number(!props.inCart))}
       >
         {props.inCart ? <><Selected style={{ width: 12 }} /> Selected</> : `${isMobile ? 'Tap' : 'Click'} to select`}
       </button>
