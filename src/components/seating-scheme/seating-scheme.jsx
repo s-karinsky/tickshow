@@ -103,11 +103,14 @@ const SeatingScheme = forwardRef((props, ref) => {
       const x  = deltaX + pos.current.x
       const y = deltaY + pos.current.y
       move({ x, y }, { updateCurrent: false })
-      if (type === 'panend') {
+      if (type === 'panstart') {
+        dragEl.style.cursor = 'grabbing'
+      } else if (type === 'panend') {
+        dragEl.style.cursor = null
         pos.current = { x, y }
       }
     }
-    hammer.on('pan panend', handlePan)
+    hammer.on('panstart pan panend', handlePan)
 
     /* Зум пальцами и колесиком */
     let initialScale
