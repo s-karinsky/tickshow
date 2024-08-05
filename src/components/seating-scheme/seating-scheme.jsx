@@ -28,11 +28,33 @@ const SeatingScheme = forwardRef((props, ref) => {
   const [scaleFactor, setScaleFactor] = useState(1)
   const pos = useRef({ x: 0, y: 0 })
 
-  const zoomMin = 0.5
+  const zoomMin = 0.4
   const zoomMax = 4
   const zoomStep = 0.4
 
   let activeEl = useRef(null)
+
+  const move = ({ x = pos.current.x, y = pos.current.y } = {}, options = {}) => {
+    const node = dragRef.current
+    const { transition, updateCurrent = true } = options
+    if (transition) {
+      node.style.transition = typeof transition === 'string' ? transition : '.2s ease-in-out'
+      node.style.transitionPropery = 'transform'
+      node.addEventListener('transitionend', () => node.style.transition = null, { once: true })
+    }
+    node.style.transform = `translate3d(${x}px, ${y}px, 0)`
+    if (updateCurrent) pos.current = { x, y }
+  }
+
+  const getZoomToFillViewportSide = useCallback((type) => {
+    const node = svgRef.current
+    const { value } = scale.current
+    const { width, height } = node.getBoundingClientRect()
+    const viewportRect = viewportRef.current.getBoundingClientRect()
+    return Math[type](viewportRect.width / (width / value), viewportRect.height / (height / value))
+  }, [])
+  const getCoverZoom = () => getZoomToFillViewportSide('max')
+  const getContainZoom = () => getZoomToFillViewportSide('min')
 
   useEffect(() => {
     if (!highlight) {
@@ -46,9 +68,11 @@ const SeatingScheme = forwardRef((props, ref) => {
   }, [highlight])
 
   const zoom = useCallback((next) => {
+    const { initialWidth, initialHeight } = scale.current
+    if (!initialHeight || !initialWidth) return
     const value = Math.min(Math.max(next, zoomMin), zoomMax)
-    const width = value * scale.current.initialWidth
-    const height = value * scale.current.initialHeight
+    const width = value * initialWidth
+    const height = value * initialHeight
     svgRef.current.style.width = `${width}px`
     svgRef.current.style.height = `${height}px`
     scale.current.value = value
@@ -58,11 +82,105 @@ const SeatingScheme = forwardRef((props, ref) => {
   const zoomOut = useCallback(() => zoom(scale.current.value - zoomStep), [])
   const isMobile = useIsMobile()
 
+  const fitToViewport = useCallback(() => {
+    move({ x: 0, y: 0 }, { transition: true })
+    zoom(getContainZoom())
+  }, [])
+  
   const handleWheel = (event) => {
     if (!event.ctrlKey) return
     event.preventDefault()
     event.deltaY > 0 ? zoomOut() : zoomIn()
   }
+
+  useEffect(() => {
+    const dragEl = dragRef.current
+    const hammer = new Hammer(dragEl)
+
+    /* Перетаскивание мышью и тачем */
+    hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL })
+    const handlePan = ({ type, deltaX, deltaY }) => {
+      const x  = deltaX + pos.current.x
+      const y = deltaY + pos.current.y
+      move({ x, y }, { updateCurrent: false })
+      if (type === 'panstart') {
+        dragEl.style.cursor = 'grabbing'
+      } else if (type === 'panend') {
+        dragEl.style.cursor = null
+        pos.current = { x, y }
+      }
+    }
+    hammer.on('panstart pan panend', handlePan)
+
+    /* Зум пальцами и колесиком */
+    let initialScale
+    dragEl.addEventListener('wheel', handleWheel)
+    hammer.get('pinch').set({ enable: true })
+    const handlePinch = (ev) => {
+      if (ev.type === 'pinchstart') {
+        initialScale = scale.current.value
+        svgRef.current.style.transition = 'none'
+      }
+      zoom(initialScale * ev.scale)
+      if (ev.type === 'pinchend') {
+        svgRef.current.style.transition = null
+      }
+    }
+    hammer.on('pinchstart pinch pinchend', handlePinch)
+
+    const handleTap = (event) => {      
+      if (scale.current.value < 1) {
+        event.preventDefault()
+        const offset = getCursorOffsetToElementCenter(viewportRef.current, event.srcEvent)
+        const x = (pos.current.x + offset.x) / scale.current.value * 2
+        const y = (pos.current.y + offset.y) / scale.current.value * 2
+        zoom(Math.max(1, getCoverZoom()))
+        move({ x, y }, { transition: true })
+        return
+      }
+      
+      const el = event.target
+      const ticket = tickets.find(t => t.id === el.id)
+      const { visible, ticketId } = tooltipSeat
+      if (ticket) {
+        if (event.pointerType === 'touch') {
+          const clone = [el.cloneNode()]
+          if (el.nextElementSibling.tagName?.toLowerCase() === 'use') clone.push(el.nextElementSibling.cloneNode())
+          document.querySelectorAll('#clone-1, #clone-2').forEach(el => el.remove())
+          clone.map((el, i) => {
+            el.id = `clone-${(i + 1)}`
+            el.classList.add('svg-seat-clone')
+            svgRef.current.appendChild(el)
+          })
+          activeEl.current = el
+          const pos = el.getBBox()
+          setTooltipSeat({
+            visible: true,
+            x: pos.x + pos.width,
+            y: pos.y + pos.height,
+            ticketId: ticket.id
+          })
+        } else {
+          toggleInCart(ticket)
+        }
+      } else {
+        const delay = el.matches('.seating-tooltip') || el.closest('.seating-tooltip') ? 500 : 0
+        
+        setTooltipSeat(prev => ({ visible: false, ticketId: prev.ticketId, delay }))
+        document.querySelectorAll('#clone-1, #clone-2').forEach(el => el.remove())
+      }
+    }
+    hammer.on('tap', handleTap)
+
+    return () => {
+      dragEl.removeEventListener('wheel', handleWheel)
+      hammer.off('pan panend', handlePan)
+      hammer.off('pinch', handlePinch)
+      hammer.off('tap', handleTap)
+      hammer.destroy()
+    }
+  }, [])
+
 
   useEffect(() => {
     const node = svgRef.current
@@ -86,7 +204,7 @@ const SeatingScheme = forwardRef((props, ref) => {
       let seatTicket = seat.isMultiple() ?
         tickets.filter(item => item.category === category) :
         tickets.find(item => item.id === el.id)
-      
+
       if (!seatTicket || (Array.isArray(seatTicket) && !seatTicket.length)) {
         el.setAttribute('data-disabled', '')
       } else {
@@ -94,6 +212,7 @@ const SeatingScheme = forwardRef((props, ref) => {
         seat.checked(hasInCart)
         if (!seat.isMultiple()) {
           el.addEventListener('mouseover', (e) => {
+            if (e.sourceCapabilities?.firesTouchEvents) return
             activeEl.current = el
             const pos = el.getBBox()
             setTooltipSeat({
@@ -104,77 +223,20 @@ const SeatingScheme = forwardRef((props, ref) => {
             })
           })
           el.addEventListener('mouseout', (e) => {
-            setTooltipSeat({ visible: false, ticketId: seatTicket.id })
+            if (e.sourceCapabilities?.firesTouchEvents) return
+            setTooltipSeat(prev => ({ visible: false, ticketId: prev.ticketId }))
           })
         }
       }
     })
-  }, [src])
 
-  useEffect(() => {
     const dragEl = dragRef.current
     const rect = dragEl.getBoundingClientRect()
-    scale.current = { value: 1, initialWidth: rect.width, initialHeight: rect.height }
-    const hammer = new Hammer(dragEl)
-
-    /* Перетаскивание мышью и тачем */
-    hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL })
-    const handlePan = ({ type, deltaX, deltaY }) => {
-      const x  = deltaX + pos.current.x
-      const y = deltaY + pos.current.y
-      dragEl.style.transform = `translate3d(${x}px, ${y}px, 0)`
-      if (type === 'panend') {
-        pos.current = { x, y }
-      }
-    }
-    hammer.on('pan panend', handlePan)
-
-    /* Зум пальцами и колесиком */
-    let initialScale
-    dragEl.addEventListener('wheel', handleWheel)
-    hammer.get('pinch').set({ enable: true })
-    const handlePinch = (ev) => {
-      if (ev.type === 'pinchstart') {
-        initialScale = scale.current.value
-        svgRef.current.style.transition = 'none'
-      }
-      zoom(initialScale * ev.scale)
-      if (ev.type === 'pinchend') {
-        svgRef.current.style.transition = null
-      }
-    }
-    hammer.on('pinchstart pinch pinchend', handlePinch)
-
-    const handleTap = (event) => {
-      if (scale.current.value < 1) {
-        const offset = getCursorOffsetToElementCenter(viewportRef.current, event.srcEvent)
-        const x = (pos.current.x + offset.x) / scale.current.value * 2
-        const y = (pos.current.y + offset.y) / scale.current.value * 2
-        dragEl.addEventListener('transitionend', () => dragEl.style.transition = null, { once: true })
-        dragEl.style.transition = `ease-in-out .2s transform`
-        dragEl.style.transform = `translate3d(${x}px, ${y}px, 0)`
-        pos.current = { x, y }
-        zoom(2)
-        return
-      }
-
-      const el = event.target      
-      const ticket = tickets.find(t => t.id === el.id)
-      const { visible, ticketId } = tooltipSeat
-      if (ticket && (event.pointerType === 'mouse' || activeEl.current === el)) {
-        toggleInCart(ticket)
-      }
-    }
-    hammer.on('tap', handleTap)
-
-    return () => {
-      dragEl.removeEventListener('wheel', handleWheel)
-      hammer.off('pan panend', handlePan)
-      hammer.off('pinch', handlePinch)
-      hammer.off('tap', handleTap)
-      hammer.destroy()
-    }
-  }, [])
+    scale.current.initialWidth = rect.width
+    scale.current.initialHeight = rect.height
+    
+    fitToViewport()
+  }, [src])
 
   useEffect(() => {
     tickets.forEach(ticket => {
@@ -210,7 +272,7 @@ const SeatingScheme = forwardRef((props, ref) => {
       <div className='scheme-reset'>
         <button
           className={classNames('scheme-control', { 'scheme-control_hidden': scaleFactor <= 1.2 })}
-          onClick={() => zoom(1.01)}
+          onClick={() => fitToViewport()}
         >
           <ResetIcon style={{ width: 23 }} />
         </button>
@@ -225,7 +287,7 @@ const SeatingScheme = forwardRef((props, ref) => {
           visible={tooltipSeat.visible}
           x={tooltipSeat.x}
           y={tooltipSeat.y}
-          hideDelay={500}
+          hideDelay={tooltipSeat.delay ?? 500}
           scaleFactor={scaleFactor}
           toggleInCart={toggleInCart}
         />}
