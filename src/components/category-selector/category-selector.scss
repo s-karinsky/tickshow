@@ -59,6 +59,10 @@
     gap: 10px;
     width: 160px;
     align-items: center;
+
+    @include bp(device) {
+      width: 140px;
+    }
   }
   &-icon {
     width: 12px;
