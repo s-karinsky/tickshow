@@ -65,7 +65,7 @@ const SeatingScheme = forwardRef((props, ref) => {
       mapSeat(node, el => el.removeAttribute('style'), '')
       return
     }
-    mapSeat(node, el => el => el.removeAttribute('style'), `[data-category="${highlight}"]`)
+    mapSeat(node, el => el.removeAttribute('style'), `[data-category="${highlight}"]`)
     mapSeat(node, el => el.style.fill = '#666', `:not([data-category="${highlight}"])`)
   }, [highlight])
 
