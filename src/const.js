@@ -32,3 +32,5 @@ export const getPhantomUser = () => ({
     password: '123456',
   }),
 })
+
+export const DISTRIBUTE_PAGE_URL = "https://tickshow.vercel.app/distribute"

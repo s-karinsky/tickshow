@@ -17,7 +17,7 @@ const combineQueries = (results) => {
     }), {})
 
     const cart = tickets.filter(ticket => ticket.inCart)
-      .reduce((map, { category, price, ...ticket }) => ({
+    const cartByCategory = cart.reduce((map, { category, price, ...ticket }) => ({
         ...map,
         [category]: {
           items: (map[category]?.items || []).concat({ category, price, ...ticket }),
@@ -44,6 +44,7 @@ const combineQueries = (results) => {
     return {
       bookingExpired,
       bookingLimit,
+      cartByCategory,
       cart,
       categories,
       config,

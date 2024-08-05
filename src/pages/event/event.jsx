@@ -21,7 +21,8 @@ import './event.scss'
 import Countdown from "components/countdown/countdown";
 import { getFromLocalStorage } from "utils/common";
 import { STORAGE_KEY_USER_EMAIL } from "const";
-import Cart from "components/cart";
+import Cart from "components/cart/cart";
+import CartModal from "components/modal/modal";
 
 const bem = cn('event')
 
@@ -30,12 +31,13 @@ export default function Event() {
   const [searchParams] = useSearchParams()
   const id = routeParams.event_id || searchParams.get('event_id')
   const queryClient = useQueryClient()
-  const { bookingExpired, bookingLimit, cart, categories, config, scheme, tickets, event } = useOutletContext()
+  const { bookingExpired, bookingLimit, cart, cartByCategory, categories, config, scheme, tickets, event } = useOutletContext()
   const isMobile = useIsMobile()
-  const [ selectValue, setSelectValue ] = useState(null)
-  const [ selectOpened, setSelectOpened ] = useState(false)
-  const [ highlightCat, setHighlightCat ] = useState(null)
-  const [ orderExpanded, setOrderExpanded ] = useState(false)
+  const [selectValue, setSelectValue] = useState(null)
+  const [selectOpened, setSelectOpened] = useState(false)
+  const [highlightCat, setHighlightCat] = useState(null)
+  const [orderExpanded, setOrderExpanded] = useState(false)
+  const [cartModal, setCartModal] = useState(false)
 
   const ref = useClickAway(() => setSelectOpened(false))
 
@@ -60,7 +62,7 @@ export default function Event() {
       return { previousCart }
     }
   })
-  
+
   return (
     <div className={bem('layout')}>
       <div className={bem('scheme')}>
@@ -69,7 +71,7 @@ export default function Event() {
           src={scheme}
           categories={categories}
           highlight={highlightCat || selectValue}
-          cart={cart}
+          cart={cartByCategory}
           tickets={tickets}
           toggleInCart={toggleInCart.mutate}
         />
@@ -108,10 +110,23 @@ export default function Event() {
         </button>
         <Cart
           categories={categories}
-          cart={cart}
+          cart={cartByCategory}
           toggleInCart={toggleInCart.mutate}
+          setCartModal={setCartModal}
         />
       </div>
+      {cartModal && (
+        <Suspense>
+          <CartModal
+            setOpen={setCartModal}
+            open={cartModal}
+            ScheduleFee={event.fee * 1}
+            categoriesF={categories}
+            bookingLimit={bookingLimit}
+            cart={cart}
+          />
+        </Suspense>
+      )}
     </div>
   )
 };
