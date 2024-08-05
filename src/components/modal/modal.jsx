@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Checkbox, ConfigProvider } from "antd";
 import { MdOutlineAccessTime } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
 import { BiLoaderCircle } from "react-icons/bi";
 import { useDispatch, useSelector } from "react-redux";
 import {getFromLocalStorage} from "../../utils/common";
 import {DISTRIBUTE_PAGE_URL, STORAGE_KEY_USER_EMAIL, STORAGE_KEY_USER_HASH, STORAGE_KEY_USER_TOKEN} from "../../const";
+import { ReactComponent as CheckboxIcon } from 'icons/checkbox.svg'
 import {ChangeUser, AuthUser} from "../../api/user";
 import {ClearSeats, MoveCart} from "../../api/cart";
 import {CreateOrder} from "../../api/order"
@@ -14,6 +14,7 @@ import {msToTime} from "../seating-scheme/utils";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import axios from "axios";
 import Button from "components/button";
+import { useLocation } from "react-router-dom";
 
 export const calculateTotal = (data, percentage, discount) => {
     let totalQuantity = 0;
@@ -43,14 +44,14 @@ export const calculateTotal = (data, percentage, discount) => {
     };
 };
 
-const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingLimit, cart}) => {
+const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingLimit, cart }) => {
     discount = discount || 0;
     const t = useMemo(() => calculateTotal(cart, ScheduleFee, discount), [cart, ScheduleFee, discount])
     const queryClient = useQueryClient()
     const [load, setLoad] = useState(false);
     const [token, setToken] = useState(null);
     const [u_hash, setU_hash] = useState(null);
-    let l = window.location.pathname;
+    const location = useLocation()
     const [msLeft, countdown] = useCountdown(bookingLimit - Date.now())
     const [correctUserData, setCorrectUserData] = useState(false)
     const [transitionClose, setTransitionClose] = useState(false)
@@ -106,15 +107,13 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingL
             }
         });
 
-
         // group seats by trip_id (t_id)
-        var seats = JSON.parse(localStorage?.getItem("cart")) || [];
-        seats = seats.reduce((acc, seat) => {
+        const seats = cart.reduce((acc, seat) => {
             if (!acc[seat.t_id]) {
                 acc[seat.t_id] = {};
             }
             var seatFormat =
-                seat.hall_id + ";" + seat.section + ";" + seat.row + ";" + seat.seat;
+                seat.hall_id + ";" + (seat.section || seat.category) + ";" + seat.row + ";" + seat.seat;
             acc[seat.t_id][seatFormat] = 1;
             return acc;
         }, {});
@@ -137,6 +136,8 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingL
                 ).length;
             }
         }
+
+        axios.post('/stripe').then(res => console.log('res', res)).catch(err => console.log('err', err))
         CreateOrder(seats, getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH), DISTRIBUTE_PAGE_URL).then(
             (data) => {
                 console.log(data)
@@ -153,7 +154,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingL
 
                 setTimeout(() => {
                     localStorage.removeItem("cart");
-                    window.location.reload();
+                    // window.location.reload();
                 }, 2000);
 
                 //window.location.href = payment_link
@@ -170,7 +171,6 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingL
             }, 2000);
         */
     }
-    console.log(cart)
     const actionOnTimeEnd = () => {
         ClearSeats(getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH), cart.map(i => [i.hall_id, i.category, i.row, i.seat].join(';'))).then((data) => {
             //console.log(data)
@@ -195,7 +195,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingL
 
     useEffect(() => {
         setLoad(false);
-    }, [l]);
+    }, [location]);
     useEffect(() => {
         if (bookingLimit > Date.now()) countdown.start()
         if (msLeft <= 0) {
@@ -337,21 +337,10 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingL
                             }
                             }
                         />
-                        <label className="w100 df aic gap8 fs12 checkbox">
-                            <ConfigProvider
-                                theme={{
-                                    token: {
-                                        colorWhite: "#2c2c2b",
-                                    },
-                                }}>
-                                <Checkbox
-                                    defaultChecked
-                                    style={{ opacity: 0.3, transform: "scale(0.8)" }}
-                                />
-                            </ConfigProvider>
-                            <p>
-                                Checkbox txt on one line to <u>show</u> what it will.
-                            </p>
+                        <label className='checkbox'>
+                          <input type="checkbox" name='aggree' />
+                          <CheckboxIcon />
+                          <div>Checkbox txt on one line to <u>show</u> what it will.</div>
                         </label>
                         <Button
                           color='bordered'

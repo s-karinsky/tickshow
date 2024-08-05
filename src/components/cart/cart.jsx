@@ -11,6 +11,7 @@ const bem = cn('cart')
 export default function Cart({ cart, categories, toggleInCart, setCartModal }) {
   const total = useMemo(() => Object.values(cart).reduce((acc, { sum }) => acc + sum, 0), [cart])
   const totalCount = useMemo(() => Object.values(cart).reduce((acc, { items }) => acc + items.length, 0), [cart])
+  const isEmpty = !Object.values(cart).length
   return (
     <div className={bem()}>
       <div>
@@ -18,7 +19,7 @@ export default function Cart({ cart, categories, toggleInCart, setCartModal }) {
         <div className={bem('delimiter')} />
       </div>
       <div className={bem('list')}>
-        {!Object.values(cart).length && <div className={bem('empty')}>Select a ticket</div>}
+        {isEmpty && <div className={bem('empty')}>Select a ticket</div>}
         {Object.values(cart).filter(({ data, items }) => !!data && !!items).map(({ data, sum, items }) => (
           <div className={bem('category')} key={data.value}>
             <div className={bem('category-title')} style={{ borderColor: data.color }}>
@@ -77,6 +78,7 @@ export default function Cart({ cart, categories, toggleInCart, setCartModal }) {
             size='large'
             className={bem('submit')}
             onClick={() => setCartModal(true)}
+            disabled={isEmpty}
           >
             Buy tickets
           </Button>

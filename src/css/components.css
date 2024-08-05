@@ -285,12 +285,38 @@
 }
 
 .checkbox {
+  width: 100%;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
   color: #f8f5ec40;
-  font-weight: 300;
+  font-weight: 400;
+  font-size: 12px;
 }
 
 .checkbox > input {
-  background: none;
+  display: none;
+}
+
+.checkbox > input + svg {
+  display: block;
+  width: 12px;
+  height: 12px;
+  color: #f8f5ec;
+  position: relative;
+  top: 1px;
+}
+
+.checkbox>input+svg path:last-child {
+  transform: scale(0.2);
+  transform-origin: 50% 50%;
+  opacity: 0;
+  transition: ease-in-out .3s;
+  transition-property: transform, opacity;
+}
+.checkbox>input:checked+svg path:last-child {
+  transform: scale(1);
+  opacity: 1;
 }
 
 .promo-container {

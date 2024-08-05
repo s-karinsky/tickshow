@@ -12,7 +12,7 @@ import './seating-scheme.scss'
 import classNames from 'classnames'
 
 const mapSeat = (node, cb, joinToSelector = '') =>
-  node.querySelectorAll(`.svg-seat${joinToSelector}`).map(cb)
+  Array.from(node.querySelectorAll(`.svg-seat${joinToSelector}`)).map(cb)
 
 const SeatingScheme = forwardRef((props, ref) => {
   const [log, setLog] = useState([])
