@@ -174,6 +174,26 @@
   color: #aaa;
 }
 
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn {
+  0% {
+    transform: scale(0.4);
+    transform-origin: 50% 50%;
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
 .modal-container {
   position: fixed;
   top: 0;
@@ -183,6 +203,7 @@
   backdrop-filter: blur(4px);
   transition: all 0.3s ease-in-out;
   z-index: 999999;
+  animation: fadeIn .3s ease-in-out;
 }
 
 .modal-container.open {
@@ -190,7 +211,16 @@
 }
 
 .modal-content {
-  width: 360px;
+  width: 385px;
+  animation-name: fadeIn, zoomIn;
+  animation-duration: .3s;
+}
+
+.modal-content_closing {
+  transition: ease-in-out .3s;
+  transition-property: opacity, transform;
+  transform: scale(0.4);
+  opacity: 0;
 }
 
 .ticket-time {
@@ -217,6 +247,7 @@
 
 ._info-title > span:hover {
   color: #f8f5ec;
+  transition: ease-in-out .2s color;
 }
 
 .tags {
@@ -226,9 +257,12 @@
 }
 
 .tag {
-  padding: 5px 10px;
+  padding: 6px 10px;
   background: #40403ec4;
   border-radius: 20px;
+  letter-spacing: 2px;
+  align-items: center;
+  align-items: center;
 }
 
 ._info-form {

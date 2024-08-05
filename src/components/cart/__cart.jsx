@@ -22,7 +22,7 @@ export default function Cart({ cart, categories, toggleInCart, setCartModal }) {
         {Object.values(cart).filter(({ data, items }) => !!data && !!items).map(({ data, sum, items }) => (
           <div className={bem('category')} key={data.value}>
             <div className={bem('category-title')} style={{ borderColor: data.color }}>
-              <div className={bem('icon')} dangerouslySetInnerHTML={{ __html: data.icon}} style={{ color: data.color }} />
+              <div className={bem('icon')} dangerouslySetInnerHTML={{ __html: data.icon }} style={{ color: data.color }} />
               <div className={bem('label')}>{data.label}</div>
               <div className={bem('count')}><Close style={{ width: 8 }} /> {items.length}</div>
               <div className={bem('price')}>{sum}</div>

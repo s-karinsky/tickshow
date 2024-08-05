@@ -1,5 +1,3 @@
-@import '../../../mixins.scss';
-
 .event {
   &-layout {
     width: 100vw;
@@ -11,7 +9,7 @@
     flex-direction: column;
     flex-wrap: wrap;
 
-    @include bp(device) {
+    @media (max-width: 1023px) {
       flex-direction: row-reverse;
       position: relative;
       padding: 0;
@@ -26,7 +24,7 @@
     position: relative;
     overflow: hidden;
 
-    @include bp(device) {
+    @media (max-width: 1023px) {
       width: 100%;
       height: 100%;
       border: none;
@@ -39,13 +37,12 @@
     border-radius: var(--layout-radius);
     padding: var(--sidebar-padding-x) var(--sidebar-padding-y);
 
-    @include bp(device) {
+    @media (max-width: 1023px) {
       position: fixed;
       left: 0;
       top: 0;
       right: 0;
       width: auto;
-      border-radius: 0;
 
       h2 {
         display: none;
@@ -57,36 +54,19 @@
     flex-grow: 0;
     flex-shrink: 0;
     padding: 25px 25px 0;
-    
-    @include bp(device) {
-      padding: 15px 0 0;
-      z-index: 55;
+    @media (max-width: 1023px) {
+      padding: 15px 15px 0;
     }
   }
 
   &-order {
     flex-grow: 1;
-    flex-shrink: 0; 
+    flex-shrink: 0;
     position: relative;
-    padding-bottom: 16px;
 
-    @include bp(device) {
-      position: fixed;
-      z-index: 55;
-      top: 100%;
-      transform: translateY(-120px);
-      max-height: calc(100% - 75px);
-      transition: ease-in-out .3s transform;
-      border-radius: 0;
-      box-shadow: 0px -7.52px 9.4px 0px #2121214D;
-
-      &_expanded {
-        transform: translateY(-100%);
-
-        .event-toggleCart svg {
-          transform: rotate(0deg);
-        }
-      }
+    @media (max-width: 1023px) {
+      top: auto;
+      bottom: 0;
     }
   }
 
@@ -102,14 +82,11 @@
     width: 100%;
     text-align: center;
     opacity: 0.5;
-    transition: ease .3s opacity;
-    
-    svg {
-      transform: rotate(0);
-      transition: ease .3s transform;
-    }
+    transform: rotate(0);
+    transition: ease .3s;
+    transition-property: opacity, transform;
 
-    &_opened svg {
+    &_opened {
       transform: rotate(-180deg);
     }
   
@@ -132,25 +109,17 @@
     transform: translateX(-50%);
   }
 
-  &-toggleCart {
-    margin: -16px -12px 10px !important;
-    color: var(--color-gray-2);
-    background-color: transparent;
-    border: none;
-    padding: 0;
-    margin: 0;
-    display: block;
-    width: 100%;
-    font-size: 12px;
-    text-transform: uppercase;
-    font-style: italic;
-    line-height: 14px;
-    padding: 6px 0;
+  &-delimiter {
+    height: 1px;
+    background: #F8F5EC0D;
+    margin: -5px -25px 4px;
 
-    svg {
-      vertical-align: middle;
-      transform: rotate(180deg);
-      transition: ease .3s transform;
+    &_bottom {
+      position: absolute;
+      bottom: 190px;
+      left: 0;
+      right: 0;
+      margin: 0;
     }
   }
 }

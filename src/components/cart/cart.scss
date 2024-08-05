@@ -37,6 +37,7 @@
 
   &-icon {
     height: 14px;
+
     svg {
       width: 14px;
     }
@@ -83,7 +84,7 @@
   &-group {
     display: flex;
     flex-direction: column;
-    
+
     @include bp(device) {
       flex-direction: row;
       gap: 20px;
@@ -108,7 +109,7 @@
     font-size: 14px;
   }
 
-  &-value + .cart-price {
+  &-value+.cart-price {
     font-size: 12px;
     opacity: 0.3;
   }
@@ -198,7 +199,7 @@
       justify-content: space-between;
     }
   }
-  
+
   &-delimiter {
     height: 1px;
     background: #F8F5EC0D;

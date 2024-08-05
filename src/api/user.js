@@ -33,3 +33,39 @@ export const useUser = () => useQuery({
   queryFn: login,
   staleTime: Infinity,
 })
+
+export async function ChangeUser(token, u_hash, name, email, phone) {
+  var data = {
+    token: token,
+    u_hash: u_hash,
+    data: JSON.stringify({
+      u_name: name,
+      u_email: email,
+      u_phone: phone,
+    }),
+  };
+  try {
+    return await axios.post("user", data);
+  } catch (e) {
+    console.log(e)
+  }
+}
+
+export async function AuthUser(email = "", phone = "", auth_type = "e-mail") {
+  if (email === null || email === undefined) {
+    auth_type = "phone";
+  }
+  var data = {
+    login: email || phone,
+    type: auth_type,
+    password: "ajekghet",
+  };
+  var auth_hash = await axios.post("auth", data);
+  auth_hash = auth_hash.data.auth_hash;
+  var req = await axios.post("token", {"auth_hash": auth_hash});
+  return {
+    token: req.data.data.token,
+    u_hash: req.data.data.u_hash,
+    u_id: req.data.auth_user.u_id,
+  };
+}
