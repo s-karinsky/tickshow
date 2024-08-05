@@ -117,8 +117,6 @@ const SeatingScheme = forwardRef((props, ref) => {
     dragEl.addEventListener('wheel', handleWheel)
     hammer.get('pinch').set({ enable: true })
     const handlePinch = (ev) => {
-      console.log(ev);
-      
       if (ev.type === 'pinchstart') {
         initialScale = scale.current.value
         svgRef.current.style.transition = 'none'
@@ -130,21 +128,46 @@ const SeatingScheme = forwardRef((props, ref) => {
     }
     hammer.on('pinchstart pinch pinchend', handlePinch)
 
-    const handleTap = (event) => {
+    const handleTap = (event) => {      
       if (scale.current.value < 1) {
+        event.preventDefault()
         const offset = getCursorOffsetToElementCenter(viewportRef.current, event.srcEvent)
         const x = (pos.current.x + offset.x) / scale.current.value * 2
         const y = (pos.current.y + offset.y) / scale.current.value * 2
-        zoom(getCoverZoom())
+        zoom(Math.max(1, getCoverZoom()))
         move({ x, y }, { transition: true })
         return
       }
-  
+      
       const el = event.target
       const ticket = tickets.find(t => t.id === el.id)
       const { visible, ticketId } = tooltipSeat
-      if (ticket && (event.pointerType === 'mouse' || activeEl.current === el)) {
-        toggleInCart(ticket)
+      if (ticket) {
+        if (event.pointerType === 'touch') {
+          const clone = [el.cloneNode()]
+          if (el.nextElementSibling.tagName?.toLowerCase() === 'use') clone.push(el.nextElementSibling.cloneNode())
+          document.querySelectorAll('#clone-1, #clone-2').forEach(el => el.remove())
+          clone.map((el, i) => {
+            el.id = `clone-${(i + 1)}`
+            el.classList.add('svg-seat-clone')
+            svgRef.current.appendChild(el)
+          })
+          activeEl.current = el
+          const pos = el.getBBox()
+          setTooltipSeat({
+            visible: true,
+            x: pos.x + pos.width,
+            y: pos.y + pos.height,
+            ticketId: ticket.id
+          })
+        } else {
+          toggleInCart(ticket)
+        }
+      } else {
+        const delay = el.matches('.seating-tooltip') || el.closest('.seating-tooltip') ? 500 : 0
+        
+        setTooltipSeat(prev => ({ visible: false, ticketId: prev.ticketId, delay }))
+        document.querySelectorAll('#clone-1, #clone-2').forEach(el => el.remove())
       }
     }
     hammer.on('tap', handleTap)
@@ -189,6 +212,7 @@ const SeatingScheme = forwardRef((props, ref) => {
         seat.checked(hasInCart)
         if (!seat.isMultiple()) {
           el.addEventListener('mouseover', (e) => {
+            if (e.sourceCapabilities?.firesTouchEvents) return
             activeEl.current = el
             const pos = el.getBBox()
             setTooltipSeat({
@@ -199,7 +223,8 @@ const SeatingScheme = forwardRef((props, ref) => {
             })
           })
           el.addEventListener('mouseout', (e) => {
-            setTooltipSeat({ visible: false, ticketId: seatTicket.id })
+            if (e.sourceCapabilities?.firesTouchEvents) return
+            setTooltipSeat(prev => ({ visible: false, ticketId: prev.ticketId }))
           })
         }
       }
@@ -262,7 +287,7 @@ const SeatingScheme = forwardRef((props, ref) => {
           visible={tooltipSeat.visible}
           x={tooltipSeat.x}
           y={tooltipSeat.y}
-          hideDelay={500}
+          hideDelay={tooltipSeat.delay ?? 500}
           scaleFactor={scaleFactor}
           toggleInCart={toggleInCart}
         />}

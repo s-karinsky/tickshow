@@ -22,6 +22,8 @@ export default function SeatingTooltip(props) {
         clearTimeout(timer.current)
         setVisible(true)
       }
+    } else {
+      setVisible(props.visible)
     }
   }, [props.visible])
 
