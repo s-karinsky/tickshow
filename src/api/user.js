@@ -34,19 +34,10 @@ export const useUser = () => useQuery({
   staleTime: Infinity,
 })
 
-export async function ChangeUser(token, u_hash, name, email, phone) {
-  var data = {
-    data: JSON.stringify({
-      u_name: name,
-      u_email: email,
-      u_phone: phone,
-    }),
-  };
-  try {
-    return await axios.post("user", data);
-  } catch (e) {
-    console.log(e)
-  }
+export async function updateUser(data) {
+  return await axios.post('user', {
+    data: JSON.stringify(data),
+  });
 }
 
 export async function AuthUser(email = "", phone = "", auth_type = "e-mail") {

@@ -71,6 +71,10 @@ export default function Event() {
       return { previousCart }
     }
   })
+
+  const clearCart = useCallback((queryKey) => {
+    queryClient.resetQueries({ queryKey, exact: true })
+  }, [])
   
   return (
     <div className={bem('layout')}>
@@ -133,6 +137,7 @@ export default function Event() {
             categoriesF={categories}
             bookingLimit={bookingLimit}
             cart={cart}
+            clearCart={clearCart}
           />
         </Suspense>
       )}
