@@ -152,7 +152,6 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingL
                 // Post msg was here
 
                 setTimeout(() => {
-                    localStorage.removeItem("cart");
                     // window.location.reload();
                 }, 2000);
 
@@ -170,6 +169,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingL
             }, 2000);
         */
     }
+
     const actionOnTimeEnd = () => {
         ClearSeats(getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH), cart.map(i => [i.hall_id, i.category, i.row, i.seat].join(';'))).then((data) => {
             //console.log(data)
@@ -195,6 +195,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingL
     useEffect(() => {
         setLoad(false);
     }, [location]);
+
     useEffect(() => {
         if (bookingLimit > Date.now()) countdown.start()
         if (msLeft <= 0) {
@@ -336,6 +337,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingL
                             }
                             }
                         />
+
                         <label className='checkbox'>
                           <input type="checkbox" name='aggree' />
                           <CheckboxIcon />
