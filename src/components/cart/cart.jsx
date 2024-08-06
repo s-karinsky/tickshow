@@ -63,7 +63,7 @@ export default function Cart({ cart, categories, toggleInCart, setCartModal }) {
               <div className={bem('fee')}>Selected tickets:</div>
               <div className={bem('fee')}>{totalCount}</div>
             </div>
-            <div className={bem('`total')}>
+            <div className={bem('total')}>
               <div className={bem('fee')}>transaction fee 5%:</div>
               <div className={bem('fee')}>{(total * 0.05).toFixed(2)}</div>
             </div>

@@ -1,11 +1,6 @@
 import { useCallback, useState, useEffect, useMemo, Suspense, lazy, useRef } from "react";
 import { useOutletContext, useParams, useSearchParams } from "react-router-dom";
-import birds from "images/EARLY BIRDS.svg";
-import { isEqualSeats } from "utils";
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getEventQuery } from "api/event";
-
 import classNames from "classnames"
 import { cn } from '@bem-react/classname'
 import Button from "components/button";
@@ -13,16 +8,21 @@ import SvgScheme from "components/svg-scheme";
 import TicketsCounter from "components/tickets-counter";
 import CategorySelector from "components/category-selector";
 import SeatingScheme from "components/seating-scheme";
-import { useClickAway, useCountdown, useIsMobile, useLocalStorage } from "utils/hooks";
+import Countdown from "components/countdown/countdown";
+import Cart from "components/cart/cart";
+import CartModal from "components/modal/modal";
+import birds from "images/EARLY BIRDS.svg";
 import { ReactComponent as IconArrow } from 'icons/arrow.svg'
 import { ReactComponent as IconArrowDouble } from 'icons/arrow_2_down.svg'
 import { updateCart } from "api/cart";
-import './event.scss'
-import Countdown from "components/countdown/countdown";
+import { getEventQuery } from "api/event";
+import { useClickAway, useCountdown, useIsMobile, useLocalStorage } from "utils/hooks";
+import { isEqualSeats } from "utils";
 import { getFromLocalStorage } from "utils/common";
 import { STORAGE_KEY_USER_EMAIL } from "const";
-import Cart from "components/cart/cart";
-import CartModal from "components/modal/modal";
+import './event.scss'
+
+
 
 const bem = cn('event')
 
@@ -59,20 +59,23 @@ export default function Event() {
   const toggleInCart = useMutation({
     mutationFn: (item) => updateCart(item, Number(!item.inCart)),
     onMutate: async (ticket) => {
+      const booking = ticket.inCart ? 0 : (bookingLimit || (Date.now() + 15 * 60 * 1000 + 59 * 1000))
       const queryKey = ['tickets', id]
       await queryClient.cancelQueries({ queryKey })
       const previousCart = queryClient.getQueryData(queryKey)
       queryClient.setQueryData(queryKey, items =>
-        items.map(item => item.id === ticket.id ? { ...item, inCart: !item.inCart } : item)
+        items.map(item => item.id === ticket.id ? {
+          ...item, inCart: !item.inCart, bookingLimit: booking
+        } : item)
       )
       return { previousCart }
     }
   })
-
+  
   return (
     <div className={bem('layout')}>
       <div className={bem('scheme')}>
-        {!!bookingLimit && <Countdown to={bookingLimit} className={bem('countdown')} />}
+        <Countdown to={bookingLimit} className={bem('countdown')} />
         <SeatingScheme
           src={scheme}
           categories={categories}

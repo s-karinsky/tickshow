@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { cn } from '@bem-react/classname'
 import classNames from 'classnames'
 import { ReactComponent as ClockIcon } from 'icons/clock.svg'
@@ -9,14 +9,32 @@ import './countdown.scss'
 const bem = cn('countdown')
 
 export default function Countdown({ to, className }) {
-  const [msLeft, countdown] = useCountdown(to - Date.now())
+  const [ time, setTime ] = useState()
+  const lastTime = useRef(null)
+  const timer = useRef(null)
+
+  const start = (seconds) => {
+    if (timer.current) clearInterval(timer.current)
+    setTime(Math.max(0, seconds))
+    timer.current = setInterval(() => {
+      setTime((time) => {
+        if (time <= 0) {
+          clearInterval(timer.current)
+          return 0
+        } else return time - 1
+      })
+    }, 1000)
+  }
 
   useEffect(() => {
-    if (to > Date.now()) countdown.start()
-  }, [])
-
+    if (lastTime.current !== to) {
+      lastTime.current = to
+      start(to > Date.now() ? (to - Date.now()) / 1000 : 0)
+    }
+  }, [to])
+  
   return (
-    <div className={classNames(bem({ active: msLeft > 0 }), { [className]: className })}>
+    <div className={classNames(bem({ active: time > 0 }), { [className]: className })}>
       <span className={bem('icon')}>
         <ClockIcon />
       </span>
@@ -24,7 +42,7 @@ export default function Countdown({ to, className }) {
         Time left to place your order:
       </span>
       <span className={bem('time')}>
-        {msToTime(msLeft)}
+        {msToTime(time * 1000)}
       </span>
     </div>
   )
