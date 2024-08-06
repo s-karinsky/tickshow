@@ -1,4 +1,5 @@
-import { useCallback, useMemo } from 'react'
+import Hammer from 'hammerjs'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { cn } from '@bem-react/classname'
 import classNames from 'classnames'
 import { CURRENCY_SYMBOL_MAP } from 'const'
@@ -20,6 +21,7 @@ export default function SelectCategory({
   onMouseOut,
   ...rest
 }) {
+  const ref = useRef(null)
   const getCurrency = useCallback((item) => {
     const def = CURRENCY_SYMBOL_MAP[defaultCurrency] || defaultCurrency
     return item.currency ? (CURRENCY_SYMBOL_MAP[item.currency] || item.currency) : def
@@ -27,11 +29,41 @@ export default function SelectCategory({
 
   const selectedIndex = useMemo(() => options.findIndex(option => option[valueKey] === value), [options, value, valueKey])
 
+  useEffect(() => {
+    let div = document.querySelector('#custom-log')
+    if (!div) {
+      div = document.createElement('div')
+      div.id='custom-log'
+      div.style = 'position:fixed; left:0; top: 0; padding: 10px; background: #313131; color: #fff;'
+      document.body.appendChild(div)
+    }
+    var manager = new Hammer.Manager(ref.current)
+    var Swipe = new Hammer.Swipe()
+    manager.add(Swipe)
+
+    let deltaX = 0
+    let deltaY = 0
+
+    manager.on('swipe', function (e) {
+      deltaX = deltaX + e.deltaX
+      deltaY = deltaY + e.deltaY
+      const direction = e.offsetDirection;
+      const translate3d = 'translate3d(' + deltaX + 'px, 0, 0)';
+      const ticket = direction + deltaX
+      e.target.innerText = deltaX;
+      e.target.style.transform = translate3d;
+      console.log(direction, translate3d);
+      
+    });
+
+  }, [])
+
   return (
     <ul
       className={classNames(bem({ opened }), { [className]: className })}
       style={{ ...style, height: opened ? (options.length - 1) * 24 + 46 : 30 }}
       {...rest}
+      ref={ref}
     >
       {options.map(({ price, ...option }, i) => (
         <li

@@ -137,7 +137,6 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount, bookingL
             }
         }
 
-        axios.post('/stripe').then(res => console.log('res', res)).catch(err => console.log('err', err))
         CreateOrder(seats, getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH), DISTRIBUTE_PAGE_URL).then(
             (data) => {
                 console.log(data)

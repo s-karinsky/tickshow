@@ -275,6 +275,7 @@ const SeatingScheme = forwardRef((props, ref) => {
         <button
           className={classNames('scheme-control', { 'scheme-control_hidden': scaleFactor <= 1.2 })}
           onClick={() => fitToViewport()}
+          style={{ backgroundColor: 'scheme - control '}}
         >
           <ResetIcon style={{ width: 23 }} />
         </button>
