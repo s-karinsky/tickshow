@@ -11,6 +11,7 @@
   border: 1px solid #40403E;
   position: relative;
   transition: ease-in-out .3s height;
+  touch-action: none;
 
   @include bp(device) {
     border: none;

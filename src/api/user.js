@@ -36,8 +36,6 @@ export const useUser = () => useQuery({
 
 export async function ChangeUser(token, u_hash, name, email, phone) {
   var data = {
-    token: token,
-    u_hash: u_hash,
     data: JSON.stringify({
       u_name: name,
       u_email: email,

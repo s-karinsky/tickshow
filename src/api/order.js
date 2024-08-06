@@ -2,26 +2,20 @@ import {axios} from "../utils/axios";
 
 export async function CreateOrder(seats, token, u_hash, appUrl = window.location.origin) {
     var data = {
-        token: token,
-        u_hash: u_hash,
-        appUrl: appUrl,
-        data: JSON.stringify({
-            b_payment_way: 2,
-            b_options: {
-                tickets: {
-                    seats: seats,
-                },
-            },
-        }),
+      appUrl: appUrl,
+      data: JSON.stringify({
+        b_payment_way: 2,
+        b_options: {
+          tickets: {
+            seats,
+          },
+        },
+      }),
     };
     try {
-        return await axios.post("drive", data, {
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Accept": "application/json",
-            },
-        });
+      return await axios.post("drive", data);
     } catch (e) {
-        console.log(e)
+      console.log(e)
+      return Promise.reject()
     }
 }

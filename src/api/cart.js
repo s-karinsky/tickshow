@@ -49,12 +49,7 @@ export async function MoveCart(token, u_hash, items, u_id) {
     item: JSON.stringify(new_tickets_grouped),
     u_id: u_id,
   };
-  return await axios.post("cart/move", data, {
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Accept": "application/json",
-    },
-  });
+  return await axios.post("cart/move", data);
 }
 export async function ClearSeats(token, u_hash, items) {
   var data = {
@@ -62,10 +57,5 @@ export async function ClearSeats(token, u_hash, items) {
     u_hash: u_hash,
     item: JSON.stringify(items),
   };
-  return await axios.post("cart/clear", data, {
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Accept": "application/json",
-    },
-  });
+  return await axios.post("cart/clear", data);
 }

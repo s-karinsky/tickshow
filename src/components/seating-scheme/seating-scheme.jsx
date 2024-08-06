@@ -11,6 +11,9 @@ import { svgSeat } from 'utils/dom-scheme'
 import './seating-scheme.scss'
 import classNames from 'classnames'
 
+const mapSeat = (node, cb, joinToSelector = '') =>
+  Array.from(node.querySelectorAll(`.svg-seat${joinToSelector}`)).map(cb)
+
 const SeatingScheme = forwardRef((props, ref) => {
   const [log, setLog] = useState([])
 
@@ -57,14 +60,13 @@ const SeatingScheme = forwardRef((props, ref) => {
   const getContainZoom = () => getZoomToFillViewportSide('min')
 
   useEffect(() => {
+    const node = svgRef.current
     if (!highlight) {
-      Array.from(svgRef.current.querySelectorAll(`.svg-seat`)).forEach(el => el.removeAttribute('style'))
+      mapSeat(node, el => el.removeAttribute('style'), '')
       return
     }
-    Array.from(svgRef.current.querySelectorAll(`.svg-seat[data-category="${highlight}"]`))
-      .forEach(el => el.removeAttribute('style'))
-    Array.from(svgRef.current.querySelectorAll(`.svg-seat:not([data-category="${highlight}"])`))
-      .forEach(el => el.style.fill = '#666')
+    mapSeat(node, el => el.removeAttribute('style'), `[data-category="${highlight}"]`)
+    mapSeat(node, el => el.style.fill = '#666', `:not([data-category="${highlight}"])`)
   }, [highlight])
 
   const zoom = useCallback((next) => {
@@ -273,6 +275,7 @@ const SeatingScheme = forwardRef((props, ref) => {
         <button
           className={classNames('scheme-control', { 'scheme-control_hidden': scaleFactor <= 1.2 })}
           onClick={() => fitToViewport()}
+          style={{ backgroundColor: 'scheme - control '}}
         >
           <ResetIcon style={{ width: 23 }} />
         </button>

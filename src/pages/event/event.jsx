@@ -46,6 +46,12 @@ export default function Event() {
   }, [])
 
   useEffect(() => {
+    if (selectOpened) {
+      setOrderExpanded(false)
+    }
+  }, [selectOpened])
+
+  useEffect(() => {
     if (!bookingExpired || !bookingExpired.length) return
     bookingExpired.forEach(item => updateCart(item, 0))
   }, [bookingExpired])
