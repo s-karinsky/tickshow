@@ -18,12 +18,14 @@ const combineQueries = (results) => {
     }), {})
 
     const cart = tickets.filter(ticket => ticket.inCart)
-    const cartByCategory = cart.reduce((map, { category, price, ...ticket }) => ({
+    const cartByCategory = cart.reduce((map, { category, price, ...ticket }) => console.log(ticket.row) ||
+     ({
         ...map,
         [category]: {
           items: (map[category]?.items || []).concat({ category, price, ...ticket }),
           sum: (map[category]?.sum || 0) + price,
-          data: map[category]?.data || eventCats.find(cat => cat.value === category)
+          data: map[category]?.data || eventCats.find(cat => cat.value === category),
+          isMulitple: map[category]?.isMultiple || ['0', '-1'].includes(ticket.row)
         }
       }), {})
 

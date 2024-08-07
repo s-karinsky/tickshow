@@ -57,7 +57,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount = 0, book
   const [ searchParams ] = useSearchParams()
   const routeParams = useParams()
   const id = routeParams.event_id || searchParams.get('event_id')
-
+  
   function addPayment(e) {
     e.preventDefault()
     const formData = new FormData(e.target)
@@ -123,57 +123,47 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount = 0, book
     }
     CreateOrder(seats, getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH), DISTRIBUTE_PAGE_URL).then(
       (data) => {
-        console.log(data)
         var payment_link = data.data.payment;
-        
         const b_id = data.data.b_id;
+        const payment = data.data.payment;
+
+        if (payment) {
+          window.location.href = payment
+        }
+        return
+
         if (typeof window !== 'undefined') {
-          const form = document.querySelector('form.t-form.js-form-proccess')
-          if (form) {
-            const inputName = form.querySelector('input[name="Name"]')
-            const inputEmail = form.querySelector('input[name="Email"]')
-            const inputPhone = form.querySelector('input[name="Phone"]')
-            const inputOrder = form.querySelector('input[name="order"]')
-            if (inputName) inputName.value = values.Name
-            if (inputEmail) inputEmail.value = values.Email
-            if (inputPhone) inputPhone.value = values.Phone
-            if (inputOrder) inputOrder.value = b_id
-            form.submit()
+          // const form = document.querySelector('form.t-form.js-form-proccess')
+          const form = document.querySelector('#form771596234')
+          if (form && typeof window.tcart__addProduct === 'function') {
+            cart.map(ticket => {
+              window.tcart__addProduct({ name: ticket.name, price: ticket.price, quantity: 1 })
+            })
+            values.order = b_id
+            setTimeout(() => {
+              window.tcart__closeCart && window.tcart__closeCart();
+            }, 10)
+
+            for (const key in values) {
+              console.log(form.querySelector(`[name=${key}]`))
+              form.querySelector(`[name=${key}]`).value = values[key]
+            }
+
+            form.querySelector('[type=submit]').click();
           } else {
             alert('Tilda form not found')
           }
         }
-        
         clearCart(['tickets', id])
-
-        // Post msg was here
-
-        setTimeout(() => {
-          // window.location.reload();
-        }, 2000);
-
-        //window.location.href = payment_link
       }
     );
-
-    /*
-     */
-
-    /*
-        setTimeout(() => {
-          localStorage.removeItem("cart");
-          window.location.reload();
-        }, 2000);
-    */
   }
 
   const actionOnTimeEnd = () => {
-    ClearSeats(getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH), cart.map(i => [i.hall_id, i.category, i.row, i.seat].join(';'))).then((data) => {
+    /* ClearSeats(getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH), cart.map(i => [i.hall_id, i.category, i.row, i.seat].join(';'))).then((data) => {
       //console.log(data)
     })
-    /*
-    ЗДЕСЬ НАДО ОЧИСТИТЬ КОРЗИНУ(локально)
-     */
+    clearCart(['tickets', id]) */
   }
 
 
@@ -296,7 +286,8 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount = 0, book
           </p>
           <form
             className="w100 df fdc aic gap8  _info-form"
-            onSubmit={addPayment}>
+            onSubmit={addPayment}
+          >
             <input
               id={"modal-auth-name"}
               type="text"

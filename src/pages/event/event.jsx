@@ -65,7 +65,9 @@ export default function Event() {
       const previousCart = queryClient.getQueryData(queryKey)
       queryClient.setQueryData(queryKey, items =>
         items.map(item => item.id === ticket.id ? {
-          ...item, inCart: !item.inCart, bookingLimit: booking
+          ...item,
+          inCart: !item.inCart,
+          bookingLimit: booking
         } : item)
       )
       return { previousCart }
@@ -122,6 +124,7 @@ export default function Event() {
           <IconArrowDouble style={{ width: 16 }} /> More details
         </button>
         <Cart
+          tickets={tickets}
           categories={categories}
           cart={cartByCategory}
           toggleInCart={toggleInCart.mutate}
@@ -131,12 +134,12 @@ export default function Event() {
       {cartModal && (
         <Suspense>
           <CartModal
-            setOpen={setCartModal}
             open={cartModal}
             ScheduleFee={event.fee * 1}
             categoriesF={categories}
             bookingLimit={bookingLimit}
             cart={cart}
+            setOpen={setCartModal}
             clearCart={clearCart}
           />
         </Suspense>

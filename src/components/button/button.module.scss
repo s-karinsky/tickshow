@@ -86,7 +86,7 @@
     }
 
     &_ghost {
-      --color: ;
+      --color: var(--color-gray-2);
       --shadow: none;
       --bg-color: none;
 

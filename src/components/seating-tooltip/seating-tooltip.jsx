@@ -13,6 +13,14 @@ export default function SeatingTooltip(props) {
   const isMobile = useIsMobile()
   const [ visible, setVisible ] = useState(props.visible)
   let timer = useRef(null)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const { x } = el.getBoundingClientRect()
+    el.style.transform = `translateX(${x < 0 ? `calc(-100% - x)` : '-100%'}px)`
+  }, [props])
 
   useEffect(() => {
     if (props.hideDelay) {
@@ -39,6 +47,7 @@ export default function SeatingTooltip(props) {
       className={bem({ visible })}
       style={{ left: props.x * props.scaleFactor, top: props.y * props.scaleFactor }}
       onClick={() => props.toggleInCart(props, Number(!props.inCart))}
+      ref={ref}
     >
       <div className={bem('head')}>
         <div className={bem('price')}>

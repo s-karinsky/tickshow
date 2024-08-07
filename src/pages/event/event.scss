@@ -40,7 +40,7 @@
     padding: var(--sidebar-padding-x) var(--sidebar-padding-y);
 
     @include bp(device) {
-      position: fixed;
+      position: absolute;
       left: 0;
       top: 0;
       right: 0;

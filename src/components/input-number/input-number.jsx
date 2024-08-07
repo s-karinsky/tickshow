@@ -10,7 +10,9 @@ const InputNumber = ({
   max = +Infinity,
   step = 1,
   style,
+  ghost,
   className,
+  disabledInput,
   ...rest
 }) => {
 
@@ -19,9 +21,9 @@ const InputNumber = ({
   }, [min, max])
 
   return (
-    <div className={cn(styles.group, className)} style={style}>
+    <div className={cn(styles.group, className, { [styles.ghost]: ghost })} style={style}>
       <Button
-        color='dark'
+        color={ghost ? 'ghost' : 'dark'}
         size='small'
         attach='right'
         disabled={typeof value === 'number' && value <= min}
@@ -36,7 +38,9 @@ const InputNumber = ({
         <div className={styles.fakeValue}>{value}</div>
         <input
           type='number'
-          className={styles.input}
+          className={cn(styles.input, {
+            [styles.readOnly]: disabledInput,
+          })}
           value={value}
           onChange={e => onChange(parseInt(e.target.value || 0))}
           onBlur={() => !isInRange(value) && onChange(value - min < max - value ? min : max)}
@@ -47,7 +51,7 @@ const InputNumber = ({
       </div>
 
       <Button
-        color='dark'
+        color={ghost ? 'ghost' : 'dark'}
         size='small'
         attach='left'
         disabled={typeof value === 'number' && value >= max}

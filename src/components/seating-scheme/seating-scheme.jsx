@@ -20,7 +20,6 @@ const SeatingScheme = forwardRef((props, ref) => {
   const { src, categories, tickets, toggleInCart, highlight } = props
   const [ tooltipSeat, setTooltipSeat ] = useState({ visible: false })
 
-  // const [ viewportRef, viewport ] = useDimensions()
   const viewportRef = useRef(null)
   const dragRef = useRef(null)
   const svgRef = useRef(null)
@@ -142,10 +141,14 @@ const SeatingScheme = forwardRef((props, ref) => {
       }
       
       const el = event.target
-      const ticket = tickets.find(t => t.id === el.id)
+      let ticket = tickets.find(t => t.id === el.id)
+      const isMultiple = svgSeat(el).isMultiple()
+      if (isMultiple) {
+        ticket = tickets.find(t => t.category === el.getAttribute('data-category') && !t.inCart) 
+      }
       const { visible, ticketId } = tooltipSeat
       if (ticket) {
-        if (event.pointerType === 'touch') {
+        if (event.pointerType === 'touch' && !isMultiple) {
           const clone = [el.cloneNode()]
           if (el.nextElementSibling.tagName?.toLowerCase() === 'use') clone.push(el.nextElementSibling.cloneNode())
           document.querySelectorAll('#clone-1, #clone-2').forEach(el => el.remove())
@@ -167,7 +170,6 @@ const SeatingScheme = forwardRef((props, ref) => {
         }
       } else {
         const delay = el.matches('.seating-tooltip') || el.closest('.seating-tooltip') ? 500 : 0
-        
         setTooltipSeat(prev => ({ visible: false, ticketId: prev.ticketId, delay }))
         document.querySelectorAll('#clone-1, #clone-2').forEach(el => el.remove())
       }
@@ -201,7 +203,7 @@ const SeatingScheme = forwardRef((props, ref) => {
     Array.from(svg.children).forEach(child => node.appendChild(child))
     Array.from(node.querySelectorAll('.svg-seat')).forEach(el => {
       const [category, row, num] = ['category', 'row', 'seat'].map(attr => el.getAttribute(`data-${attr}`))
-      el.id = `seat-${[category, row, num].join('-')}`
+      el.id = `seat-${[category, row, num].filter(Boolean).join('-')}`
       const seat = svgSeat(el)
       let seatTicket = seat.isMultiple() ?
         tickets.filter(item => item.category === category) :
@@ -242,12 +244,18 @@ const SeatingScheme = forwardRef((props, ref) => {
 
   useEffect(() => {
     tickets.forEach(ticket => {
-      const el = svgRef.current.querySelector(`#${ticket.id}`)
+      let isMultiple = ['0', '-1'].includes(ticket.row)
+      let id = `#${ticket.id}`
+      if (isMultiple) {
+        id = `#seat-${ticket.category}`
+      }
+      const el = svgRef.current.querySelector(id)
       if (!el) return
-      svgSeat(el).checked(ticket.inCart)
+      const checked = isMultiple ? tickets.some(t => t.category === ticket.category && t.inCart) : ticket.inCart
+      svgSeat(el).checked(checked)
     })
   }, [tickets])
-  
+
   return (
     <div
       className='scheme-viewport'
