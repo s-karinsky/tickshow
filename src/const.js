@@ -33,4 +33,4 @@ export const getPhantomUser = () => ({
   }),
 })
 
-export const DISTRIBUTE_PAGE_URL = "https://tickshow.vercel.app/distribute"
+export const DISTRIBUTE_PAGE_URL = "https://ticketing.tilda.ws/thank-you-page"

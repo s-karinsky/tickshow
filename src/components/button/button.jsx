@@ -25,14 +25,12 @@ const Button = forwardRef(function Button(props, ref) {
         [s[`button_size_${size}`]]: size,
         [s[`button_color_${color}`]]: color,
         [s[`button_attach_${attach}`]]: attach,
+        [s[`button_loading`]]: loading,
       })}
       {...tagProps}
       {...rest}
     >
-      {loading ?
-        <span className={s.icon}>Loader</span> :
-        children
-      }
+      {children}
     </Tag>
   )
 })

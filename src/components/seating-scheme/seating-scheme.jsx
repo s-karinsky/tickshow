@@ -36,14 +36,28 @@ const SeatingScheme = forwardRef((props, ref) => {
 
   let activeEl = useRef(null)
 
+  const getTransformLimits = () => {
+    const node = svgRef.current
+    const { width, height } = node.getBoundingClientRect()
+    const { width: viewportWidth, height: viewportHeight } = viewportRef.current.getBoundingClientRect()
+    const x = Math.min(0, viewportWidth - width)
+    const y = Math.min(0, viewportHeight - height)
+    console.log(width, height, viewportWidth, viewportHeight);
+    
+    return { x, y }
+  }
+
   const move = ({ x = pos.current.x, y = pos.current.y } = {}, options = {}) => {
     const node = dragRef.current
     const { transition, updateCurrent = true } = options
+    const limits = getTransformLimits()
     if (transition) {
       node.style.transition = typeof transition === 'string' ? transition : '.2s ease-in-out'
       node.style.transitionPropery = 'transform'
       node.addEventListener('transitionend', () => node.style.transition = null, { once: true })
     }
+    console.log(limits);
+    
     node.style.transform = `translate3d(${x}px, ${y}px, 0)`
     if (updateCurrent) pos.current = { x, y }
   }
@@ -260,11 +274,7 @@ const SeatingScheme = forwardRef((props, ref) => {
     <div
       className='scheme-viewport'
       ref={viewportRef}
-    >
-      <div style={{ position: 'fixed', left: 0, top: 0, background: '#333', color: '#fff', zIndex:10000 }}>
-        {log.map(msg => <>{msg}<br /></>)}
-      </div>
-      
+    >   
       <div className='scheme-zoom'>
         <button
           className={classNames('scheme-control')}

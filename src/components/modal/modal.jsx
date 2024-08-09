@@ -63,7 +63,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount = 0, book
     const formData = new FormData(e.target)
     const values = Object.fromEntries(formData.entries())
     values.Phone = values.Phone.toString().replace("+", "")
-
+    setLoad(true)
     updateUser({
       u_name: values.Name,
       u_email: values.Email,
@@ -126,7 +126,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount = 0, book
         var payment_link = data.data.payment;
         const b_id = data.data.b_id;
         const payment = data.data.payment;
-
+        setLoad(false)
         if (payment) {
           window.location.href = payment
         }
@@ -336,6 +336,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount = 0, book
               size='large'
               type='submit'
               style={{ width: '100%', textTransform: 'uppercase' }}
+              loading={load}
             >
               Buy tickets
             </Button>
