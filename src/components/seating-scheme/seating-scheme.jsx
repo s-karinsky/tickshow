@@ -36,28 +36,41 @@ const SeatingScheme = forwardRef((props, ref) => {
 
   let activeEl = useRef(null)
 
-  const getTransformLimits = () => {
+  const getMoveLimits = () => {
+    if (!svgRef.current || !viewportRef.current) return [[0, 0], [0, 0]]
     const node = svgRef.current
-    const { width, height } = node.getBoundingClientRect()
-    const { width: viewportWidth, height: viewportHeight } = viewportRef.current.getBoundingClientRect()
-    const x = Math.min(0, viewportWidth - width)
-    const y = Math.min(0, viewportHeight - height)
-    console.log(width, height, viewportWidth, viewportHeight);
-    
-    return { x, y }
+    const vpBounds = viewportRef.current.getBoundingClientRect()
+    const width = scale.current.initialWidth * scaleFactor
+    const height = scale.current.initialHeight * scaleFactor
+    const min = [0, 0]
+    const max = [0, 0] 
+    if (width > vpBounds.width) {
+      const x = (width - vpBounds.width) / 2
+      min[0] = -x
+      max[0] = x
+    }
+    if (height > vpBounds.height) {
+      const y = (height - vpBounds.height) / 2
+      min[1] = -y
+      max[1] = y
+    }
+    return [min, max]
   }
-
+  
   const move = ({ x = pos.current.x, y = pos.current.y } = {}, options = {}) => {
     const node = dragRef.current
     const { transition, updateCurrent = true } = options
-    const limits = getTransformLimits()
     if (transition) {
       node.style.transition = typeof transition === 'string' ? transition : '.2s ease-in-out'
       node.style.transitionPropery = 'transform'
       node.addEventListener('transitionend', () => node.style.transition = null, { once: true })
     }
-    console.log(limits);
+    const moveLimits = getMoveLimits()
+    console.log('moveLimits', ...moveLimits);
     
+    
+    x = Math.min(Math.max(x, moveLimits[0][0]), moveLimits[1][0])
+    y = Math.min(Math.max(y, moveLimits[0][1]), moveLimits[1][1])
     node.style.transform = `translate3d(${x}px, ${y}px, 0)`
     if (updateCurrent) pos.current = { x, y }
   }
@@ -111,19 +124,13 @@ const SeatingScheme = forwardRef((props, ref) => {
   useEffect(() => {
     const dragEl = dragRef.current
     const hammer = new Hammer(dragEl)
-
     /* Перетаскивание мышью и тачем */
-    hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL })
+    hammer.get('pan').set({ domEvents: true, direction: Hammer.DIRECTION_ALL })
     const handlePan = ({ type, deltaX, deltaY }) => {
       const x  = deltaX + pos.current.x
       const y = deltaY + pos.current.y
-      move({ x, y }, { updateCurrent: false })
-      if (type === 'panstart') {
-        dragEl.style.cursor = 'grabbing'
-      } else if (type === 'panend') {
-        dragEl.style.cursor = null
-        pos.current = { x, y }
-      }
+      move({ x, y }, { updateCurrent: type === 'panend' })
+      dragEl.style.cursor = type !== 'panend' ? 'grabbing' : null
     }
     hammer.on('panstart pan panend', handlePan)
 
@@ -197,7 +204,7 @@ const SeatingScheme = forwardRef((props, ref) => {
       hammer.off('tap', handleTap)
       hammer.destroy()
     }
-  }, [])
+  }, [scaleFactor])
 
 
   useEffect(() => {

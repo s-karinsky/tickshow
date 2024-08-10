@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect, useMemo, Suspense, lazy, useRef } from "react";
+import { useCallback, useState, useEffect, useMemo, Suspense, lazy, useRef, useLayoutEffect } from "react";
 import { useOutletContext, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import classNames from "classnames"
@@ -41,10 +41,10 @@ export default function Event() {
 
   const ref = useClickAway(() => setSelectOpened(false))
 
-  useEffect(() => {
-    setSelectOpened(!isMobile)
+  useLayoutEffect(() => {
+    setSelectOpened(window.innerWidth > 1023)
   }, [])
-
+  
   useEffect(() => {
     if (selectOpened) {
       setOrderExpanded(false)

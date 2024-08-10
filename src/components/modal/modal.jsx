@@ -178,7 +178,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount = 0, book
       overlay.style.opacity = null;
     }, {})
   }
-
+// 1139193
   useEffect(() => {
     setLoad(false);
   }, [location]);

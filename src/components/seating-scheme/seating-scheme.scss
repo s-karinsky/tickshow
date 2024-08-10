@@ -9,7 +9,12 @@
   min-width: 150px;
   overflow: hidden;
   position: relative;
-
+  
+  @include bp(device) {
+    height: calc(100% - 75px - 120px);
+    margin: 75px 0 120px;
+  }
+  
   /* &:before {
     left: 50%;
     top: 50%;

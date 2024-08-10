@@ -18,8 +18,7 @@ const combineQueries = (results) => {
     }), {})
 
     const cart = tickets.filter(ticket => ticket.inCart)
-    const cartByCategory = cart.reduce((map, { category, price, ...ticket }) => console.log(ticket.row) ||
-     ({
+    const cartByCategory = cart.reduce((map, { category, price, ...ticket }) => ({
         ...map,
         [category]: {
           items: (map[category]?.items || []).concat({ category, price, ...ticket }),
