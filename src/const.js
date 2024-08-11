@@ -34,3 +34,5 @@ export const getPhantomUser = () => ({
 })
 
 export const DISTRIBUTE_PAGE_URL = "https://ticketing.tilda.ws/thank-you-page"
+
+export const SCHEME_BLUR_ID = 'scheme-blur-filter'

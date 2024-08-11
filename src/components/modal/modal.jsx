@@ -69,6 +69,8 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount = 0, book
       u_email: values.Email,
       u_phone: values.Phone
     }).then((data) => {
+      console.log(data)
+      
       if (
         data.status === "error" &&
         data.message.startsWith("busy user data:")
@@ -123,7 +125,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount = 0, book
     }
 
     localStorage.setItem('last_paid_event', id)
-
+    return
     CreateOrder(seats, getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH), DISTRIBUTE_PAGE_URL).then(
       (data) => {
         var payment_link = data.data.payment;

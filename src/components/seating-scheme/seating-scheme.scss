@@ -42,12 +42,13 @@
   min-width: 150px;
 
   @include bp(device) {
-    & > g {
-      transition: ease-in-out .2s filter;
+    & > g > * {
+      transition: ease-in-out 2s filter;
     }
   
-    &:has(.svg-seat-clone) > g {
-      filter: blur(2px) brightness(0.7);
+    &:has(.svg-seat-clone) > g > * {
+      // filter: blur(2px) brightness(0.7);
+      filter: url(#filter-blur) brightness(70%);
     }
   }
 }
@@ -72,7 +73,7 @@
   top: 16px;
 
   @include bp(device) {
-    top: 86px;
+    top: 12px;
     right: 10px;
     margin: 0;
   }

@@ -133,10 +133,7 @@
     transform: translateX(-50%);
 
     @include bp(device) {
-      position: absolute;
-      left: 10px;
       top: 70px;
-      transform: none;
       padding: 0 8px;
 
       span {

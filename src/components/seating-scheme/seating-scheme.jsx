@@ -152,10 +152,10 @@ const SeatingScheme = forwardRef((props, ref) => {
         move({ x, y }, { transition: true })
         return
       }
-      
       const el = event.target
       let ticket = tickets.find(t => t.id === el.id)
-      const isMultiple = svgSeat(el).isMultiple()
+      const seat = svgSeat.from(el)
+      const isMultiple = seat && seat.isMultiple()
       if (isMultiple) {
         ticket = tickets.find(t => t.category === el.getAttribute('data-category') && !t.inCart) 
       }
@@ -206,6 +206,7 @@ const SeatingScheme = forwardRef((props, ref) => {
     createDefs(svg, ['path', { x: 0, y: 0, d: 'M 1.5 3.5 L 3 5 L 6 2', className: 'seat-check', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', id: 'checked-seat-path' }])
     // Белая галочка для категории без мест
     createDefs(svg, ['path', { x: 0, y: 0, d: 'M 1 3 L 4.25 6.25 L 10 0.5', className: 'category-check', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', id: 'checked-category-path' }])
+    createDefs(svg, ['filter', { id: 'filter-blur' }, '<feGaussianBlur in="SourceGraphic" stdDeviation="1.2"></feGaussianBlur>'])
     createStyles(svg, categories)
 
     if (node.hasChildNodes()) node.innerHTML = ''

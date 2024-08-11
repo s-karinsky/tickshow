@@ -99,6 +99,13 @@
   }
 
   &_size {
+    &_xlarge {
+      --height: 50px;
+      --radius: 25px;
+      --font-size: 14px;
+      text-transform: uppercase;
+    }
+
     &_large {
       --height: 40px;
       --radius: 20px;
