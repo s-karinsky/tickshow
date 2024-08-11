@@ -86,6 +86,8 @@ export default function Event() {
           src={scheme}
           categories={categories}
           highlight={highlightCat || selectValue}
+          selectedCategory={selectValue}
+          resetSelectedCategory={() => setSelectValue(null)}
           cart={cartByCategory}
           tickets={tickets}
           toggleInCart={toggleInCart.mutate}

@@ -121,6 +121,9 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount = 0, book
         ).length;
       }
     }
+
+    localStorage.setItem('last_paid_event', id)
+
     CreateOrder(seats, getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH), DISTRIBUTE_PAGE_URL).then(
       (data) => {
         var payment_link = data.data.payment;
