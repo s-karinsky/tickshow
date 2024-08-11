@@ -1,15 +1,16 @@
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Hammer from 'hammerjs'
-import { useDimensions, useIsMobile } from 'utils/hooks'
-import { createDefs, createStyles, getCursorOffsetToElementCenter, stringToSvg } from './utils'
+import classNames from 'classnames'
+import { useDimensions } from 'utils/hooks'
 import SeatingTooltip from 'components/seating-tooltip'
 import Button from 'components/button'
 import { ReactComponent as ResetIcon } from 'icons/reset.svg'
+import { ReactComponent as TicketLogo } from 'icons/ticket_logo.svg'
 import { ReactComponent as ZoomIn } from 'icons/zoom-in.svg'
 import { ReactComponent as ZoomOut } from 'icons/zoom-out.svg'
 import { svgSeat } from 'utils/dom-scheme'
+import { createDefs, createStyles, getCursorOffsetToElementCenter, stringToSvg } from './utils'
 import './seating-scheme.scss'
-import classNames from 'classnames'
 
 const mapSeat = (node, cb, joinToSelector = '') =>
   Array.from(node.querySelectorAll(`.svg-seat${joinToSelector}`)).map(cb)
@@ -17,26 +18,42 @@ const mapSeat = (node, cb, joinToSelector = '') =>
 const SeatingScheme = forwardRef((props, ref) => {
   const [log, setLog] = useState([])
 
-  const { src, categories, tickets, toggleInCart, highlight } = props
+  const { src, categories, tickets, toggleInCart, highlight, selectedCategory, resetSelectedCategory } = props
   const [ tooltipSeat, setTooltipSeat ] = useState({ visible: false })
-
-  // const [ viewportRef, viewport ] = useDimensions()
+  
   const viewportRef = useRef(null)
   const dragRef = useRef(null)
   const svgRef = useRef(null)
 
-  const [ state, setState ] = useState({ x: 0, y: 0 })
-
   const scale = useRef({ value: 1, initialWidth: 0, initialHeight: 0 })
-  const [scaleFactor, setScaleFactor] = useState(1)
   const pos = useRef({ x: 0, y: 0 })
+  const [scaleFactor, setScaleFactor] = useState(1)
 
   const zoomMin = 0.4
   const zoomMax = 4
   const zoomStep = 0.4
 
-  let activeEl = useRef(null)
-
+  const moveLimits = useMemo(() => {
+    if (!svgRef.current || !viewportRef.current) return [[0, 0], [0, 0]]
+    const node = svgRef.current
+    const vpBounds = viewportRef.current.getBoundingClientRect()
+    const width = scale.current.initialWidth * scaleFactor
+    const height = scale.current.initialHeight * scaleFactor
+    const min = [0, 0]
+    const max = [0, 0] 
+    if (width > vpBounds.width) {
+      const x = (width - vpBounds.width) / 2
+      min[0] = -x
+      max[0] = x
+    }
+    if (height > vpBounds.height) {
+      const y = (height - vpBounds.height) / 2
+      min[1] = -y
+      max[1] = y
+    }
+    return [min, max]
+  }, [scaleFactor])
+  
   const move = ({ x = pos.current.x, y = pos.current.y } = {}, options = {}) => {
     const node = dragRef.current
     const { transition, updateCurrent = true } = options
@@ -45,6 +62,8 @@ const SeatingScheme = forwardRef((props, ref) => {
       node.style.transitionPropery = 'transform'
       node.addEventListener('transitionend', () => node.style.transition = null, { once: true })
     }
+    x = Math.min(Math.max(x, moveLimits[0][0]), moveLimits[1][0])
+    y = Math.min(Math.max(y, moveLimits[0][1]), moveLimits[1][1])
     node.style.transform = `translate3d(${x}px, ${y}px, 0)`
     if (updateCurrent) pos.current = { x, y }
   }
@@ -82,7 +101,6 @@ const SeatingScheme = forwardRef((props, ref) => {
   }, [])
   const zoomIn = useCallback(() => zoom(scale.current.value + zoomStep), [])
   const zoomOut = useCallback(() => zoom(scale.current.value - zoomStep), [])
-  const isMobile = useIsMobile()
 
   const fitToViewport = useCallback(() => {
     move({ x: 0, y: 0 }, { transition: true })
@@ -98,19 +116,13 @@ const SeatingScheme = forwardRef((props, ref) => {
   useEffect(() => {
     const dragEl = dragRef.current
     const hammer = new Hammer(dragEl)
-
     /* Перетаскивание мышью и тачем */
-    hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL })
+    hammer.get('pan').set({ domEvents: true, direction: Hammer.DIRECTION_ALL })
     const handlePan = ({ type, deltaX, deltaY }) => {
       const x  = deltaX + pos.current.x
       const y = deltaY + pos.current.y
-      move({ x, y }, { updateCurrent: false })
-      if (type === 'panstart') {
-        dragEl.style.cursor = 'grabbing'
-      } else if (type === 'panend') {
-        dragEl.style.cursor = null
-        pos.current = { x, y }
-      }
+      move({ x, y }, { updateCurrent: type === 'panend' })
+      dragEl.style.cursor = type !== 'panend' ? 'grabbing' : null
     }
     hammer.on('panstart pan panend', handlePan)
 
@@ -140,12 +152,16 @@ const SeatingScheme = forwardRef((props, ref) => {
         move({ x, y }, { transition: true })
         return
       }
-      
       const el = event.target
-      const ticket = tickets.find(t => t.id === el.id)
+      let ticket = tickets.find(t => t.id === el.id)
+      const seat = svgSeat.from(el)
+      const isMultiple = seat && seat.isMultiple()
+      if (isMultiple) {
+        ticket = tickets.find(t => t.category === el.getAttribute('data-category') && !t.inCart) 
+      }
       const { visible, ticketId } = tooltipSeat
       if (ticket) {
-        if (event.pointerType === 'touch') {
+        if (event.pointerType === 'touch' && !isMultiple) {
           const clone = [el.cloneNode()]
           if (el.nextElementSibling.tagName?.toLowerCase() === 'use') clone.push(el.nextElementSibling.cloneNode())
           document.querySelectorAll('#clone-1, #clone-2').forEach(el => el.remove())
@@ -154,7 +170,6 @@ const SeatingScheme = forwardRef((props, ref) => {
             el.classList.add('svg-seat-clone')
             svgRef.current.appendChild(el)
           })
-          activeEl.current = el
           const pos = el.getBBox()
           setTooltipSeat({
             visible: true,
@@ -167,7 +182,6 @@ const SeatingScheme = forwardRef((props, ref) => {
         }
       } else {
         const delay = el.matches('.seating-tooltip') || el.closest('.seating-tooltip') ? 500 : 0
-        
         setTooltipSeat(prev => ({ visible: false, ticketId: prev.ticketId, delay }))
         document.querySelectorAll('#clone-1, #clone-2').forEach(el => el.remove())
       }
@@ -181,7 +195,7 @@ const SeatingScheme = forwardRef((props, ref) => {
       hammer.off('tap', handleTap)
       hammer.destroy()
     }
-  }, [])
+  }, [scaleFactor])
 
 
   useEffect(() => {
@@ -192,6 +206,7 @@ const SeatingScheme = forwardRef((props, ref) => {
     createDefs(svg, ['path', { x: 0, y: 0, d: 'M 1.5 3.5 L 3 5 L 6 2', className: 'seat-check', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', id: 'checked-seat-path' }])
     // Белая галочка для категории без мест
     createDefs(svg, ['path', { x: 0, y: 0, d: 'M 1 3 L 4.25 6.25 L 10 0.5', className: 'category-check', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', id: 'checked-category-path' }])
+    createDefs(svg, ['filter', { id: 'filter-blur' }, '<feGaussianBlur in="SourceGraphic" stdDeviation="1.2"></feGaussianBlur>'])
     createStyles(svg, categories)
 
     if (node.hasChildNodes()) node.innerHTML = ''
@@ -201,7 +216,7 @@ const SeatingScheme = forwardRef((props, ref) => {
     Array.from(svg.children).forEach(child => node.appendChild(child))
     Array.from(node.querySelectorAll('.svg-seat')).forEach(el => {
       const [category, row, num] = ['category', 'row', 'seat'].map(attr => el.getAttribute(`data-${attr}`))
-      el.id = `seat-${[category, row, num].join('-')}`
+      el.id = `seat-${[category, row, num].filter(Boolean).join('-')}`
       const seat = svgSeat(el)
       let seatTicket = seat.isMultiple() ?
         tickets.filter(item => item.category === category) :
@@ -215,7 +230,6 @@ const SeatingScheme = forwardRef((props, ref) => {
         if (!seat.isMultiple()) {
           el.addEventListener('mouseover', (e) => {
             if (e.sourceCapabilities?.firesTouchEvents) return
-            activeEl.current = el
             const pos = el.getBBox()
             setTooltipSeat({
               visible: true,
@@ -242,22 +256,25 @@ const SeatingScheme = forwardRef((props, ref) => {
 
   useEffect(() => {
     tickets.forEach(ticket => {
-      const el = svgRef.current.querySelector(`#${ticket.id}`)
+      let isMultiple = ['0', '-1'].includes(ticket.row)
+      let id = `#${ticket.id}`
+      if (isMultiple) {
+        id = `#seat-${ticket.category}`
+      }
+      const el = svgRef.current.querySelector(id)
       if (!el) return
-      svgSeat(el).checked(ticket.inCart)
+      const checked = isMultiple ? tickets.some(t => t.category === ticket.category && t.inCart) : ticket.inCart
+      svgSeat(el).checked(checked)
     })
   }, [tickets])
-  
+
   return (
     <div
       className='scheme-viewport'
       ref={viewportRef}
-    >
-      <div style={{ position: 'fixed', left: 0, top: 0, background: '#333', color: '#fff', zIndex:10000 }}>
-        {log.map(msg => <>{msg}<br /></>)}
-      </div>
-      
-      <div className='scheme-zoom'>
+    >   
+       {/* <div style={{ position: 'fixed', left: 0, top: 0, padding: 10, background: '#333', color: '#fff' }} id='helppanel' /> */}
+       <div className='scheme-zoom'>
         <button
           className={classNames('scheme-control')}
           onClick={() => zoomOut()}
@@ -275,10 +292,27 @@ const SeatingScheme = forwardRef((props, ref) => {
         <button
           className={classNames('scheme-control', { 'scheme-control_hidden': scaleFactor <= 1.2 })}
           onClick={() => fitToViewport()}
-          style={{ backgroundColor: 'scheme - control '}}
         >
           <ResetIcon style={{ width: 23 }} />
         </button>
+      </div>
+      <div className='scheme-reset-categories'>
+        <button
+          className={classNames('scheme-control scheme-control-large', { 'scheme-control_hidden': !selectedCategory })}
+          onClick={() => {
+            fitToViewport()
+            resetSelectedCategory()
+          }}
+        >
+          <svg width="34" height="6" viewBox="0 0 34 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M33 3.4C33.2209 3.4 33.4 3.22091 33.4 3C33.4 2.77909 33.2209 2.6 33 2.6L33 3.4ZM0.717155 2.71716C0.560947 2.87337 0.560947 3.12663 0.717155 3.28284L3.26274 5.82843C3.41895 5.98464 3.67222 5.98464 3.82843 5.82843C3.98464 5.67222 3.98464 5.41895 3.82843 5.26274L1.56569 3L3.82843 0.737258C3.98464 0.581048 3.98464 0.327782 3.82843 0.171573C3.67222 0.0153629 3.41895 0.0153629 3.26274 0.171573L0.717155 2.71716ZM33 2.6L1 2.6L1 3.4L33 3.4L33 2.6Z" fill="currentColor" />
+          </svg>
+          BACK TO<br />
+          ALL CATEGORIES
+        </button>
+      </div>
+      <div className='simple-impudent-logo'>
+        <TicketLogo />
       </div>
       <div
         className='scheme-draggable'

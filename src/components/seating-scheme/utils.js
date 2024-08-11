@@ -2,11 +2,12 @@ import { SEAT_CLASS } from "const"
 
 const xmlType = "http://www.w3.org/2000/svg"
 
-export function createSvgElement(tag, attributes) {
+export function createSvgElement(tag, attributes, inner = '') {
   const el = document.createElementNS(xmlType, tag)
   for (const key in attributes) {
     el.setAttribute(key, attributes[key])
   }
+  if (inner) el.innerHTML = inner
   return el
 }
 
@@ -26,8 +27,8 @@ export function createDefs(svg, ...elemsConfig) {
     defs = createSvgElement('defs', {})
     svg.insertBefore(defs, svg.firstElementChild)
   }
-  elemsConfig.forEach(([tag, attrs]) => {
-    const el = createSvgElement(tag, attrs)
+  elemsConfig.forEach(([tag, attrs, inner]) => {
+    const el = createSvgElement(tag, attrs, inner)
     defs.appendChild(el)
   })
 }

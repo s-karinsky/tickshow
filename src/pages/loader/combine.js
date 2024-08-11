@@ -4,6 +4,7 @@ import { isEqualSeats } from "utils"
 const combineQueries = (results) => {
   if (results.every(item => item.status === 'success')) {
     const [config, respEvent, tickets] = results.map(item => item.data)
+    const refetch = () => Promise.all(results.map(item => item.refetch()))
     const priceList = tickets.map(item => item.price).filter(Boolean)
     const { categories: eventCats = [], schemeCode: scheme, ...event } = respEvent
     const bookingLimit = tickets.reduce((limit, ticket) => ticket.bookingLimit > Date.now() ? Math.max(limit, ticket.bookingLimit) : limit, 0)
@@ -22,7 +23,8 @@ const combineQueries = (results) => {
         [category]: {
           items: (map[category]?.items || []).concat({ category, price, ...ticket }),
           sum: (map[category]?.sum || 0) + price,
-          data: map[category]?.data || eventCats.find(cat => cat.value === category)
+          data: map[category]?.data || eventCats.find(cat => cat.value === category),
+          isMulitple: map[category]?.isMultiple || ['0', '-1'].includes(ticket.row)
         }
       }), {})
 
@@ -51,6 +53,7 @@ const combineQueries = (results) => {
       event,
       scheme,
       tickets,
+      refetch,
       loaded: true
     }
   }

@@ -1,3 +1,5 @@
+@import '../../../mixins.scss';
+
 .countdown {
   display: inline-flex;
   align-items: center;
@@ -10,7 +12,7 @@
   font-size: 14px;
   font-weight: 400;
   margin-top: -50px;
-  transition: ease-in-out .3s transform;
+  transition: ease-in-out .3s margin-top;
   box-shadow: 0.95px 2.86px 6.68px 0px #0000001A,
     4.77px 11.44px 12.4px 0px #00000017,
     11.44px 24.8px 16.21px 0px #0000000D,
@@ -30,5 +32,15 @@
       height: 14px;
       vertical-align: baseline;
     }
+  }
+}
+
+.event-countdown {
+  @include bp(device) {
+    position: absolute;
+    top: 130px;
+    left: 10px;
+    font-size: 10px;
+    padding: 0 8px;
   }
 }

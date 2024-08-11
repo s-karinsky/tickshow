@@ -10,6 +10,7 @@ const selectFlatArray = data =>
       stadium: 'hall_id',
       t_start_datetime: 'date_start',
     }, group, true)
+    let limit = 0
     const { seats_sold = {}, price: pricesList = [] } = group.t_options || {}
     entries(seats_sold).forEach(([category, rows]) => {
       entries(rows).forEach(([row, seats]) => {
@@ -31,7 +32,7 @@ const selectFlatArray = data =>
             currency,
             t_id: group.t_id,
             bookingLimit: seatOptions[3] ? new Date(seatOptions[3]).getTime() : null,
-            inCart: !!seatOptions[3],
+            inCart: !!seatOptions[3] && new Date(seatOptions[3]).getTime() > Date.now(),
             id: `seat-${[...key, seat].join('-')}`
           }))
         })

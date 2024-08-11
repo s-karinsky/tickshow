@@ -15,6 +15,13 @@ export const createCheckElement = ({ x = 0, y = 0, className, d = 'M 1.5 3.5 L 3
   return check
 }
 
+export const createFilterElement = ({ id = 'filter-blur', blur = 1.2 }) => {
+  const el = document.createElementNS(xmlType, 'filter')
+  el.id = id
+  el.innerHTML = '<feGaussianBlur in="SourceGraphic" stdDeviation="' + blur + '"></feGaussianBlur>'
+  return el
+}
+
 export const createUse = (attrs) => {
   const el = document.createElementNS(xmlType, 'use')
   Object.entries(attrs).forEach(([ attr, val ]) => {

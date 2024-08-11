@@ -58,7 +58,7 @@
   &-column {
     display: flex;
     gap: 10px;
-    width: 160px;
+    flex: 1 1 auto;
     align-items: center;
 
     @include bp(device) {
@@ -83,6 +83,7 @@
   }
   &-count {
     margin-right: auto;
+    display: none;
   }
   &-count, &-sale {
     font-size: 12px;

@@ -1,3 +1,5 @@
+@import '../../../mixins.scss';
+
 @keyframes rotate {
   0% {
     transform: scale(1) rotate(360deg);
@@ -58,8 +60,89 @@
     background: black;
     padding: 20px;
   }
+
+  &-content {
+    height: 100vh;
+    overflow: hidden;
+  }
 }
 
 .loader-content {
   animation: ease .3s fadeIn;
+
+  @include bp(mobile) {
+    background-color: #212121;
+    display: none;
+    position: fixed;
+    inset: 28px 0 0;
+    transform: translate(-150%, 150%);
+  }
+
+  &_mobile-visible {
+    display: block;
+    transform: translate(0, 0);
+  }
+}
+
+.mobile-placeholder {
+  display: none;
+
+  @include bp(mobile) {
+    display: flex;
+    gap: 30px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+    background: url('../../images/placeholder_bg.png') no-repeat center center;
+    background-size: contain;
+  }
+}
+
+.mobile-button {
+  display: block;
+  line-height: 50px;
+  width: calc(100% - 40px);
+}
+
+.mobile-logo {
+  width: 144px;
+}
+
+.mobile-slogan {
+  font-size: 12px;
+  text-align: center;
+  margin-top: 10px;
+  color: #828282;
+}
+
+.mobile-close {
+  height: 28px;
+  position: fixed;
+  inset: 0 0 auto;
+  background-color: #4EAE63;
+  color: var(--color-gray-2);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  display: none;
+
+  &_visible {
+    display: flex;
+  }
+
+  a {
+    color: var(--color-gray-2);
+    
+    svg {
+      vertical-align: middle;
+    }
+
+    .icon-arrow {
+      margin-right: 8px;
+    }
+  }
 }
