@@ -72,14 +72,16 @@
 
   @include bp(mobile) {
     background-color: #212121;
-    display: none;
+    opacity: 0;
+    z-index: -1;
     position: fixed;
     inset: 28px 0 0;
-    transform: translate(-150%, 150%);
+    transition: ease-in-out .3s opacity;
   }
 
   &_mobile-visible {
-    display: block;
+    z-index: 15;
+    opacity: 1;
     transform: translate(0, 0);
   }
 }
