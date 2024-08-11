@@ -234,7 +234,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount = 0, book
                 (x) => x.value === chair?.category
               )?.color;
               // replace color in string svg
-              chairCategoryImg = chairCategoryImg.replace(
+              chairCategoryImg = chairCategoryImg && chairCategoryImg.replace(
                 "currentColor",
                 chairCategoryColor
               );
