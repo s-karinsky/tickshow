@@ -103,6 +103,7 @@ export default function Event() {
           }}
           onMouseOver={(e, val) => setHighlightCat(val.value)}
           onMouseOut={() => setHighlightCat(null)}
+          currency={event?.currency_sign}
         />
         <Button
           color='ghost'
@@ -129,6 +130,7 @@ export default function Event() {
           toggleInCart={toggleInCart.mutate}
           setCartModal={setCartModal}
           fee={event?.fee * 1}
+          currency={event?.currency_sign}
         />}
       </div>
       {cartModal && (

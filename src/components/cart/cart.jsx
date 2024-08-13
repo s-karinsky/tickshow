@@ -11,7 +11,7 @@ import './cart.scss'
 
 const bem = cn('cart')
 
-export default function Cart({ tickets, cart, categories, toggleInCart, setCartModal, fee }) {
+export default function Cart({ tickets, cart, categories, currency = '', toggleInCart, setCartModal, fee }) {
   const total = useMemo(() => Object.values(cart).reduce((acc, { sum }) => acc + sum, 0), [cart])
   const totalCount = useMemo(() => Object.values(cart).reduce((acc, { items }) => acc + items.length, 0), [cart])
   const isEmpty = !Object.values(cart).length
@@ -57,7 +57,7 @@ export default function Cart({ tickets, cart, categories, toggleInCart, setCartM
               <div className={bem('icon')} dangerouslySetInnerHTML={{ __html: data.icon}} style={{ color: data.color }} />
               <div className={bem('label')}>{data.label}</div>
               <div className={bem('count')}><Close style={{ width: 8 }} /> {items.length}</div>
-              <div className={bem('price')}>{sum}</div>
+              <div className={bem('price')}>{sum} {currency}</div>
               <button
                 className={bem('remove')}
                 onClick={() => {
@@ -88,7 +88,7 @@ export default function Cart({ tickets, cart, categories, toggleInCart, setCartM
                     <div className={bem('value')}>{item.row}</div>
                     <div className={bem('name')}>Seat:</div>
                     <div className={bem('value')}>{item.seat}</div>
-                    <div className={bem('price')}>{item.price}</div>
+                    <div className={bem('price')}>{item.price} {currency}</div>
                     <button className={bem('remove')} onClick={() => toggleInCart(item, 0)}><Close style={{ width: 10 }} /></button>
                   </div>
                 ))}

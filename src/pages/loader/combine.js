@@ -52,6 +52,12 @@ const combineQueries = (results) => {
           [...t.price][0]
         return { ...category, ...t }
       }))
+
+    // TODO: Прикрутить в админке выбор валюты для мероприятия
+    // и использвать его вместо этого хардкода
+    if (event) {
+      event.currency_sign = '€'
+    }
     
     return {
       bookingExpired,

@@ -19,6 +19,7 @@ export default function SelectCategory({
   onChange,
   onMouseOver,
   onMouseOut,
+  currency,
   ...rest
 }) {
   const ref = useRef(null)
@@ -69,11 +70,11 @@ export default function SelectCategory({
           <span className={bem('price')}>
             {!!price && (
               Array.isArray(price) ? <>
-                <span className='only-desktop'>from</span> {price[0]}{`${getCurrency(option)} `}
+                <span className='only-desktop'>from</span> {price[0]} {currency}&nbsp;
                 <span className={classNames(bem('price-del'), 'only-mobile')}>–</span>
-                <span className='only-desktop'>to</span> {price[1]}{getCurrency(option)}
+                <span className='only-desktop'>to</span> {price[1]} {currency}
               </> :
-              `${price}${getCurrency(option)}`
+              [price, currency].filter(Boolean).join(' ')
             )}
           </span>
         </li>
