@@ -150,7 +150,6 @@ const SeatingScheme = forwardRef((props, ref) => {
         const y = (pos.current.y + offset.y) / scale.current.value * 2
         zoom(Math.max(1, getCoverZoom()))
         move({ x, y }, { transition: true })
-        return
       }
       const el = event.target
       let ticket = tickets.find(t => t.id === el.id)
@@ -225,7 +224,7 @@ const SeatingScheme = forwardRef((props, ref) => {
       if (!seatTicket || (Array.isArray(seatTicket) && !seatTicket.length)) {
         el.setAttribute('data-disabled', '')
       } else {
-        const hasInCart = seat.isMultiple() ? seatTicket.some(ticket => ticket.inCart) : seatTicket.inCart
+        const hasInCart = seat.isMultiple() ? seatTicket.some(ticket => ticket.inCart) : seatTicket.inCart        
         seat.checked(hasInCart)
         if (!seat.isMultiple()) {
           el.addEventListener('mouseover', (e) => {
@@ -312,7 +311,7 @@ const SeatingScheme = forwardRef((props, ref) => {
         </button>
       </div>
       <div className='simple-impudent-logo'>
-        <TicketLogo />
+        <TicketLogo width="54" height="13" />
       </div>
       <div
         className='scheme-draggable'

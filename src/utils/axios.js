@@ -1,5 +1,5 @@
 import axiosHttp from 'axios'
-import { getFormData } from 'utils'
+import { getFormData, omit } from 'utils'
 import { getFromLocalStorage } from 'utils/common'
 import { STORAGE_KEY_USER_HASH, STORAGE_KEY_USER_TOKEN } from 'const'
 
@@ -10,18 +10,24 @@ export const axios = axiosHttp.create({
 })
 
 axios.interceptors.request.use(config => {
-  const { data } = config
+  const { data, headers } = config
   if (config.baseURL === API_URL) {
     const formData = (data instanceof URLSearchParams || data instanceof FormData) ? data : getFormData(data)
-    const token = getFromLocalStorage(STORAGE_KEY_USER_TOKEN)
-    const hash = getFromLocalStorage(STORAGE_KEY_USER_HASH)
-    if (token && hash) {
-      formData.append('token', token)
-      formData.append('u_hash', hash)
+
+    if (!headers.Anonymus) {
+      const token = getFromLocalStorage(STORAGE_KEY_USER_TOKEN)
+      const hash = getFromLocalStorage(STORAGE_KEY_USER_HASH)
+      if (token && hash) {
+        formData.append('token', token)
+        formData.append('u_hash', hash)
+      }
     }
     config.data = formData
   }
-  return config
+  return {
+    ...config,
+    headers: omit(headers, ['Anonymus'])
+  }
 })
 
 axios.interceptors.response.use(response => {

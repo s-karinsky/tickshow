@@ -1,18 +1,23 @@
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import classNames from 'classnames'
 import { cn } from '@bem-react/classname'
 import { ReactComponent as Close } from 'icons/close.svg'
 import { ReactComponent as ArrowRight } from 'icons/arrow_right.svg'
+import { ReactComponent as Spinner } from 'icons/spinner-dots.svg'
+import { ReactComponent as Clear } from 'icons/close.svg'
 import Button from 'components/button'
-import './cart.scss'
 import InputNumber from 'components/input-number/input-number'
+import './cart.scss'
 
 const bem = cn('cart')
 
-export default function Cart({ tickets, cart, categories, toggleInCart, setCartModal }) {
+export default function Cart({ tickets, cart, categories, toggleInCart, setCartModal, fee }) {
   const total = useMemo(() => Object.values(cart).reduce((acc, { sum }) => acc + sum, 0), [cart])
   const totalCount = useMemo(() => Object.values(cart).reduce((acc, { items }) => acc + items.length, 0), [cart])
   const isEmpty = !Object.values(cart).length
+  const [promoCode, setPromoCode] = useState('')
+  const [sendingPromo, setSendingPromo] = useState(false)
+  const [promoCheckStatus, setPromoCheckStatus] = useState(null)
   
   const handleChangeMultiple = (count, tickets, cat) => {
     const catInCart = tickets.filter(item => item.category === cat && item.inCart)
@@ -26,6 +31,17 @@ export default function Cart({ tickets, cart, categories, toggleInCart, setCartM
       changed.forEach(item => toggleInCart(item, 0))
     }
   }
+
+  const handleSubmitPromo = useCallback(e => {
+    e.preventDefault()
+    setSendingPromo(true)
+    setTimeout(() => {
+      setPromoCheckStatus(false)
+      setSendingPromo(false)
+    }, 1024)
+  }, [])
+  
+  const feeAbs = (total * fee / 100).toFixed(2) * 1
 
   return (
     <div className={bem()}>
@@ -84,23 +100,44 @@ export default function Cart({ tickets, cart, categories, toggleInCart, setCartM
       </div>
       <div className={bem('form')}>
         <div className={bem('delimiter')} />
-        <div className={bem('promo')}>
-          <input type='text' className={bem('input')} placeholder='enter promo code' />
-          <Button className={bem('applyPromo')}><ArrowRight style={{ width: 9 }} /></Button>
-        </div>
+        <form className={bem('promo')} onSubmit={handleSubmitPromo}>
+          <input
+            type='text'
+            className={bem('input')}
+            placeholder='enter promo code'
+            value={promoCode}
+            onChange={e => {
+              setPromoCode(e.target.value)
+              setPromoCheckStatus(null)
+            }}
+          />
+          <Clear
+            className={bem('clear')}
+            onClick={() => {
+              setPromoCode('')
+              setPromoCheckStatus(null)
+            }}
+          />
+          <Button className={bem('applyPromo')} disabled={!promoCode || isEmpty || sendingPromo}>
+            {sendingPromo ? <Spinner style={{ width: 24 }} /> : <ArrowRight style={{ width: 9 }} />}
+          </Button>
+        </form>
+        {promoCheckStatus !== null && <div className={bem('status-text', { success: promoCheckStatus })}>
+          {promoCheckStatus ? 'Valid' : 'Promo code is wrong!'}
+        </div>}
         <div className={bem('group')}>
           <div className={bem('summary')}>
             <div className={classNames(bem('total'), 'only-mobile')}>
               <div className={bem('fee')}>Selected tickets:</div>
               <div className={bem('fee')}>{totalCount}</div>
             </div>
-            <div className={bem('total')}>
-              <div className={bem('fee')}>transaction fee 5%:</div>
-              <div className={bem('fee')}>{(total * 0.05).toFixed(2)}</div>
-            </div>
+            {!!fee && <div className={bem('total')}>
+              <div className={bem('fee')}>transaction fee {fee}%:</div>
+              <div className={bem('fee')}>{feeAbs}</div>
+            </div>}
             <div className={bem('total')}>
               <div className={bem('cost')}>Total:</div>
-              <div className={bem('cost')}>{total + Number((total * 0.05).toFixed(2))}</div>
+              <div className={bem('cost')}>{total + feeAbs}</div>
             </div>
           </div>
 

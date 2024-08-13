@@ -132,8 +132,10 @@
   padding: 0 16px;
   display: none;
 
-  &_visible {
-    display: flex;
+  @include bp(mobile) {
+    &_visible {
+      display: flex;
+    }
   }
 
   a {

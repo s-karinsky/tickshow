@@ -22,8 +22,6 @@ import { getFromLocalStorage } from "utils/common";
 import { STORAGE_KEY_USER_EMAIL } from "const";
 import './event.scss'
 
-
-
 const bem = cn('event')
 
 export default function Event() {
@@ -131,6 +129,7 @@ export default function Event() {
           cart={cartByCategory}
           toggleInCart={toggleInCart.mutate}
           setCartModal={setCartModal}
+          fee={event.fee * 1}
         />
       </div>
       {cartModal && (

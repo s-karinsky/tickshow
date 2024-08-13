@@ -27,6 +27,18 @@
     }
   }
 
+  &-status-text {
+    color: var(--color-failure);
+    font-size: 10px;
+    line-height: 12px;
+    margin-top: -20px;
+    margin-bottom: 20px;
+
+    & _success {
+      color: var(--color-success);
+    } 
+  }
+
   &-category-title {
     padding: 12px 0;
     border-bottom: 1px solid;
@@ -118,6 +130,7 @@
   }
 
   &-promo {
+    position: relative;
     background: #393939;
     padding: 4px;
     border-radius: 38px;
@@ -134,16 +147,46 @@
   &-input {
     background-color: transparent;
     border: none;
-    margin-left: 12px;
     flex: 1 1 auto;
     color: var(--color-gray-2);
     opacity: 0.3;
     font-family: 'articulat', sans-serif;
+    margin-left: 36px;
+    transition: ease-in-out .2s margin-left;
+
+    &:placeholder-shown {
+      margin-left: 12px;
+
+      & + .cart-clear {
+        width: 0;
+      }
+    }
+
+    &:focus {
+      opacity: 1;
+    }
+  }
+
+  &-clear {
+    transition: ease-in-out .2s;
+    transition-property: width, color;
+    position: absolute;
+    width: 12px;
+    left: 16px;
+    top: 14px;
+    cursor: pointer;
+    color: var(--color-gray-2-alpha);
+
+    &:hover {
+      color: var(--color-gray-2);
+    }
   }
 
   &-applyPromo {
     width: 74px;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     @include bp(device) {
       max-height: none;

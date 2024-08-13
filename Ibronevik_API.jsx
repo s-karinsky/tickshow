@@ -24,7 +24,7 @@ export async function AuthUser(email = "", phone = "", auth_type = "e-mail") {
   var data = {
     login: email || phone,
     type: auth_type,
-    password: "ajekghet",
+    password: "123456", // ajekghet",
   };
   var auth_hash = await make_async_request("auth", data);
   auth_hash = auth_hash.auth_hash;
@@ -42,7 +42,7 @@ export async function RegisterUser(email = "", phone = "", name) {
     u_phone: phone,
     u_email: email,
     data: JSON.stringify({
-      password: "ajekghet",
+      password: "123456", // ajekghet",
     }),
     st: "",
   };
@@ -87,7 +87,7 @@ export async function RegisterPhantomUser() {
       u_phone: Math.random(3, 1000000000000),
       u_email: email,
       data: JSON.stringify({
-        password: "ajekghet",
+        password: "123456", // ajekghet",
       }),
     };
     var resp = await make_async_request("register", data, "POST");

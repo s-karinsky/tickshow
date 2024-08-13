@@ -18,21 +18,20 @@ export const CURRENCY_SYMBOL_MAP = {
   JPY: "¥",
   TRY: "₺",
 }
-export const MAX_SCALE = 8
 
 export const STORAGE_KEY_USER_TOKEN = 'phantom_user_token'
 export const STORAGE_KEY_USER_EMAIL = 'phantom_user_email'
 export const STORAGE_KEY_USER_HASH = 'phantom_user_u_hash'
+export const SCHEME_BLUR_ID = 'scheme-blur-filter'
 
+export const PHANTOM_PASSWORD = '123456' // ajekghet',
 export const getPhantomUser = () => ({
   u_name: `Phantom-${Date.now()}`,
   u_role: '1',
   u_email: `${Date.now()}@client`,
   data: JSON.stringify({
-    password: '123456',
+    password: PHANTOM_PASSWORD,
   }),
 })
 
 export const DISTRIBUTE_PAGE_URL = "https://ticketing.tilda.ws/thank-you-page"
-
-export const SCHEME_BLUR_ID = 'scheme-blur-filter'

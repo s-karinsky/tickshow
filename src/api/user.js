@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { getPhantomUser, STORAGE_KEY_USER_EMAIL, STORAGE_KEY_USER_HASH, STORAGE_KEY_USER_TOKEN } from 'const'
+import { getPhantomUser, PHANTOM_PASSWORD, STORAGE_KEY_USER_EMAIL, STORAGE_KEY_USER_HASH, STORAGE_KEY_USER_TOKEN } from 'const'
 import { axios } from 'utils/axios'
 import { getFromLocalStorage, setLocalStorage } from 'utils/common'
 
@@ -47,14 +47,13 @@ export async function AuthUser(email = "", phone = "", auth_type = "e-mail") {
   var data = {
     login: email || phone,
     type: auth_type,
-    password: "ajekghet",
+    password: PHANTOM_PASSWORD
   };
-  var auth_hash = await axios.post("auth", data);
-  auth_hash = auth_hash.data.auth_hash;
-  var req = await axios.post("token", {"auth_hash": auth_hash});
+  var { auth_hash } = await axios.post("auth", data, { headers: { Anonymus: true } });
+  var req = await axios.post("token", {"auth_hash": auth_hash}, { headers: { Anonymus: true } });
   return {
-    token: req.data.data.token,
-    u_hash: req.data.data.u_hash,
-    u_id: req.data.auth_user.u_id,
+    token: req.data.token,
+    u_hash: req.data.u_hash,
+    u_id: req.auth_user.u_id,
   };
 }
