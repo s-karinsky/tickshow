@@ -171,12 +171,13 @@ const SeatingScheme = forwardRef((props, ref) => {
             el.classList.add('svg-seat-clone')
             svgRef.current.appendChild(el)
           })
-          const pos = el.getBBox()
+
           setTooltipSeat({
             visible: true,
             x: pos.x + pos.width,
             y: pos.y + pos.height,
-            ticketId: ticket.id
+            ticketId: ticket.id,
+            text: el.getAttribute('data-text')
           })
         } else {
           toggleInCart(ticket)
@@ -236,7 +237,8 @@ const SeatingScheme = forwardRef((props, ref) => {
               visible: true,
               x: pos.x + pos.width,
               y: pos.y + pos.height,
-              ticketId: seatTicket.id
+              ticketId: seatTicket.id,
+              text: el.getAttribute('data-text')
             })
           })
           el.addEventListener('mouseout', (e) => {
@@ -268,7 +270,7 @@ const SeatingScheme = forwardRef((props, ref) => {
       svgSeat(el).checked(checked)
     })
   }, [tickets])
-
+  
   return (
     <div
       className='scheme-viewport'
@@ -325,6 +327,7 @@ const SeatingScheme = forwardRef((props, ref) => {
           visible={tooltipSeat.visible}
           x={tooltipSeat.x}
           y={tooltipSeat.y}
+          text={tooltipSeat.text}
           hideDelay={tooltipSeat.delay ?? 500}
           scaleFactor={scaleFactor}
           toggleInCart={toggleInCart}

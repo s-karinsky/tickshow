@@ -14,7 +14,7 @@ export default function SeatingTooltip(props) {
   const [ visible, setVisible ] = useState(props.visible)
   let timer = useRef(null)
   const ref = useRef(null)
-
+  
   useEffect(() => {
     const el = ref.current
     if (!el) return
