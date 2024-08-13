@@ -11,17 +11,19 @@ import { ReactComponent as TicketLogo } from 'icons/ticket_logo.svg'
 import Button from "components/button"
 import './loader.scss'
 import { useEffect } from "react";
+import { useEventId } from "utils/hooks";
+import NotFound from "pages/not-found";
 
 export default function Loader() {
   const routeParams = useParams()
   const [ searchParams ] = useSearchParams()
-  const id = routeParams.event_id || searchParams.get('event_id')
+  const id = useEventId()
   const showScheme = searchParams.get('scheme') !== null
   const { data: authorized } = useUser()
   const location = useLocation()
   
   const enabled = authorized && !!id
-  const { loaded, ...data } = useQueries({
+  const data = useQueries({
     queries: [
       getConfigQuery({ enabled }),
       getEventQuery(id, { enabled }),
@@ -29,6 +31,7 @@ export default function Loader() {
     ],
     combine: combineQueries
   })
+  const { loaded, errors, ...resp } = data
   const search = location.search.replace(/&?scheme/, '')
 
   useEffect(() => {
@@ -38,6 +41,10 @@ export default function Loader() {
       document.body.style.overflow = 'hidden'
     }
   }, [searchParams.get('scheme')])
+  
+  if (errors?.length > 0) {
+    return <NotFound />
+  }
   
   return (
     <>

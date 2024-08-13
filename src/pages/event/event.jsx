@@ -1,17 +1,15 @@
-import { useCallback, useState, useEffect, useMemo, Suspense, lazy, useRef, useLayoutEffect } from "react";
+import { useCallback, useState, useEffect, useMemo, useRef, useLayoutEffect } from "react";
 import { useOutletContext, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import classNames from "classnames"
 import { cn } from '@bem-react/classname'
 import Button from "components/button";
-import SvgScheme from "components/svg-scheme";
 import TicketsCounter from "components/tickets-counter";
 import CategorySelector from "components/category-selector";
 import SeatingScheme from "components/seating-scheme";
 import Countdown from "components/countdown/countdown";
 import Cart from "components/cart/cart";
 import CartModal from "components/modal/modal";
-import birds from "images/EARLY BIRDS.svg";
 import { ReactComponent as IconArrow } from 'icons/arrow.svg'
 import { ReactComponent as IconArrowDouble } from 'icons/arrow_2_down.svg'
 import { updateCart } from "api/cart";
@@ -19,7 +17,7 @@ import { getEventQuery } from "api/event";
 import { useClickAway, useCountdown, useIsMobile, useLocalStorage } from "utils/hooks";
 import { isEqualSeats } from "utils";
 import { getFromLocalStorage } from "utils/common";
-import { STORAGE_KEY_USER_EMAIL } from "const";
+import { EMPTY_ARRAY, STORAGE_KEY_USER_EMAIL } from "const";
 import './event.scss'
 
 const bem = cn('event')
@@ -29,7 +27,7 @@ export default function Event() {
   const [searchParams] = useSearchParams()
   const id = routeParams.event_id || searchParams.get('event_id')
   const queryClient = useQueryClient()
-  const { bookingExpired, bookingLimit, cart, cartByCategory, categories, config, scheme, tickets, event } = useOutletContext()
+  const { bookingExpired, bookingLimit, cart, cartByCategory, categories, config, scheme, tickets, event, errors } = useOutletContext()
   const isMobile = useIsMobile()
   const [selectValue, setSelectValue] = useState(null)
   const [selectOpened, setSelectOpened] = useState(false)
@@ -87,14 +85,14 @@ export default function Event() {
           selectedCategory={selectValue}
           resetSelectedCategory={() => setSelectValue(null)}
           cart={cartByCategory}
-          tickets={tickets}
+          tickets={tickets || EMPTY_ARRAY}
           toggleInCart={toggleInCart.mutate}
         />
       </div>
       <div className={classNames(bem('sidebar'), bem('categories'))} ref={ref}>
         <h2 className={bem('title')}>select a category:</h2>
         <CategorySelector
-          defaultCurrency={config.currency}
+          defaultCurrency={config?.currency}
           value={selectValue}
           options={categories}
           opened={selectOpened}
@@ -123,27 +121,25 @@ export default function Event() {
         >
           <IconArrowDouble style={{ width: 16 }} /> More details
         </button>
-        <Cart
+        {!!cartByCategory  && <Cart
           tickets={tickets}
           categories={categories}
           cart={cartByCategory}
           toggleInCart={toggleInCart.mutate}
           setCartModal={setCartModal}
-          fee={event.fee * 1}
-        />
+          fee={event?.fee * 1}
+        />}
       </div>
       {cartModal && (
-        <Suspense>
-          <CartModal
-            open={cartModal}
-            ScheduleFee={event.fee * 1}
-            categoriesF={categories}
-            bookingLimit={bookingLimit}
-            cart={cart}
-            setOpen={setCartModal}
-            clearCart={clearCart}
-          />
-        </Suspense>
+        <CartModal
+          open={cartModal}
+          ScheduleFee={event?.fee * 1}
+          categoriesF={categories}
+          bookingLimit={bookingLimit}
+          cart={cart}
+          setOpen={setCartModal}
+          clearCart={clearCart}
+        />
       )}
     </div>
   )

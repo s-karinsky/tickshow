@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, useMemo } fr
 import debounce from './debounce'
 import { svgSeat } from './dom-scheme'
 import { SEAT_CLASS } from '../const'
+import { useSearchParams } from 'react-router-dom'
 
 export function useLocalStorage(key, defaultValue) {
   const serialize = () => {
@@ -230,4 +231,9 @@ export function useClickAway(cb) {
   }, [])
 
   return ref
+}
+
+export const useEventId = () => {
+  const [searchParams, setSearchParams] = useSearchParams()
+  return searchParams.get('event_id') || window.T2_EVENT_ID
 }

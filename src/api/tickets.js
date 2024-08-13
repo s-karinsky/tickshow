@@ -50,5 +50,6 @@ async function fetchTickets(id) {
 export const getTicketsQuery = (id, options) => ({
   queryKey: ['tickets', id],
   queryFn: () => fetchTickets(id).then(selectFlatArray),
+  retry: 0,
   ...options
 })

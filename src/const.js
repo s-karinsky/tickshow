@@ -1,4 +1,6 @@
 
+export const EMPTY_ARRAY = []
+
 export const CHECK_PATH_ID = 'checked-seat-path'
 export const CATEGORY_CHECK_PATH_ID = 'checked-category-path'
 export const SEAT_CLASS = 'svg-seat'
