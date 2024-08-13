@@ -134,6 +134,8 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount = 0, book
           setLoad(false)
           clearCart(['tickets', id])
           if (payment) {
+            /* !Ё!const url = new URL(window.location.href)
+            if (url) */
             localStorage.setItem('last_paid_event', id)
             window.location.href = payment
           } else {

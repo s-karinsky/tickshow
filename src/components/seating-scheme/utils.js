@@ -13,10 +13,10 @@ export function createSvgElement(tag, attributes, inner = '') {
 
 export function stringToSvg(str) {
   const parser = new DOMParser()
-  const doc = parser.parseFromString(str, 'image/svg+xml')
+  const doc = parser.parseFromString(str, 'text/html')
   const error = doc.querySelector('parsererror')
   if (error) {
-    throw new Error(`Message: ${error.innerText}, Details: ${doc.querySelector('sourcetext').innerText}`)
+    throw new Error(`Message: ${error.innerText}, Details: ${doc.querySelector('sourcetext')?.innerText}`)
   }
   return doc.querySelector('svg')
 }

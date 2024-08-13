@@ -73,6 +73,7 @@ export default function Event() {
   const clearCart = useCallback((queryKey) => {
     queryClient.resetQueries({ queryKey, exact: true })
   }, [])
+  console.log(tickets);
   
   return (
     <div className={bem('layout')}>
