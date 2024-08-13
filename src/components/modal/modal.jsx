@@ -10,7 +10,7 @@ import { ReactComponent as CheckboxIcon } from 'icons/checkbox.svg'
 import { updateUser, AuthUser } from "../../api/user";
 import { ClearSeats, MoveCart } from "../../api/cart";
 import { CreateOrder } from "../../api/order"
-import { useCountdown } from "../../utils/hooks";
+import { useCountdown, useEventId } from "../../utils/hooks";
 import { msToTime } from "../seating-scheme/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
@@ -45,10 +45,18 @@ export const calculateTotal = (data, percentage, discount) => {
   };
 };
 
-const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount = 0, bookingLimit, cart, clearCart }) => {
-  const t = useMemo(() => calculateTotal(cart, ScheduleFee, discount), [cart, ScheduleFee, discount])
-  console.log(ScheduleFee);
-  
+const CartModal = ({
+  setOpen,
+  open,
+  fee,
+  categoriesF,
+  discount = 0,
+  bookingLimit,
+  cart,
+  clearCart,
+  cartByCategory = {}
+}) => {
+  const t = useMemo(() => calculateTotal(cart, fee, discount), [cart, fee, discount])  
   const queryClient = useQueryClient()
   const [load, setLoad] = useState(false);
   const [token, setToken] = useState(null);
@@ -60,7 +68,7 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount = 0, book
   const [errorMsg, setErrorMsg] = useState(null)
   const [ searchParams ] = useSearchParams()
   const routeParams = useParams()
-  const id = routeParams.event_id || searchParams.get('event_id')
+  const id = useEventId()
   const timer = useRef(null)
 
   useEffect(() => {
@@ -134,9 +142,9 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount = 0, book
           setLoad(false)
           clearCart(['tickets', id])
           if (payment) {
-            /* !Ё!const url = new URL(window.location.href)
-            if (url) */
-            localStorage.setItem('last_paid_event', id)
+            const url = new URL(window.location.href)
+            const redirect = url?.href || window.location.href
+            localStorage.setItem('redirect_after_pay', redirect)
             window.location.href = payment
           } else {
             setErrorMsg(`Payment error ${JSON.stringify(data)}`)
@@ -159,11 +167,11 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount = 0, book
 
   useEffect(() => setLoad(false), [location])
 
+  console.log(cartByCategory);
+  
+
   useEffect(() => {
     if (bookingLimit > Date.now()) countdown.start()
-    // if (msLeft <= 0) {
-    //   actionOnTimeEnd();
-    // }
   }, [])
   const contentRef = useRef(null)
   return (
@@ -192,6 +200,82 @@ const CartModal = ({ setOpen, open, ScheduleFee, categoriesF, discount = 0, book
                 <RxCross2 className="close-icon" />
               </span>
             </div>
+            <div className="w100 df aic fww gap10 tags">
+              {Object.values(cartByCategory).map(({ data, items }, i) => {
+                return <>
+                  {items.map(item => {
+                  return (
+                    <label
+                      className="df aic gap8 fs12 tag"
+                      key={`label-${data?.value}-${item?.category}`}>
+                      <div
+                        className='seats-preview'
+                        dangerouslySetInnerHTML={{
+                          __html: data?.icon,
+                        }}
+                        style={{
+                          width: 12,
+                          height: 12,
+                          color: data?.color,
+                        }}
+                      />
+                      <span>
+                        {`${item?.row}${item?.seat}`}
+                      </span>
+                    </label>)
+                  })}
+                
+                </>
+              })}
+            </div>
+            {/* <div className="w100 df aic fww gap10 tags">
+              {cart?.map((chair, ind) => {
+                const isDancefloor = chair?.category === danceCtgy;
+                let chairCategoryImg = categoriesF?.find(
+                  (x) => x.value === chair?.category
+                )?.icon;  
+                const chairCategoryColor = categoriesF?.find(
+                  (x) => x.value === chair?.category
+                )?.color;
+                // replace color in string svg
+                chairCategoryImg = chairCategoryImg && chairCategoryImg.replace(
+                  "currentColor",
+                  chairCategoryColor
+                );
+
+                if (isDancefloor && first_dancefloor_seat_index === ind) {
+                  return (
+                    <label
+                      className="df aic gap8 fs12 tag"
+                      key={`${chair?.seat}_${ind}`}>
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: danceCtgyImg,
+                        }}
+                        style={{ width: 12, height: 12 }}
+                      />
+                      Dancefloor × {dancefloorCount}
+                    </label>
+                  );
+                } else if (!isDancefloor) {
+                  return (
+                    <label
+                      className="df aic gap8 fs12 tag"
+                      key={`${chair?.seat}_${ind}`}>
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: chairCategoryImg,
+                        }}
+                        style={{ width: 12, height: 12 }}
+                      />
+                      <span>
+                        {`${chair?.row}${chair?.seat}`}
+                      </span>
+                    </label>
+                  );
+                }
+              })}
+            </div> */}
             <p className="w100 df aic jcsb" style={{ color: "#f8f5ec80" }}>
               <span className="fs12">fee 5%:</span>
               <i className="fs12">

@@ -134,10 +134,11 @@ export default function Event() {
       {cartModal && (
         <CartModal
           open={cartModal}
-          ScheduleFee={event?.fee * 1}
+          fee={event?.fee * 1}
           categoriesF={categories}
           bookingLimit={bookingLimit}
           cart={cart}
+          cartByCategory={cartByCategory}
           setOpen={setCartModal}
           clearCart={clearCart}
         />

@@ -158,3 +158,8 @@ textarea {
     width: 4px !important;
   }
 }
+
+.seats-preview svg {
+  width: 14px;
+  height: 12px;
+}
