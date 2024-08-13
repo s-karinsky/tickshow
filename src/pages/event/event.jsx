@@ -14,7 +14,7 @@ import { ReactComponent as IconArrow } from 'icons/arrow.svg'
 import { ReactComponent as IconArrowDouble } from 'icons/arrow_2_down.svg'
 import { updateCart } from "api/cart";
 import { getEventQuery } from "api/event";
-import { useClickAway, useCountdown, useIsMobile, useLocalStorage } from "utils/hooks";
+import { useClickAway, useCountdown, useEventId, useIsMobile, useLocalStorage } from "utils/hooks";
 import { isEqualSeats } from "utils";
 import { getFromLocalStorage } from "utils/common";
 import { EMPTY_ARRAY, STORAGE_KEY_USER_EMAIL } from "const";
@@ -25,7 +25,7 @@ const bem = cn('event')
 export default function Event() {
   const routeParams = useParams()
   const [searchParams] = useSearchParams()
-  const id = routeParams.event_id || searchParams.get('event_id')
+  const id = useEventId()
   const queryClient = useQueryClient()
   const { bookingExpired, bookingLimit, cart, cartByCategory, categories, config, scheme, tickets, event, errors } = useOutletContext()
   const isMobile = useIsMobile()

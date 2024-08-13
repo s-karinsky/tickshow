@@ -142,7 +142,7 @@ const SeatingScheme = forwardRef((props, ref) => {
     }
     hammer.on('pinchstart pinch pinchend', handlePinch)
 
-    const handleTap = (event) => {      
+    const handleTap = (event) => {
       if (scale.current.value < 1) {
         event.preventDefault()
         const offset = getCursorOffsetToElementCenter(viewportRef.current, event.srcEvent)
@@ -151,6 +151,7 @@ const SeatingScheme = forwardRef((props, ref) => {
         zoom(Math.max(1, getCoverZoom()))
         move({ x, y }, { transition: true })
       }
+
       const el = event.target
       let ticket = tickets.find(t => t.id === el.id)
       const seat = svgSeat.from(el)
@@ -158,8 +159,9 @@ const SeatingScheme = forwardRef((props, ref) => {
       if (isMultiple) {
         ticket = tickets.find(t => t.category === el.getAttribute('data-category') && !t.inCart) 
       }
+      
       const { visible, ticketId } = tooltipSeat
-      if (ticket) {
+      if (ticket && !el.hasAttribute('data-disabled')) {
         if (event.pointerType === 'touch' && !isMultiple) {
           const clone = [el.cloneNode()]
           if (el.nextElementSibling.tagName?.toLowerCase() === 'use') clone.push(el.nextElementSibling.cloneNode())
