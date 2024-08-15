@@ -1,6 +1,6 @@
 import {axios} from "../utils/axios";
 
-export async function CreateOrder(seats, token, u_hash, appUrl = window.location.origin) {
+export async function CreateOrder(seats, appUrl = window.location.origin) {
     var data = {
       appUrl: appUrl,
       data: JSON.stringify({

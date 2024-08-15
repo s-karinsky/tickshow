@@ -56,7 +56,7 @@ const CartModal = ({
   clearCart,
   cartByCategory = {}
 }) => {
-  const t = useMemo(() => calculateTotal(cart, fee, discount), [cart, fee, discount])  
+  const t = useMemo(() => calculateTotal(cart, fee, discount), [cart, fee, discount])
   const queryClient = useQueryClient()
   const [load, setLoad] = useState(false);
   const [token, setToken] = useState(null);
@@ -66,7 +66,7 @@ const CartModal = ({
   const [correctUserData, setCorrectUserData] = useState(false)
   const [transitionClose, setTransitionClose] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
-  const [ searchParams ] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const routeParams = useParams()
   const id = useEventId()
   const timer = useRef(null)
@@ -75,7 +75,7 @@ const CartModal = ({
     if (!errorMsg) return
     timer.current = setTimeout(() => setErrorMsg(null), 10000)
   }, [errorMsg])
-  
+
   useEffect(() => {
     setErrorMsg('Text about')
   }, [])
@@ -90,68 +90,71 @@ const CartModal = ({
       .then(({ data }) => {
         if (data.status === "error" && data.message.startsWith("busy user data:")) {
           return AuthUser(values.Email, values.Phone).then((data) => {
-            localStorage.setItem("phantom_user_token", data.token);
-            localStorage.setItem("phantom_user_u_hash", data.u_hash);
-            return MoveCart(
+            // console.log("old user credentials", getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH));
+            // console.log("new user credentials", data.token, data.u_hash);
+            MoveCart(
               getFromLocalStorage(STORAGE_KEY_USER_TOKEN),
               getFromLocalStorage(STORAGE_KEY_USER_HASH),
               cart,
               data.u_id
             )
+            localStorage.setItem("phantom_user_token", data.token);
+            localStorage.setItem("phantom_user_u_hash", data.u_hash);
+
           });
         } else if (data.message === "user or modified data not found") {
-          console.log("CHANGE USER: ok, user already here");
+          // console.log("CHANGE USER: ok, user already here");
         } else if (data.message === "database update failed") {
-          console.log("BUG");
+          // console.log("BUG");
         }
       })
       .catch(e => {
         setErrorMsg(e.message)
       })
 
-      // group seats by trip_id (t_id)
-      const seats = cart.reduce((acc, seat) => {
-        if (!acc[seat.t_id]) acc[seat.t_id] = {}
-        var seatFormat = [seat.hall_id, seat.section || seat.category, seat.row, seat.seat].join(';');
-        acc[seat.t_id][seatFormat] = 1;
-        return acc;
-      }, {});
+    // group seats by trip_id (t_id)
+    const seats = cart.reduce((acc, seat) => {
+      if (!acc[seat.t_id]) acc[seat.t_id] = {}
+      var seatFormat = [seat.hall_id, seat.section || seat.category, seat.row, seat.seat].join(';');
+      acc[seat.t_id][seatFormat] = 1;
+      return acc;
+    }, {});
 
-      var to_stripe_formatting_dancefloor_flag = false;
-      for (var i = 0; i < cart.length; i++) {
-        cart[i].name = "Row - " + cart[i].row + ", Seat - " + cart[i].seat;
+    var to_stripe_formatting_dancefloor_flag = false;
+    for (var i = 0; i < cart.length; i++) {
+      cart[i].name = "Row - " + cart[i].row + ", Seat - " + cart[i].seat;
 
-        if (
-          cart[i].category ===
-          categoriesF.find((cat) => cat.code_type === "Dancefloor")?.value &&
-          !to_stripe_formatting_dancefloor_flag
-        ) {
-          to_stripe_formatting_dancefloor_flag = true;
-          cart[i].name = "DANCE FLOOR";
-          cart[i].quantity = cart.filter(
-            (x) =>
-              x.category ===
-              categoriesF.find((cat) => cat.code_type === "Dancefloor")?.value
-          ).length;
-        }
+      if (
+        cart[i].category ===
+        categoriesF.find((cat) => cat.code_type === "Dancefloor")?.value &&
+        !to_stripe_formatting_dancefloor_flag
+      ) {
+        to_stripe_formatting_dancefloor_flag = true;
+        cart[i].name = "DANCE FLOOR";
+        cart[i].quantity = cart.filter(
+          (x) =>
+            x.category ===
+            categoriesF.find((cat) => cat.code_type === "Dancefloor")?.value
+        ).length;
       }
-
-      CreateOrder(seats, getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH), DISTRIBUTE_PAGE_URL)
-        .then(({ data } = {}) => {
-          const { payment, b_id } = data
-          setLoad(false)
-          clearCart(['tickets', id])
-          if (payment) {
-            const url = new URL(window.location.href)
-            const redirect = url?.href || window.location.href
-            localStorage.setItem('redirect_after_pay', redirect)
-            window.location.href = payment
-          } else {
-            setErrorMsg(`Payment error ${JSON.stringify(data)}`)
-          }
-        })
-        .catch(e => setErrorMsg(e.message))
     }
+
+    CreateOrder(seats, getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH), DISTRIBUTE_PAGE_URL)
+      .then(({ data } = {}) => {
+        const { payment, b_id } = data
+        setLoad(false)
+        clearCart(['tickets', id])
+        if (payment) {
+          const url = new URL(window.location.href)
+          const redirect = url?.href || window.location.href
+          localStorage.setItem('redirect_after_pay', redirect)
+          window.location.href = payment
+        } else {
+          setErrorMsg(`Payment error ${JSON.stringify(data)}`)
+        }
+      })
+      .catch(e => setErrorMsg(e.message))
+  }
 
   const close = () => {
     const modal = contentRef.current
@@ -159,16 +162,12 @@ const CartModal = ({
     modal.classList.add('modal-content_closing')
     overlay.style.opacity = 0;
     modal.addEventListener('transitionend', () => {
-    setOpen(false)
-    modal.classList.remove('modal-content_closing')
-    overlay.style.opacity = null
-  }, {})
+      setOpen(false)
+      modal.classList.remove('modal-content_closing')
+      overlay.style.opacity = null
+    }, {})
   }
-
   useEffect(() => setLoad(false), [location])
-
-  console.log(cartByCategory);
-  
 
   useEffect(() => {
     if (bookingLimit > Date.now()) countdown.start()
@@ -204,27 +203,27 @@ const CartModal = ({
               {Object.values(cartByCategory).map(({ data, items }, i) => {
                 return <>
                   {items.map(item => {
-                  return (
-                    <label
-                      className="df aic gap8 fs12 tag"
-                      key={`label-${data?.value}-${item?.category}`}>
-                      <div
-                        className='seats-preview'
-                        dangerouslySetInnerHTML={{
-                          __html: data?.icon,
-                        }}
-                        style={{
-                          width: 12,
-                          height: 12,
-                          color: data?.color,
-                        }}
-                      />
-                      <span>
-                        {`${item?.row}${item?.seat}`}
-                      </span>
-                    </label>)
+                    return (
+                      <label
+                        className="df aic gap8 fs12 tag"
+                        key={`label-${data?.value}-${item?.category}`}>
+                        <div
+                          className='seats-preview'
+                          dangerouslySetInnerHTML={{
+                            __html: data?.icon,
+                          }}
+                          style={{
+                            width: 12,
+                            height: 12,
+                            color: data?.color,
+                          }}
+                        />
+                        <span>
+                          {`${item?.row}${item?.seat}`}
+                        </span>
+                      </label>)
                   })}
-                
+
                 </>
               })}
             </div>

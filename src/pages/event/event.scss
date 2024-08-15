@@ -74,7 +74,7 @@
       position: absolute;
       z-index: 108;
       top: 100%;
-      transform: translateY(-120px);
+      transform: translateY(-150px);
       max-height: calc(100% - 74px);
       border-top: 1px solid var(--color-gray-9);
       transition: ease-in-out .3s transform;
@@ -82,7 +82,7 @@
       box-shadow: 0px -7.52px 9.4px 0px #2121214D;
 
       &_expanded {
-        transform: translateY(-100%);
+        transform: translateY(calc(-100% - 27px));
 
         .event-toggleCart svg {
           transform: rotate(0deg);

@@ -11,7 +11,7 @@ import './cart.scss'
 
 const bem = cn('cart')
 
-export default function Cart({ tickets, cart, categories, currency = '', toggleInCart, setCartModal, fee }) {
+function Cart({ tickets, cart, categories, currency = '', toggleInCart, setCartModal, fee }) {
   const total = useMemo(() => Object.values(cart).reduce((acc, { sum }) => acc + sum, 0), [cart])
   const totalCount = useMemo(() => Object.values(cart).reduce((acc, { items }) => acc + items.length, 0), [cart])
   const isEmpty = !Object.values(cart).length
@@ -103,7 +103,7 @@ export default function Cart({ tickets, cart, categories, currency = '', toggleI
         <form className={bem('promo')} onSubmit={handleSubmitPromo}>
           <input
             type='text'
-            className={bem('input')}
+            className={bem('input', { invalid: promoCheckStatus === false })}
             placeholder='enter promo code'
             value={promoCode}
             onChange={e => {
@@ -133,11 +133,11 @@ export default function Cart({ tickets, cart, categories, currency = '', toggleI
             </div>
             {!!fee && <div className={bem('total')}>
               <div className={bem('fee')}>transaction fee {fee}%:</div>
-              <div className={bem('fee')}>{feeAbs}</div>
+              <div className={bem('fee')}>{feeAbs} {currency}</div>
             </div>}
             <div className={bem('total')}>
               <div className={bem('cost')}>Total:</div>
-              <div className={bem('cost')}>{total + feeAbs}</div>
+              <div className={bem('cost')}>{total + feeAbs} {currency}</div>
             </div>
           </div>
 
@@ -159,3 +159,5 @@ export default function Cart({ tickets, cart, categories, currency = '', toggleI
     </div>
   )
 }
+
+export default Cart

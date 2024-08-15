@@ -41,6 +41,11 @@ export async function MoveCart(token, u_hash, items, u_id) {
     }
     new_tickets_grouped[item.t_id].push(item);
   });
+  for (const key in new_tickets_grouped) {
+    for (let i = 0; i < new_tickets_grouped[key].length; i++) {
+      new_tickets_grouped[key][i] = new_tickets_grouped[key][i].hall_id + ';' + new_tickets_grouped[key][i].category + ';' + new_tickets_grouped[key][i].row + ';' + new_tickets_grouped[key][i].seat
+    }
+  }
   console.log("MOVING CART ITEMS", new_tickets_grouped);
 
   var data = {
@@ -49,7 +54,7 @@ export async function MoveCart(token, u_hash, items, u_id) {
     item: JSON.stringify(new_tickets_grouped),
     u_id: u_id,
   };
-  return await axios.post("cart/move", data);
+  return await axios.post("cart/move", data, { headers: { Anonymus: true } });
 }
 export async function ClearSeats(token, u_hash, items) {
   var data = {

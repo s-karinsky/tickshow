@@ -8,7 +8,7 @@ import TicketsCounter from "components/tickets-counter";
 import CategorySelector from "components/category-selector";
 import SeatingScheme from "components/seating-scheme";
 import Countdown from "components/countdown/countdown";
-import Cart from "components/cart/cart";
+import Cart from "components/cart";
 import CartModal from "components/modal/modal";
 import { ReactComponent as IconArrow } from 'icons/arrow.svg'
 import { ReactComponent as IconArrowDouble } from 'icons/arrow_2_down.svg'
@@ -73,7 +73,6 @@ export default function Event() {
   const clearCart = useCallback((queryKey) => {
     queryClient.resetQueries({ queryKey, exact: true })
   }, [])
-  console.log(tickets);
   
   return (
     <div className={bem('layout')}>

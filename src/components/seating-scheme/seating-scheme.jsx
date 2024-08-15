@@ -159,6 +159,7 @@ const SeatingScheme = forwardRef((props, ref) => {
       if (isMultiple) {
         ticket = tickets.find(t => t.category === el.getAttribute('data-category') && !t.inCart) 
       }
+      console.log(ticket, isMultiple);
       
       const { visible, ticketId } = tooltipSeat
       if (ticket && !el.hasAttribute('data-disabled')) {
@@ -171,11 +172,13 @@ const SeatingScheme = forwardRef((props, ref) => {
             el.classList.add('svg-seat-clone')
             svgRef.current.appendChild(el)
           })
-
+          const elBounds = el.getBBox()
+          console.log(elBounds);
+          
           setTooltipSeat({
             visible: true,
-            x: pos.x + pos.width,
-            y: pos.y + pos.height,
+            x: elBounds.x + elBounds.width,
+            y: elBounds.y + elBounds.height,
             ticketId: ticket.id,
             text: el.getAttribute('data-text')
           })
@@ -232,11 +235,11 @@ const SeatingScheme = forwardRef((props, ref) => {
         if (!seat.isMultiple()) {
           el.addEventListener('mouseover', (e) => {
             if (e.sourceCapabilities?.firesTouchEvents) return
-            const pos = el.getBBox()
+            const elBounds = el.getBBox()
             setTooltipSeat({
               visible: true,
-              x: pos.x + pos.width,
-              y: pos.y + pos.height,
+              x: elBounds.x + elBounds.width,
+              y: elBounds.y + elBounds.height,
               ticketId: seatTicket.id,
               text: el.getAttribute('data-text')
             })
