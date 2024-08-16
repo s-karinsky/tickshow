@@ -1,5 +1,6 @@
-import { Link, Outlet, useLocation, useParams, useSearchParams } from "react-router-dom";
-import { useQueries } from "@tanstack/react-query";
+import { useEffect } from "react"
+import { Link, Outlet, useLocation, useParams, useSearchParams } from "react-router-dom"
+import { useQueries } from "@tanstack/react-query"
 import cn from "classnames"
 import { useUser } from "api/user"
 import { getCartQuery } from "api/cart"
@@ -10,9 +11,9 @@ import combineQueries from "./combine"
 import { ReactComponent as TicketLogo } from 'icons/ticket_logo.svg'
 import Button from "components/button"
 import './loader.scss'
-import { useEffect } from "react";
-import { useEventId } from "utils/hooks";
-import NotFound from "pages/not-found";
+import { useEventId } from "utils/hooks"
+import NotFound from "pages/not-found"
+import { ClearSeats } from "api/cart"
 
 export default function Loader() {
   const routeParams = useParams()
@@ -35,10 +36,32 @@ export default function Loader() {
   const search = location.search.replace(/&?scheme/, '')
 
   useEffect(() => {
+    if (!resp.cart) return
+    const items = resp.cart.reduce((acc, item) => ({
+      ...acc,
+      [item.t_id]: (acc[item.t_id] || []).concat([item.hall_id, item.category, item.row, item.seat].join(';'))
+    }), {})
+    console.log(items);
+    const onLeave = function () {
+      
+      if (document.visibilityState == 'hidden') {
+        ClearSeats(items)
+      }
+    }
+
+    window.addEventListener('load', onLeave)
+    return () => window.removeEventListener('load', onLeave)
+  }, [resp.cart])
+
+  useEffect(() => {
+    const body = document.body
     if (searchParams.get('scheme') === null) {
-      document.body.style.overflow = 'auto'
+      body.style = {}
     } else {
-      document.body.style.overflow = 'hidden'
+      body.style.overscrollBehavior = 'auto'
+      body.style.overflow = 'none'
+      body.style.height = '100dvh'
+      body.style.maxHeight = '100dvh'
     }
   }, [searchParams.get('scheme')])
   
@@ -48,7 +71,7 @@ export default function Loader() {
   
   return (
     <>
-      <div
+      {/* <div
         className={cn("loading-screen", {
           'loading-screen_hidden': loaded
         })}
@@ -60,7 +83,7 @@ export default function Loader() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
       <div className={cn('mobile-close', { 'mobile-close_visible': showScheme })}>
         <Link to={{ search }}>
           <svg className='icon-arrow' width="7" height="12" viewBox="0 0 7 12" fill="none" xmlns="http://www.w3.org/2000/svg">

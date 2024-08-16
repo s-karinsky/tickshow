@@ -12,7 +12,7 @@ import Cart from "components/cart";
 import CartModal from "components/modal/modal";
 import { ReactComponent as IconArrow } from 'icons/arrow.svg'
 import { ReactComponent as IconArrowDouble } from 'icons/arrow_2_down.svg'
-import { updateCart } from "api/cart";
+import { ClearSeats, updateCart } from "api/cart";
 import { getEventQuery } from "api/event";
 import { useClickAway, useCountdown, useEventId, useIsMobile, useLocalStorage } from "utils/hooks";
 import { isEqualSeats } from "utils";
@@ -71,8 +71,12 @@ export default function Event() {
   })
 
   const clearCart = useCallback((queryKey) => {
-    queryClient.resetQueries({ queryKey, exact: true })
-  }, [])
+    const items = cart.reduce((acc, item) => ({
+      ...acc,
+      [item.t_id]: (acc[item.t_id] || []).concat([item.hall_id, item.category, item.row, item.seat].join(';'))
+    }), {})
+    return ClearSeats(items).then(() => queryClient.resetQueries({ queryKey, exact: true }))
+  }, [cart])
   
   return (
     <div className={bem('layout')}>

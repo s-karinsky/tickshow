@@ -8,7 +8,7 @@ import { getFromLocalStorage } from "../../utils/common";
 import { DISTRIBUTE_PAGE_URL, STORAGE_KEY_USER_EMAIL, STORAGE_KEY_USER_HASH, STORAGE_KEY_USER_TOKEN } from "../../const";
 import { ReactComponent as CheckboxIcon } from 'icons/checkbox.svg'
 import { updateUser, AuthUser } from "../../api/user";
-import { ClearSeats, MoveCart } from "../../api/cart";
+import { MoveCart } from "../../api/cart";
 import { CreateOrder } from "../../api/order"
 import { useCountdown, useEventId } from "../../utils/hooks";
 import { msToTime } from "../seating-scheme/utils";
@@ -76,10 +76,6 @@ const CartModal = ({
     timer.current = setTimeout(() => setErrorMsg(null), 10000)
   }, [errorMsg])
 
-  useEffect(() => {
-    setErrorMsg('Text about')
-  }, [])
-
   async function addPayment(e) {
     e.preventDefault()
     const formData = new FormData(e.target)
@@ -90,16 +86,15 @@ const CartModal = ({
       .then(({ data }) => {
         if (data.status === "error" && data.message.startsWith("busy user data:")) {
           return AuthUser(values.Email, values.Phone).then((data) => {
-            // console.log("old user credentials", getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH));
-            // console.log("new user credentials", data.token, data.u_hash);
-            MoveCart(
+            localStorage.setItem("phantom_user_email", values.Email)
+            localStorage.setItem("phantom_user_token", data.token)
+            localStorage.setItem("phantom_user_u_hash", data.u_hash)
+            return MoveCart(
               getFromLocalStorage(STORAGE_KEY_USER_TOKEN),
               getFromLocalStorage(STORAGE_KEY_USER_HASH),
               cart,
               data.u_id
             )
-            localStorage.setItem("phantom_user_token", data.token);
-            localStorage.setItem("phantom_user_u_hash", data.u_hash);
 
           });
         } else if (data.message === "user or modified data not found") {
@@ -143,7 +138,7 @@ const CartModal = ({
       .then(({ data } = {}) => {
         const { payment, b_id } = data
         setLoad(false)
-        clearCart(['tickets', id])
+        clearCart()
         if (payment) {
           const url = new URL(window.location.href)
           const redirect = url?.href || window.location.href

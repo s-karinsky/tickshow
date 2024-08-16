@@ -88,6 +88,7 @@ const SeatingScheme = forwardRef((props, ref) => {
     mapSeat(node, el => el.style.fill = '#666', `:not([data-category="${highlight}"])`)
   }, [highlight])
 
+  // TODO зум ин с курсором в центре, зум аут с контролем выхода за границы
   const zoom = useCallback((next) => {
     const { initialWidth, initialHeight } = scale.current
     if (!initialHeight || !initialWidth) return

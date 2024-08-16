@@ -50,7 +50,8 @@
     &:hover {
       cursor: pointer;
 
-      .category-selector-label {
+      .category-selector-label,
+      .category-selector-price {
         opacity: 1;
       }
     }
@@ -97,10 +98,10 @@
   &-price {
     font-weight: 500;
     font-style: italic;
+    opacity: 0.5;
 
     span {
       font-size: 12px;
-      color: #f8f5ec4d;
     }
 
     &-del {

@@ -5,8 +5,6 @@ import { getFromLocalStorage } from 'utils/common'
 export const getCartQuery = options => ({
   queryKey: ['cart', getFromLocalStorage(STORAGE_KEY_USER_EMAIL)],
   queryFn: async () => axios.post('cart'),
-  cacheTime: Infinity,
-  staleTime: Infinity,
   select: ({ data }) => (data.cart || []).map(item => {
     const [hall_id, category, row, seat] = item.prop?.split(';')
     return {
@@ -56,11 +54,7 @@ export async function MoveCart(token, u_hash, items, u_id) {
   };
   return await axios.post("cart/move", data, { headers: { Anonymus: true } });
 }
-export async function ClearSeats(token, u_hash, items) {
-  var data = {
-    token: token,
-    u_hash: u_hash,
-    item: JSON.stringify(items),
-  };
-  return await axios.post("cart/clear", data);
+export async function ClearSeats(items) {
+  const params = { item: JSON.stringify(items) }
+  return await axios.post("cart/clear", params)
 }

@@ -27,6 +27,13 @@ body {
   min-height: 100dvh;
 }
 
+@media screen and (max-width: 1023px) {
+  #root {
+    position: relative;
+    z-index: 9997;
+  }
+}
+
 a {
   text-decoration: none;
 }

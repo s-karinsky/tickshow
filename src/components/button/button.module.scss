@@ -19,7 +19,7 @@
   background-color: var(--bg-color);
   text-align: center;
   cursor: pointer;
-  color: var(--color);
+  color: var(--color) !important;
   box-sizing: border-box;
   transition: ease .3s;
   transition-property: background-color, color, box-shadow, opacity, border-color;
@@ -166,7 +166,7 @@
     border-radius: 5px;
     padding: 10px;
     animation: dash 6s linear infinite;
-    border: none;
+    border: 1px solid transparent;
     border-radius: 40px;
   }
 }

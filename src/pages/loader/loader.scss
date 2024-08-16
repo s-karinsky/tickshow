@@ -78,12 +78,18 @@
     inset: 28px 0 0;
     height: auto;
     transition: ease-in-out .3s opacity;
+    touch-action: none;
+    pointer-events: none;
+    right: 150%;
+    bottom: 150%;
   }
 
   &_mobile-visible {
     z-index: 15;
     opacity: 1;
     transform: translate(0, 0);
+    right: 0;
+    bottom: 0;
   }
 }
 
@@ -98,7 +104,7 @@
     justify-content: center;
     width: 100vw;
     height: 100vh;
-    background: url('../../images/placeholder_bg.png') no-repeat center center;
+    background: url('https: //s-karinsky.github.io/static/build/tickshow/placeholder_bg.png') no-repeat center center;
     background-size: contain;
   }
 }
@@ -140,7 +146,7 @@
   }
 
   a {
-    color: var(--color-gray-2);
+    color: var(--color-gray-2) !important;
     
     svg {
       vertical-align: middle;
