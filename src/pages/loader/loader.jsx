@@ -14,6 +14,7 @@ import './loader.scss'
 import { useEventId } from "utils/hooks"
 import NotFound from "pages/not-found"
 import { ClearSeats } from "api/cart"
+import { STORAGE_KEY_PLACES_IN_ORDERS } from "const"
 
 export default function Loader() {
   const routeParams = useParams()
@@ -22,6 +23,18 @@ export default function Loader() {
   const showScheme = searchParams.get('scheme') !== null
   const { data: authorized } = useUser()
   const location = useLocation()
+
+  useEffect(() => {
+    let cart = []
+    try {
+      const carts = JSON.parse(localStorage.getItem(STORAGE_KEY_PLACES_IN_ORDERS) || '{}')
+      cart = carts?.[id]
+    } catch (e) {
+      console.log(e)
+    }
+    if (!cart) return
+    ClearSeats(cart)
+  }, [id])
   
   const enabled = authorized && !!id
   const data = useQueries({
@@ -35,15 +48,13 @@ export default function Loader() {
   const { loaded, errors, ...resp } = data
   const search = location.search.replace(/&?scheme/, '')
 
-  useEffect(() => {
+  /* useEffect(() => {
     if (!resp.cart) return
     const items = resp.cart.reduce((acc, item) => ({
       ...acc,
       [item.t_id]: (acc[item.t_id] || []).concat([item.hall_id, item.category, item.row, item.seat].join(';'))
     }), {})
-    console.log(items);
     const onLeave = function () {
-      
       if (document.visibilityState == 'hidden') {
         ClearSeats(items)
       }
@@ -51,7 +62,7 @@ export default function Loader() {
 
     window.addEventListener('load', onLeave)
     return () => window.removeEventListener('load', onLeave)
-  }, [resp.cart])
+  }, [resp.cart]) */
 
   useEffect(() => {
     const body = document.body

@@ -4,6 +4,7 @@ import Distribute from "pages/distribute"
 import NotFound from "pages/not-found"
 import Event from "pages/event"
 import Loader from "pages/loader"
+import { STORAGE_KEY_PLACES_IN_ORDERS } from "const"
 
 export default function App() {
   return (

@@ -4,11 +4,18 @@ import { MdOutlineAccessTime } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
 import { BiLoaderCircle } from "react-icons/bi";
 import { useDispatch, useSelector } from "react-redux";
-import { getFromLocalStorage } from "../../utils/common";
-import { DISTRIBUTE_PAGE_URL, STORAGE_KEY_USER_EMAIL, STORAGE_KEY_USER_HASH, STORAGE_KEY_USER_TOKEN } from "../../const";
+import { getFromLocalStorage, setLocalStorage } from "../../utils/common";
+import {
+  DISTRIBUTE_PAGE_URL,
+  STORAGE_KEY_PLACES_IN_ORDERS,
+  STORAGE_KEY_REDIRECT,
+  STORAGE_KEY_USER_EMAIL,
+  STORAGE_KEY_USER_HASH,
+  STORAGE_KEY_USER_TOKEN
+} from "../../const";
 import { ReactComponent as CheckboxIcon } from 'icons/checkbox.svg'
 import { updateUser, AuthUser } from "../../api/user";
-import { MoveCart } from "../../api/cart";
+import { ClearSeats, formatSeats, MoveCart } from "../../api/cart";
 import { CreateOrder } from "../../api/order"
 import { useCountdown, useEventId } from "../../utils/hooks";
 import { msToTime } from "../seating-scheme/utils";
@@ -54,7 +61,7 @@ const CartModal = ({
   bookingLimit,
   cart,
   clearCart,
-  cartByCategory = {}
+  cartByCategory = {},
 }) => {
   const t = useMemo(() => calculateTotal(cart, fee, discount), [cart, fee, discount])
   const queryClient = useQueryClient()
@@ -76,6 +83,10 @@ const CartModal = ({
     timer.current = setTimeout(() => setErrorMsg(null), 10000)
   }, [errorMsg])
 
+  useEffect(() => {
+    setErrorMsg('Text about')
+  }, [])
+
   async function addPayment(e) {
     e.preventDefault()
     const formData = new FormData(e.target)
@@ -86,21 +97,22 @@ const CartModal = ({
       .then(({ data }) => {
         if (data.status === "error" && data.message.startsWith("busy user data:")) {
           return AuthUser(values.Email, values.Phone).then((data) => {
-            localStorage.setItem("phantom_user_email", values.Email)
-            localStorage.setItem("phantom_user_token", data.token)
-            localStorage.setItem("phantom_user_u_hash", data.u_hash)
-            return MoveCart(
+            //console.log("old user credentials", getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH));
+            //console.log("new user credentials", data.token, data.u_hash);
+            MoveCart(
               getFromLocalStorage(STORAGE_KEY_USER_TOKEN),
               getFromLocalStorage(STORAGE_KEY_USER_HASH),
               cart,
               data.u_id
             )
-
+            setLocalStorage(STORAGE_KEY_USER_EMAIL, values.Email);
+            setLocalStorage(STORAGE_KEY_USER_TOKEN, data.token);
+            setLocalStorage(STORAGE_KEY_USER_HASH, data.u_hash);
           });
         } else if (data.message === "user or modified data not found") {
-          // console.log("CHANGE USER: ok, user already here");
+          //console.log("CHANGE USER: ok, user already here");
         } else if (data.message === "database update failed") {
-          // console.log("BUG");
+          //console.log("BUG");
         }
       })
       .catch(e => {
@@ -133,16 +145,32 @@ const CartModal = ({
         ).length;
       }
     }
+    var places_in_orders = getFromLocalStorage(STORAGE_KEY_PLACES_IN_ORDERS, {})
 
     CreateOrder(seats, getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH), DISTRIBUTE_PAGE_URL)
       .then(({ data } = {}) => {
         const { payment, b_id } = data
         setLoad(false)
-        clearCart()
+        clearCart(['tickets', id])
         if (payment) {
           const url = new URL(window.location.href)
           const redirect = url?.href || window.location.href
-          localStorage.setItem('redirect_after_pay', redirect)
+          localStorage.setItem(STORAGE_KEY_REDIRECT, redirect)
+
+          if (!places_in_orders[id]) { places_in_orders[id] = {} }
+          var new_tickets_grouped = {};
+          for (let i = 0; i < cart.length; i++) {
+            if (!new_tickets_grouped[cart[i].t_id]) new_tickets_grouped[cart[i].t_id] = []
+            new_tickets_grouped[cart[i].t_id].push(cart[i])
+          }
+          for (const key in new_tickets_grouped) {
+            for (let i = 0; i < new_tickets_grouped[key].length; i++) {
+              new_tickets_grouped[key][i] = new_tickets_grouped[key][i].hall_id + ';' + new_tickets_grouped[key][i].category + ';' + new_tickets_grouped[key][i].row + ';' + new_tickets_grouped[key][i].seat
+            }
+          }
+          places_in_orders[id] = new_tickets_grouped
+          //setLocalStorage(STORAGE_KEY_PLACES_IN_ORDERS, places_in_orders)
+          localStorage.setItem(STORAGE_KEY_PLACES_IN_ORDERS, JSON.stringify(places_in_orders))
           window.location.href = payment
         } else {
           setErrorMsg(`Payment error ${JSON.stringify(data)}`)
@@ -162,6 +190,7 @@ const CartModal = ({
       overlay.style.opacity = null
     }, {})
   }
+
   useEffect(() => setLoad(false), [location])
 
   useEffect(() => {

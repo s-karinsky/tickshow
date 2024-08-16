@@ -21,6 +21,7 @@ export const CURRENCY_SYMBOL_MAP = {
   TRY: "₺",
 }
 
+export const STORAGE_KEY_REDIRECT = 'redirect_after_pay'
 export const STORAGE_KEY_USER_TOKEN = 'phantom_user_token'
 export const STORAGE_KEY_USER_EMAIL = 'phantom_user_email'
 export const STORAGE_KEY_USER_HASH = 'phantom_user_u_hash'
@@ -37,3 +38,5 @@ export const getPhantomUser = () => ({
 })
 
 export const DISTRIBUTE_PAGE_URL = "https://uventy.com/congratulations"
+
+export const STORAGE_KEY_PLACES_IN_ORDERS = 'places_in_orders'
