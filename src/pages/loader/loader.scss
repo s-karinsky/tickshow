@@ -78,8 +78,8 @@
     inset: 28px 0 0;
     height: auto;
     transition: ease-in-out .3s opacity;
-    touch-action: none;
-    pointer-events: none;
+    // touch-action: none;
+    // pointer-events: none;
     right: 150%;
     bottom: 150%;
   }
@@ -106,6 +106,10 @@
     height: 100vh;
     background: url('https: //s-karinsky.github.io/static/build/tickshow/placeholder_bg.png') no-repeat center center;
     background-size: contain;
+
+    &:has(+ .loader-content_mobile-visible) {
+      z-index: -1;
+    }
   }
 }
 

@@ -24,7 +24,7 @@ export default function Loader() {
   const { data: authorized } = useUser()
   const location = useLocation()
 
-  useEffect(() => {
+  /* useEffect(() => {
     let cart = []
     try {
       const carts = JSON.parse(localStorage.getItem(STORAGE_KEY_PLACES_IN_ORDERS) || '{}')
@@ -32,9 +32,8 @@ export default function Loader() {
     } catch (e) {
       console.log(e)
     }
-    if (!cart) return
-    ClearSeats(cart)
-  }, [id])
+    return cart ? Promise.resolve(cart) : ClearSeats(cart)
+  }, [id]) */
   
   const enabled = authorized && !!id
   const data = useQueries({
@@ -45,12 +44,12 @@ export default function Loader() {
     ],
     combine: combineQueries
   })
-  const { loaded, errors, ...resp } = data
+  const { loaded, errors, cart, ...resp } = data
   const search = location.search.replace(/&?scheme/, '')
 
-  /* useEffect(() => {
-    if (!resp.cart) return
-    const items = resp.cart.reduce((acc, item) => ({
+  useEffect(() => {
+    if (!cart) return
+    const items = cart.reduce((acc, item) => ({
       ...acc,
       [item.t_id]: (acc[item.t_id] || []).concat([item.hall_id, item.category, item.row, item.seat].join(';'))
     }), {})
@@ -62,9 +61,9 @@ export default function Loader() {
 
     window.addEventListener('load', onLeave)
     return () => window.removeEventListener('load', onLeave)
-  }, [resp.cart]) */
+  }, [resp.cart])
 
-  useEffect(() => {
+  /* useEffect(() => {
     const body = document.body
     if (searchParams.get('scheme') === null) {
       body.style = {}
@@ -78,7 +77,7 @@ export default function Loader() {
   
   if (errors?.length > 0) {
     return <NotFound />
-  }
+  } */
   
   return (
     <>
