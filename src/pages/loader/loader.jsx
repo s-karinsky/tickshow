@@ -63,13 +63,13 @@ export default function Loader() {
     return () => window.removeEventListener('load', onLeave)
   }, [resp.cart])
 
-  /* useEffect(() => {
+  useEffect(() => {
     const body = document.body
     if (searchParams.get('scheme') === null) {
       body.style = {}
     } else {
       body.style.overscrollBehavior = 'auto'
-      body.style.overflow = 'none'
+      body.style.overflow = 'hidden'
       body.style.height = '100dvh'
       body.style.maxHeight = '100dvh'
     }
@@ -77,7 +77,7 @@ export default function Loader() {
   
   if (errors?.length > 0) {
     return <NotFound />
-  } */
+  }
   
   return (
     <>
