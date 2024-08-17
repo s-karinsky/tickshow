@@ -30,45 +30,7 @@ export const createUse = (attrs) => {
   return el
 }
 
-export const createSvgElement = (tag, attrs) => {
-  const el = document.createElementNS(xmlType, tag)
-  Object.entries(attrs).forEach(([ attr, val ]) => {
-    el.setAttribute(attr, val)
-  })
-  return el
-}
-
-export const createOverlay = () => {
-  const el = document.createElementNS(xmlType, 'rect')
-  Object.entries({
-    id: 'scheme-overlay',
-    class: "scheme-overlay",
-    x: 0,
-    y: 0,
-    width: '100%',
-    height: '100%',
-    fill: '#21212199',
-  }).forEach(([ attr, val ]) => {
-    el.setAttribute(attr, val)
-  })
-  return el
-}
-
-export const addDef = (root, id, el) => {
-  if (root.querySelector(`#${id}`)) {
-    return
-  }
-  let defs = root.querySelector('defs')
-  if (!defs) {
-    defs = document.createElementNS(xmlType, 'defs')
-    root.insertBefore(defs, root.firstElementChild)
-  }
-  el.setAttribute('id', id)
-  defs.appendChild(el)
-  return defs
-}
-
-export const insertAfter = (el, insertEl) => {
+const insertAfter = (el, insertEl) => {
   const parent = el?.parentNode
   if (!parent) return
   const next = el?.nextElementSibling
@@ -101,6 +63,8 @@ export const svgSeat = (el, details = {}) => {
         const node = seat.getTitleNode()
         if (!node) return
         const { x, y } = node.getBBox()
+        console.log(node, x, y);
+        
         insertAfter(node, createUse({ x: x - 15, y: y + 6, class: 'category-check', href: `#${CATEGORY_CHECK_PATH_ID}` }))
         el.style.cursor = 'auto'
       } else {
@@ -125,7 +89,7 @@ export const svgSeat = (el, details = {}) => {
     // Вызов без аргументов вернет значение галочки
     // Вызов с аргументом установит галочку в соответствии с этим значением
     checked: val => {
-      if (val === undefined || val === null) return seat.hasCheck()
+      if (val === undefined || val === null) return seat.w()
       val ? seat.addCheck() : seat.removeCheck()
       return seat
     },
@@ -139,7 +103,11 @@ export const svgSeat = (el, details = {}) => {
     // Проверка множественности места (танцпол - множественное место)
     isMultiple: () => !seat.get('seat') && !seat.get('row'),
     // Получить элемент с названием категории (только для множественных)
-    getTitleNode: () => seat.isMultiple() ? el.ownerSVGElement.querySelector(`#${seat.get('category').toUpperCase()}`) : null,
+    getTitleNode: () => {
+      if (!seat.isMultiple()) return null
+      const selector = `.title-${seat.get('category').toUpperCase()}`
+      return el.ownerSVGElement.querySelector(selector)
+    },
     // Получить уникалный ключ места
     getKey: () => seat.isMultiple() ? seat.get('category') : seat.get(['row', 'seat']).join('-'),
     // Проверка на соответствие объекту. Например, чтобы проверить соответствие ряду A и месту 2
@@ -171,6 +139,10 @@ export const svgSeat = (el, details = {}) => {
 }
 
 svgSeat.from = obj => {
+  if (obj && obj instanceof SVGElement) {
+    return obj.hasAttribute('data-category') ? svgSeat(obj) : null
+  }
+  
   const el = (!obj.row || obj.row === '-1' || obj.row === '0') ?
     document.querySelector(`.${SEAT_CLASS}[data-category="${obj.category}"]`) :
     document.querySelector(`.${SEAT_CLASS}[data-row="${obj.row}"][data-seat="${obj.seat}"]`)

@@ -11,6 +11,8 @@ import { ReactComponent as ZoomOut } from 'icons/zoom-out.svg'
 import { svgSeat } from 'utils/dom-scheme'
 import { createDefs, createStyles, getCursorOffsetToElementCenter, stringToSvg } from './utils'
 import './seating-scheme.scss'
+import { SEAT_CLONE_CLASS } from 'const'
+import TicketsCounter from 'components/tickets-counter/tickets-counter'
 
 const mapSeat = (node, cb, joinToSelector = '') =>
   Array.from(node.querySelectorAll(`.svg-seat${joinToSelector}`)).map(cb)
@@ -18,7 +20,7 @@ const mapSeat = (node, cb, joinToSelector = '') =>
 const SeatingScheme = forwardRef((props, ref) => {
   const [log, setLog] = useState([])
 
-  const { src, categories, tickets, toggleInCart, highlight, selectedCategory, resetSelectedCategory } = props
+  const { src, cart, categories, tickets, toggleInCart, highlight, selectedCategory, resetSelectedCategory } = props
   const [ tooltipSeat, setTooltipSeat ] = useState({ visible: false })
   
   const viewportRef = useRef(null)
@@ -28,6 +30,8 @@ const SeatingScheme = forwardRef((props, ref) => {
   const scale = useRef({ value: 1, initialWidth: 0, initialHeight: 0 })
   const pos = useRef({ x: 0, y: 0 })
   const [scaleFactor, setScaleFactor] = useState(1)
+
+  const [counters, setCounters] = useState([])
 
   const zoomMin = 0.4
   const zoomMax = 4
@@ -114,6 +118,11 @@ const SeatingScheme = forwardRef((props, ref) => {
     event.deltaY > 0 ? zoomOut() : zoomIn()
   }
 
+  const ticketsByCategory = useMemo(() => tickets.reduce((acc, ticket) => ({
+    ...acc,
+    [ticket.category]: (acc[ticket.category] || []).concat(ticket)
+  }), {}), [tickets])
+
   useEffect(() => {
     const dragEl = dragRef.current
     const hammer = new Hammer(dragEl)
@@ -153,29 +162,29 @@ const SeatingScheme = forwardRef((props, ref) => {
         move({ x, y }, { transition: true })
       }
 
+      const isTouch = event.pointerType === 'touch'
       const el = event.target
-      let ticket = tickets.find(t => t.id === el.id)
       const seat = svgSeat.from(el)
       const isMultiple = seat && seat.isMultiple()
-      if (isMultiple) {
-        ticket = tickets.find(t => t.category === el.getAttribute('data-category') && !t.inCart) 
-      }
-      console.log(ticket, isMultiple);
+      const seatCat = seat ? seat.get('category') : ''
+      const ticketsCat = ticketsByCategory?.[seatCat] || []
       
+      const ticket = isMultiple && ticketsCat ? ticketsCat.find(item => !item.inCart) : tickets.find(t => t.id === el.id)
       const { visible, ticketId } = tooltipSeat
+
       if (ticket && !el.hasAttribute('data-disabled')) {
-        if (event.pointerType === 'touch' && !isMultiple) {
+        Array.from(document.querySelectorAll('#clone-1, #clone-2')).forEach(el => el.remove())
+        if (isTouch && !isMultiple) {
+          // Копируем текущее место для вывода копии поверх блюра
           const clone = [el.cloneNode()]
+          // Если у элемента есть галочка, то копируем и ее
           if (el.nextElementSibling.tagName?.toLowerCase() === 'use') clone.push(el.nextElementSibling.cloneNode())
-          document.querySelectorAll('#clone-1, #clone-2').forEach(el => el.remove())
-          clone.map((el, i) => {
+          const elBounds = el.getBBox()
+          clone.forEach((el, i) => {
             el.id = `clone-${(i + 1)}`
-            el.classList.add('svg-seat-clone')
+            el.classList.add(SEAT_CLONE_CLASS)
             svgRef.current.appendChild(el)
           })
-          const elBounds = el.getBBox()
-          console.log(elBounds);
-          
           setTooltipSeat({
             visible: true,
             x: elBounds.x + elBounds.width,
@@ -201,7 +210,7 @@ const SeatingScheme = forwardRef((props, ref) => {
       hammer.off('tap', handleTap)
       hammer.destroy()
     }
-  }, [scaleFactor])
+  }, [scaleFactor, ticketsByCategory, tickets, tooltipSeat])
 
 
   useEffect(() => {
@@ -257,7 +266,6 @@ const SeatingScheme = forwardRef((props, ref) => {
     const rect = dragEl.getBoundingClientRect()
     scale.current.initialWidth = rect.width
     scale.current.initialHeight = rect.height
-    
     fitToViewport()
   }, [src])
 
@@ -268,12 +276,52 @@ const SeatingScheme = forwardRef((props, ref) => {
       if (isMultiple) {
         id = `#seat-${ticket.category}`
       }
+      
       const el = svgRef.current.querySelector(id)
       if (!el) return
+      
       const checked = isMultiple ? tickets.some(t => t.category === ticket.category && t.inCart) : ticket.inCart
       svgSeat(el).checked(checked)
     })
   }, [tickets])
+
+  useEffect(() => {
+    const cats = svgRef.current.querySelectorAll('.svg-seat[data-category]:not([data-row]):not([data-seat])')
+    const svgBound = svgRef.current.getBBox()
+    const counters = Array.from(cats).map(el => {
+      const seat = svgSeat(el)
+      const category = seat.get('category')
+      const title = seat.getTitleNode()
+      const bound = title ? title.getBBox() : el.getBBox()
+      const left = bound.x + bound.width / 2
+      const top = bound.y + (title ? 1.1 * bound.height : (2 / 3) * bound.height)
+      const value = cart[category]?.items?.length || 0
+      const visible = !!cart[category] || 0
+      const max = ticketsByCategory[category]?.length || 0
+      return {
+        category,
+        left: Math.round((left / svgBound.width) * 100) + '%',
+        top: Math.round((top / svgBound.height) * 100) + '%',
+        max,
+        value,
+        visible
+      }
+    })
+    setCounters(counters)
+  }, [cart, ticketsByCategory])
+
+  const handleChangeMultiple = (count, tickets, cat) => {
+    const catInCart = tickets.filter(item => item.category === cat && item.inCart)
+    const diff = count - catInCart.length
+
+    if (diff > 0) {
+      const changed = tickets.filter(item => item.category === cat && !item.inCart).slice(0, diff)
+      changed.forEach(item => toggleInCart(item, 1))
+    } else {
+      const changed = catInCart.slice(0, -diff)
+      changed.forEach(item => toggleInCart(item, 0))
+    }
+  }
   
   return (
     <div
@@ -336,6 +384,13 @@ const SeatingScheme = forwardRef((props, ref) => {
           scaleFactor={scaleFactor}
           toggleInCart={toggleInCart}
         />}
+        {counters.map(({ category, ...counter }, i) => (
+          <TicketsCounter
+            key={i}
+            {...counter}
+            onChange={value => handleChangeMultiple(value, tickets, category)}
+          />
+        ))}
         <svg
           className='scheme-svg'
           ref={svgRef}

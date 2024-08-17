@@ -36,21 +36,15 @@ export function createDefs(svg, ...elemsConfig) {
 export function createStyles(svg, categories) {
   const styles = createSvgElement('style')
   styles.innerHTML = categories.reduce(
-    (acc, cat) => {
-      acc += `
-        .${SEAT_CLASS}[data-category="${cat.value}"] { fill: ${cat.color}; stroke: ${cat.color}; stroke-width: 0; transition: ease-out .3s; transition-property: stroke-width, fill; }
-        @media (hover: hover) {
-          .${SEAT_CLASS}[data-category="${cat.value}"]:not([data-disabled]):hover { stroke-width: 2px; }
-        }
-        .${SEAT_CLASS}-icon-cat-${cat.value} { color: ${cat.color}; }
-        .${SEAT_CLASS}-bg-cat-${cat.value} { background-color: ${cat.color}; }
-      `
-      return acc
-    },
-    `
-      .${SEAT_CLASS}:not([data-disabled]) { cursor: pointer; }
+    (acc, cat) => acc + `
+      .${SEAT_CLASS}[data-category="${cat.value}"] { fill: ${cat.color}; stroke: ${cat.color}; stroke-width: 0; transition: ease-out .3s; transition-property: stroke-width, fill; }
+      @media (hover: hover) { .${SEAT_CLASS}[data-category="${cat.value}"]:not([data-disabled]):hover { stroke-width: 2px; } }
+      .${SEAT_CLASS}-icon-cat-${cat.value} { color: ${cat.color}; }
+      .${SEAT_CLASS}-bg-cat-${cat.value} { background-color: ${cat.color}; }
+    `,
+    ` .${SEAT_CLASS}:not([data-disabled]) { cursor: pointer; }
       .${SEAT_CLASS}[data-disabled] { fill: #666 !important; }
-    `
+      text, tspan { pointer-events: none; }`
   )
   svg.insertBefore(styles, svg.firstElementChild)
 }
