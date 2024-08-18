@@ -197,6 +197,17 @@ const CartModal = ({
     if (bookingLimit > Date.now()) countdown.start()
   }, [])
   const contentRef = useRef(null)
+
+  const isDancefloorTypeCategory = (categoryItems) => {
+    var flag = true
+    categoryItems.forEach((item) => {
+      if(item.row !== "-1"){
+        flag = false
+      }
+    })
+    return flag
+  }
+
   return (
     <>
       <div className={cn('error-msg', { open: !!errorMsg })}>
@@ -226,27 +237,47 @@ const CartModal = ({
             <div className="w100 df aic fww gap10 tags">
               {Object.values(cartByCategory).map(({ data, items }, i) => {
                 return <>
-                  {items.map(item => {
-                    return (
-                      <label
-                        className="df aic gap8 fs12 tag"
-                        key={`label-${data?.value}-${item?.category}`}>
-                        <div
-                          className='seats-preview'
-                          dangerouslySetInnerHTML={{
-                            __html: data?.icon,
-                          }}
-                          style={{
-                            width: 12,
-                            height: 12,
-                            color: data?.color,
-                          }}
-                        />
-                        <span>
-                          {`${item?.row}${item?.seat}`}
+                  { isDancefloorTypeCategory(items) ? <div>
+                        <label
+                            className="df aic gap8 fs12 tag"
+                            key={`label-${data?.value}`}>
+                          <div
+                              className='seats-preview'
+                              dangerouslySetInnerHTML={{
+                                __html: data?.icon,
+                              }}
+                              style={{
+                                width: 12,
+                                height: 12,
+                                color: data?.color,
+                              }}
+                          />
+                          <span style={{alignItems: "baseline",display: "flex",verticalAlign: "middle"}}>
+                      {data?.value} <RxCross2 style={{marginTop: "auto",marginBottom: "auto",marginLeft: "5px",marginRight: "5px"}}/> {items.length}
+                    </span>
+                        </label>
+                      </div>
+                      :items.map(item => {
+                        return (
+                            <label
+                                className="df aic gap8 fs12 tag"
+                                key={`label-${data?.value}-${item?.category}`}>
+                              <div
+                                  className='seats-preview'
+                                  dangerouslySetInnerHTML={{
+                                    __html: data?.icon,
+                                  }}
+                                  style={{
+                                    width: 12,
+                                    height: 12,
+                                    color: data?.color,
+                                  }}
+                              />
+                              <span>
+                          {`${item?.row}-${item?.seat}`}
                         </span>
-                      </label>)
-                  })}
+                            </label>)
+                      })}
 
                 </>
               })}
