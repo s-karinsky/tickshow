@@ -3,7 +3,6 @@ import { Link, Outlet, useLocation, useParams, useSearchParams } from "react-rou
 import { useQueries } from "@tanstack/react-query"
 import cn from "classnames"
 import { useUser } from "api/user"
-import { getCartQuery } from "api/cart"
 import { getEventQuery } from "api/event"
 import { getTicketsQuery } from "api/tickets"
 import { getConfigQuery } from "api/config"

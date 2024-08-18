@@ -15,6 +15,12 @@ const selectFlatArray = data =>
     entries(seats_sold).forEach(([category, rows]) => {
       entries(rows).forEach(([row, seats]) => {
         entries(seats).forEach(([seat, seatOptions]) => {
+          // Фильтруем свои оплаченные билеты, они всегда в списке приходят
+          // но на схеме должны быть недоступны
+          if (seatOptions.length === 3 && seatOptions.every(Boolean)) {
+            return
+          }
+
           const key = [category, row]
           const priceString = pricesList[isArray(seatOptions) ? seatOptions[0] : null]
           const [price, currency] = typeof priceString === 'string' ? priceString.split(' ') : []
@@ -30,6 +36,7 @@ const selectFlatArray = data =>
             seat,
             price: Number(price),
             currency,
+            disabled: true,
             t_id: group.t_id,
             bookingLimit: seatOptions[3] ? new Date(seatOptions[3]).getTime() : null,
             inCart: !!seatOptions[3] && new Date(seatOptions[3]).getTime() > Date.now(),
