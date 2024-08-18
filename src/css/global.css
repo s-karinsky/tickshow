@@ -169,3 +169,33 @@ textarea {
   width: 14px;
   height: 12px;
 }
+.modal-bottom-container {
+  margin-top: 20px;
+  display: flex;
+}
+.modal-bottom-container .svg-info-container{
+  width: 15px;
+  height: 15px;
+  margin-right: 10px;
+}
+.modal-bottom-container .svg-info-icon-path-active{
+  stroke: #fff;
+}
+.modal-bottom-container .modal-bottom-info-text {
+  transition: ease .3s;
+  transition-property: color;
+  font-size: 12px;
+  font-weight: 400;
+  font-family: 'articulat', sans-serif;
+  line-height: 14px;
+  color: #f8f5ec40;
+}
+.modal-bottom-container .modal-bottom-info-text-active{
+  transition: ease .3s;
+  transition-property: color;
+  font-size: 12px;
+  font-weight: 400;
+  font-family: 'articulat', sans-serif;
+  line-height: 14px;
+  color: #fff;
+}
