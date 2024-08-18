@@ -15,7 +15,7 @@ import {
 } from "../../const";
 import { ReactComponent as CheckboxIcon } from 'icons/checkbox.svg'
 import { updateUser, AuthUser } from "../../api/user";
-import { ClearSeats, formatSeats, MoveCart } from "../../api/cart";
+import { clearCart, formatSeats, moveCart } from "../../api/cart";
 import { CreateOrder } from "../../api/order"
 import { useCountdown, useEventId } from "../../utils/hooks";
 import { msToTime } from "../seating-scheme/utils";
@@ -94,21 +94,16 @@ const CartModal = ({
     values.Phone = values.Phone.toString().replace("+", "")
     setLoad(true)
     await updateUser({ u_name: values.Name, u_email: values.Email, u_phone: values.Phone })
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (data.status === "error" && data.message.startsWith("busy user data:")) {
-          return AuthUser(values.Email, values.Phone).then((data) => {
-            //console.log("old user credentials", getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH));
-            //console.log("new user credentials", data.token, data.u_hash);
-            MoveCart(
-              getFromLocalStorage(STORAGE_KEY_USER_TOKEN),
-              getFromLocalStorage(STORAGE_KEY_USER_HASH),
-              cart,
-              data.u_id
-            )
+          const userData = await AuthUser(values.Email, values.Phone)
+          if (userData.u_id) {
+            await moveCart(userData.u_id)
             setLocalStorage(STORAGE_KEY_USER_EMAIL, values.Email);
-            setLocalStorage(STORAGE_KEY_USER_TOKEN, data.token);
-            setLocalStorage(STORAGE_KEY_USER_HASH, data.u_hash);
-          });
+            setLocalStorage(STORAGE_KEY_USER_TOKEN, userData.token);
+            setLocalStorage(STORAGE_KEY_USER_HASH, userData.u_hash);
+            return userData.u_id
+          }
         } else if (data.message === "user or modified data not found") {
           //console.log("CHANGE USER: ok, user already here");
         } else if (data.message === "database update failed") {
@@ -147,7 +142,7 @@ const CartModal = ({
     }
     var places_in_orders = getFromLocalStorage(STORAGE_KEY_PLACES_IN_ORDERS, {})
 
-    CreateOrder(seats, getFromLocalStorage(STORAGE_KEY_USER_TOKEN), getFromLocalStorage(STORAGE_KEY_USER_HASH), DISTRIBUTE_PAGE_URL)
+    CreateOrder(seats, DISTRIBUTE_PAGE_URL)
       .then(({ data } = {}) => {
         const { payment, b_id } = data
         setLoad(false)
@@ -176,7 +171,9 @@ const CartModal = ({
           setErrorMsg(`Payment error ${JSON.stringify(data)}`)
         }
       })
-      .catch(e => setErrorMsg(e.message))
+      .catch(e => {
+        setErrorMsg(e.message)
+      })
   }
 
   const close = () => {

@@ -2,6 +2,7 @@ import { useCallback, useState, useEffect, useMemo, useRef, useLayoutEffect } fr
 import { useOutletContext, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import classNames from "classnames"
+import Hammer from 'hammerjs'
 import { cn } from '@bem-react/classname'
 import Button from "components/button";
 import TicketsCounter from "components/tickets-counter";
@@ -12,7 +13,7 @@ import Cart from "components/cart";
 import CartModal from "components/modal/modal";
 import { ReactComponent as IconArrow } from 'icons/arrow.svg'
 import { ReactComponent as IconArrowDouble } from 'icons/arrow_2_down.svg'
-import { ClearSeats, updateCart } from "api/cart";
+import { clearCart, updateCart } from "api/cart";
 import { getEventQuery } from "api/event";
 import { useClickAway, useCountdown, useEventId, useIsMobile, useLocalStorage } from "utils/hooks";
 import { isEqualSeats } from "utils";
@@ -36,9 +37,40 @@ export default function Event() {
   const [cartModal, setCartModal] = useState(false)
 
   const ref = useClickAway(() => setSelectOpened(false))
+  const cartRef = useRef(false)
 
   useLayoutEffect(() => {
-    setSelectOpened(window.innerWidth > 1023)
+    const isDesktop = window.innerWidth > 1023
+    setSelectOpened(isDesktop)
+  }, [])
+
+  useEffect(() => {
+    const isMobile = window.innerWidth <= 1023
+    console.log(isMobile, cartRef.current)
+    if (isMobile && cartRef.current) {
+      const select = new Hammer(ref.current)
+      select.get('swipe').set({ domEvents: true, enable: true })
+      select.on('swipedown', () => {
+        setOrderExpanded(false)
+        setSelectOpened(true)
+      })
+      select.on('swipeup', () => setSelectOpened(false))
+      
+      const cart = new Hammer(cartRef.current)
+      cart.get('swipe').set({ domEvents: true })
+      cart.on('swipeup', () => {
+        console.log('swipeup cart');
+
+        setOrderExpanded(true)
+        setSelectOpened(false)
+      })
+      cart.on('swipedown', () => setOrderExpanded(false))
+
+      return () => {
+        select.off('swipedown swipeup')
+        cart.off('swipeup swipedown')
+      }
+    }
   }, [])
   
   useEffect(() => {
@@ -70,12 +102,8 @@ export default function Event() {
     }
   })
 
-  const clearCart = useCallback((queryKey) => {
-    const items = cart.reduce((acc, item) => ({
-      ...acc,
-      [item.t_id]: (acc[item.t_id] || []).concat([item.hall_id, item.category, item.row, item.seat].join(';'))
-    }), {})
-    return ClearSeats(items).then(() => queryClient.resetQueries({ queryKey, exact: true }))
+  const handleClearCart = useCallback((queryKey) => {
+    return clearCart().then(() => queryClient.resetQueries({ queryKey, exact: true }))
   }, [cart])
   
   return (
@@ -116,7 +144,13 @@ export default function Event() {
           <IconArrow />
         </Button>
       </div>
-      <div className={classNames(bem('sidebar'), bem('order', { expanded: orderExpanded }))}>
+      <div
+        className={classNames(
+          bem('sidebar'),
+          bem('order', { expanded: orderExpanded })
+        )}
+        ref={cartRef}
+      >
         <button
           className={classNames(bem('toggleCart'), 'only-mobile')}
           onClick={() => {
@@ -145,7 +179,7 @@ export default function Event() {
           cart={cart}
           cartByCategory={cartByCategory}
           setOpen={setCartModal}
-          clearCart={clearCart}
+          clearCart={handleClearCart}
         />
       )}
     </div>
