@@ -6,7 +6,7 @@ import { BiLoaderCircle } from "react-icons/bi";
 import { useDispatch, useSelector } from "react-redux";
 import { getFromLocalStorage, setLocalStorage } from "../../utils/common";
 import {
-  DISTRIBUTE_PAGE_URL,
+  DISTRIBUTE_PAGE_URL, MODAL_WINDOW_PRIVACY_POLICY,
   STORAGE_KEY_PLACES_IN_ORDERS,
   STORAGE_KEY_REDIRECT,
   STORAGE_KEY_USER_EMAIL,
@@ -208,6 +208,36 @@ const CartModal = ({
     return flag
   }
 
+  const checkUserData = () => {
+    const name = document.getElementById('modal-auth-name')
+    const email = document.getElementById('modal-auth-email')
+    const phone = document.getElementById('modal-auth-phone')
+
+    if (email.value.match(/.+@.+\..+/i)) {
+      setCorrectUserData(true)
+      email.style.border = "none"
+    } else {
+      email.style.border = "1px solid #F56363"
+      setCorrectUserData(false)
+    }
+
+    if(phone.value.match(/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/g)) {
+      setCorrectUserData(true)
+      phone.style.border = "none"
+    } else {
+      phone.style.border = "1px solid #F56363"
+      setCorrectUserData(false)
+    }
+
+    if(name.value.length > 0) {
+      setCorrectUserData(true)
+      name.style.border = "none"
+    }
+    else {
+      name.style.border = "1px solid #F56363"
+      setCorrectUserData(false)
+    }
+  }
   return (
     <>
       <div className={cn('error-msg', { open: !!errorMsg })}>
@@ -353,6 +383,7 @@ const CartModal = ({
                 placeholder="Name"
                 autoComplete="off"
                 required
+                onInput={() => checkUserData()}
               />
               <input
                 id={"modal-auth-phone"}
@@ -361,6 +392,7 @@ const CartModal = ({
                 placeholder="Phone"
                 autoComplete="off"
                 required
+                onInput={() => checkUserData()}
               />
               <input
                 id={"modal-auth-email"}
@@ -369,36 +401,43 @@ const CartModal = ({
                 placeholder="Email"
                 autoComplete="off"
                 required
-                onInput={() => {
-                  let email_input = document.querySelector("#modal-auth-email");
-                  if (email_input) {
-                    email_input = email_input.value
-                    if (email_input.match(/.+@.+\..+/i)) {
-                      setCorrectUserData(true)
-                    }
-                    else {
-                      setCorrectUserData(false)
-                    }
-                  }
-                }
-                }
+                onInput={() => checkUserData()}
               />
 
               <label className='checkbox' style={{ paddingTop: 4 }}>
                 <input type='checkbox' name='aggree' defaultChecked />
-                <CheckboxIcon />
-                <div>Checkbox txt on one line to <u>show</u> what it will.</div>
+                <CheckboxIcon style={ correctUserData ? { color: '#ffffff' } : { color: '#f8f5ec40' }}/>
+                <div style={ correctUserData ?
+                    { color: '#ffffff',transition: 'color 0.3s' } :
+                    { color: '#f8f5ec40',transition: 'color 0.3s' }}>
+                  By checking the box, you agree to&nbsp;
+                  <a href={MODAL_WINDOW_PRIVACY_POLICY}
+                                                 target={"_blank"}
+                                                 style={{color:"inherit",textDecoration: 'underline'}}>Uventy privacy policy</a>
+                  .
+                </div>
               </label>
               <Button
                 color='bordered'
                 size='large'
                 type='submit'
-                style={{ width: '100%', textTransform: 'uppercase' }}
+                style={{width: '100%', textTransform: 'uppercase'}}
                 loading={load}
+                disabled={!correctUserData}
               >
                 Buy tickets
               </Button>
             </form>
+            <div className="modal-bottom-container">
+              <div className="svg-info-container">
+                <svg width="13" height="14" viewBox="0 0 13 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path className={"svg-info-icon-path" + (correctUserData ? "-active" : "")} d="M6.625 4.71204V7.21204M6.625 12.5557C3.5184 12.5557 1 10.0373 1 6.93066C1 3.82406 3.5184 1.30566 6.625 1.30566C9.7316 1.30566 12.25 3.82406 12.25 6.93066C12.25 10.0373 9.7316 12.5557 6.625 12.5557ZM6.65613 9.08704V9.14954L6.59387 9.14929V9.08704H6.65613Z" stroke="#f8f5ec40" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <span className={"modal-bottom-info-text" + (correctUserData ? "-active" : "")}>
+                Double-check your order—once you proceed to payment, changes won’t be possible, and your order will be locked for 10 minutes to complete the transaction.
+              </span>
+            </div>
           </div>
         </div>
       </div>
