@@ -72,6 +72,7 @@ const CartModal = ({
   const [msLeft, countdown] = useCountdown(bookingLimit - Date.now())
   const [correctUserData, setCorrectUserData] = useState(false)
   const [transitionClose, setTransitionClose] = useState(false)
+  const [userAcceptPrivacyPolicy, setUserAcceptPrivacyPolicy] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
   const [searchParams] = useSearchParams()
   const routeParams = useParams()
@@ -209,29 +210,39 @@ const CartModal = ({
     const name = document.getElementById('modal-auth-name')
     const email = document.getElementById('modal-auth-email')
     const phone = document.getElementById('modal-auth-phone')
+    const checkName = name.value.length > 0
+    const checkEmail = email.value.match(/.+@.+\..+/i)
+    const checkPhone = phone.value.match(/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/g)
 
-    if (email.value.match(/.+@.+\..+/i)) {
-      setCorrectUserData(true)
+    if (checkEmail) {
       email.style.border = "none"
     } else {
-      email.style.border = "1px solid #F56363"
-      setCorrectUserData(false)
+      if(email.value.length > 0) {
+        email.style.border = "1px solid #B3261E"
+      }
     }
 
-    if(phone.value.match(/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/g)) {
-      setCorrectUserData(true)
+    if(checkPhone) {
       phone.style.border = "none"
     } else {
-      phone.style.border = "1px solid #F56363"
-      setCorrectUserData(false)
+      if(phone.value.length > 0) {
+        phone.style.border = "1px solid #B3261E"
+      }
     }
 
-    if(name.value.length > 0) {
-      setCorrectUserData(true)
+    if(checkName) {
       name.style.border = "none"
     }
     else {
-      name.style.border = "1px solid #F56363"
+      if (checkName) {
+        name.style.border = "1px solid #B3261E"
+      }
+    }
+
+    if( checkName && checkEmail && checkPhone ) {
+      setCorrectUserData(true)
+    }
+    else {
       setCorrectUserData(false)
     }
   }
@@ -261,6 +272,7 @@ const CartModal = ({
                 <RxCross2 className="close-icon" />
               </span>
             </div>
+
             <div className="w100 df aic fww gap10 tags">
               {Object.values(cartByCategory).map(({ data, items }, i) => {
                 return <>
@@ -301,7 +313,16 @@ const CartModal = ({
                                   }}
                               />
                               <span>
-                          {`${item?.row}-${item?.seat}`}
+                                {item?.row}
+                                <div style={{
+                                  color: "#F8F5EC4D",
+                                  height: "100%",
+                                  width: "1px",
+                                  display: "inline-block",
+                                  margin:"0 6px 0 4px",
+                                }}>|
+                                </div>
+                                {item?.seat}
                         </span>
                             </label>)
                       })}
@@ -358,7 +379,7 @@ const CartModal = ({
               })}
             </div> */}
             <p className="w100 df aic jcsb" style={{ color: "#f8f5ec80" }}>
-              <span className="fs12">fee 5%:</span>
+              <span className="fs12">Service fee 5%:</span>
               <i className="fs12">
                 <b>{t?.fee || 0} €</b>
               </i>
@@ -380,7 +401,15 @@ const CartModal = ({
                 placeholder="Name"
                 autoComplete="off"
                 required
-                onInput={() => checkUserData()}
+                onChange={() => checkUserData()}
+                onKeyDown={ (e) => {
+                  if (e.key === 'Delete' || e.key === 'Backspace') {
+                    if(e.target.value.length === 1) {
+                      setCorrectUserData(false)
+                      e.target.style.border = 'none'
+                    }
+                  }
+                }}
               />
               <input
                 id={"modal-auth-phone"}
@@ -389,7 +418,15 @@ const CartModal = ({
                 placeholder="Phone"
                 autoComplete="off"
                 required
-                onInput={() => checkUserData()}
+                onChange={() => checkUserData()}
+                onKeyDown={ (e) => {
+                  if (e.key === 'Delete' || e.key === 'Backspace') {
+                    if(e.target.value.length === 1) {
+                      setCorrectUserData(false)
+                      e.target.style.border = 'none'
+                    }
+                  }
+                }}
               />
               <input
                 id={"modal-auth-email"}
@@ -398,15 +435,21 @@ const CartModal = ({
                 placeholder="Email"
                 autoComplete="off"
                 required
-                onInput={() => checkUserData()}
+                onChange={() => checkUserData()}
+                onKeyDown={ (e) => {
+                  if (e.key === 'Delete' || e.key === 'Backspace') {
+                    if(e.target.value.length === 1) {
+                      setCorrectUserData(false)
+                      e.target.style.border = 'none'
+                    }
+                  }
+                }}
               />
 
-              <label className='checkbox' style={{ paddingTop: 4 }}>
-                <input type='checkbox' name='aggree' defaultChecked />
-                <CheckboxIcon style={ correctUserData ? { color: '#ffffff' } : { color: '#f8f5ec40' }}/>
-                <div style={ correctUserData ?
-                    { color: '#ffffff',transition: 'color 0.3s' } :
-                    { color: '#f8f5ec40',transition: 'color 0.3s' }}>
+              <label className='checkbox' style={{ paddingTop: 4 }} onMouseUp={() => {setUserAcceptPrivacyPolicy(!userAcceptPrivacyPolicy);}}>
+                <input type='checkbox' name='aggree' defaultChecked={userAcceptPrivacyPolicy} />
+                <CheckboxIcon style={{color: (userAcceptPrivacyPolicy && correctUserData ? '#f8f5ec' : '#f8f5ec40'),transition: 'all 0.3s ease'}} />
+                <div style={{color: (userAcceptPrivacyPolicy && correctUserData ? '#f8f5ec' : '#f8f5ec40'),transition: 'all 0.3s ease'} }>
                   By checking the box, you agree to&nbsp;
                   <a href={MODAL_WINDOW_PRIVACY_POLICY}
                                                  target={"_blank"}
@@ -420,7 +463,7 @@ const CartModal = ({
                 type='submit'
                 style={{width: '100%', textTransform: 'uppercase'}}
                 loading={load}
-                disabled={!correctUserData}
+                disabled={!correctUserData || !userAcceptPrivacyPolicy}
               >
                 Buy tickets
               </Button>
@@ -428,10 +471,10 @@ const CartModal = ({
             <div className="modal-bottom-container">
               <div className="svg-info-container">
                 <svg width="13" height="14" viewBox="0 0 13 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path className={"svg-info-icon-path" + (correctUserData ? "-active" : "")} d="M6.625 4.71204V7.21204M6.625 12.5557C3.5184 12.5557 1 10.0373 1 6.93066C1 3.82406 3.5184 1.30566 6.625 1.30566C9.7316 1.30566 12.25 3.82406 12.25 6.93066C12.25 10.0373 9.7316 12.5557 6.625 12.5557ZM6.65613 9.08704V9.14954L6.59387 9.14929V9.08704H6.65613Z" stroke="#f8f5ec40" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path className={"svg-info-icon-path"} d="M6.625 4.71204V7.21204M6.625 12.5557C3.5184 12.5557 1 10.0373 1 6.93066C1 3.82406 3.5184 1.30566 6.625 1.30566C9.7316 1.30566 12.25 3.82406 12.25 6.93066C12.25 10.0373 9.7316 12.5557 6.625 12.5557ZM6.65613 9.08704V9.14954L6.59387 9.14929V9.08704H6.65613Z" style={{stroke:'#F8F5EC'}} stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </div>
-              <span className={"modal-bottom-info-text" + (correctUserData ? "-active" : "")}>
+              <span className={"modal-bottom-info-text"} style={{color: '#F8F5EC'}}>
                 Double-check your order—once you proceed to payment, changes won’t be possible, and your order will be locked for 10 minutes to complete the transaction.
               </span>
             </div>
