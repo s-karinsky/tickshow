@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { Link, Outlet, useLocation, useParams, useSearchParams } from "react-router-dom"
+import { Form, Link, Outlet, useLocation, useParams, useSearchParams } from "react-router-dom"
 import { useQueries } from "@tanstack/react-query"
 import cn from "classnames"
 import { useUser } from "api/user"
@@ -12,8 +12,10 @@ import Button from "components/button"
 import './loader.scss'
 import { useEventId } from "utils/hooks"
 import NotFound from "pages/not-found"
-import { ClearSeats } from "api/cart"
-import { STORAGE_KEY_PLACES_IN_ORDERS } from "const"
+import { clearCart } from "api/cart"
+import { STORAGE_KEY_PLACES_IN_ORDERS, STORAGE_KEY_USER_HASH, STORAGE_KEY_USER_TOKEN } from "const"
+import { getFromLocalStorage } from "utils/common"
+import { API_URL } from "utils/axios"
 
 export default function Loader() {
   const routeParams = useParams()
@@ -23,16 +25,7 @@ export default function Loader() {
   const { data: authorized } = useUser()
   const location = useLocation()
 
-  /* useEffect(() => {
-    let cart = []
-    try {
-      const carts = JSON.parse(localStorage.getItem(STORAGE_KEY_PLACES_IN_ORDERS) || '{}')
-      cart = carts?.[id]
-    } catch (e) {
-      console.log(e)
-    }
-    return cart ? Promise.resolve(cart) : ClearSeats(cart)
-  }, [id]) */
+  // useEffect(clearCart, [id])
   
   const enabled = authorized && !!id
   const data = useQueries({
@@ -47,24 +40,30 @@ export default function Loader() {
   const search = location.search.replace(/&?scheme/, '')
 
   useEffect(() => {
-    if (!cart) return
-    const items = cart.reduce((acc, item) => ({
-      ...acc,
-      [item.t_id]: (acc[item.t_id] || []).concat([item.hall_id, item.category, item.row, item.seat].join(';'))
-    }), {})
-    const onLeave = function () {
-      if (document.visibilityState == 'hidden') {
-        ClearSeats(items)
+    const onLeave = function(e) {
+      e.preventDefault()
+      console.log('leave')
+      if (document.visibilityState === "hidden") {
+        const formData = new FormData()
+        const token = getFromLocalStorage(STORAGE_KEY_USER_TOKEN)
+        const hash = getFromLocalStorage(STORAGE_KEY_USER_HASH)
+        if (token && hash) {
+          formData.append('token', token)
+          formData.append('u_hash', hash)
+        }
+        navigator.sendBeacon(`${API_URL}cart/clear`, formData)
+        // clearCart()
       }
     }
 
-    window.addEventListener('load', onLeave)
-    return () => window.removeEventListener('load', onLeave)
-  }, [resp.cart])
+    window.addEventListener('unload', onLeave, { capture: true })
+    return () => window.removeEventListener('unload', onLeave, { capture: true })
+  }, [])
 
   useEffect(() => {
+    const isMobile = window.innerWidth <= 1023
     const body = document.body
-    if (searchParams.get('scheme') === null) {
+    if (!isMobile || searchParams.get('scheme') === null) {
       body.style = {}
     } else {
       body.style.overscrollBehavior = 'auto'
@@ -73,10 +72,6 @@ export default function Loader() {
       body.style.maxHeight = '100dvh'
     }
   }, [searchParams.get('scheme')])
-  
-  if (errors?.length > 0) {
-    return <NotFound />
-  }
   
   return (
     <>

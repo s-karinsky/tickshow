@@ -82,6 +82,10 @@
     // pointer-events: none;
     right: 150%;
     bottom: 150%;
+
+    &_mobile-visible {
+      z-index: 9998 !important;
+    }
   }
 
   &_mobile-visible {
@@ -146,6 +150,7 @@
   @include bp(mobile) {
     &_visible {
       display: flex;
+      z-index: 9998;
     }
   }
 
