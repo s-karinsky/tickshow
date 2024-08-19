@@ -9,7 +9,14 @@ import "./css/global.css";
 import "./css/main.scss";
 import "./css/components.css";
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: false,
+    },
+  },
+})
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(
