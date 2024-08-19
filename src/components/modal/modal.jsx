@@ -74,7 +74,7 @@ const CartModal = ({
   const [msLeft, countdown] = useCountdown(bookingLimit - Date.now())
   const [correctUserData, setCorrectUserData] = useState(false)
   const [transitionClose, setTransitionClose] = useState(false)
-  const [userAcceptPrivacyPolicy, setUserAcceptPrivacyPolicy] = useState(false)
+  const [userAcceptPrivacyPolicy, setUserAcceptPrivacyPolicy] = useState(true)
   const [errorMsg, setErrorMsg] = useState(null)
   const [searchParams] = useSearchParams()
   const routeParams = useParams()
@@ -377,7 +377,7 @@ const CartModal = ({
               })}
             </div> */}
             <p className="w100 df aic jcsb" style={{ color: "#f8f5ec80" }}>
-              <span className="fs12">Service fee 5%:</span>
+              <span className="fs12">Service fee {fee}%:</span>
               <i className="fs12">
                 <b>{t?.fee || 0} €</b>
               </i>
@@ -444,10 +444,15 @@ const CartModal = ({
                 }}
               />
 
-              <label className='checkbox' style={{ paddingTop: 4,alignItems: "baseline" }} onMouseUp={() => {setUserAcceptPrivacyPolicy(!userAcceptPrivacyPolicy);}}>
-                <input type='checkbox' name='aggree' defaultChecked={userAcceptPrivacyPolicy} />
-                <CheckboxIcon style={{color: (userAcceptPrivacyPolicy && correctUserData ? '#f8f5ec' : '#f8f5ec40'),transition: 'all 0.3s ease'}} />
-                <div style={{color: (userAcceptPrivacyPolicy && correctUserData ? '#f8f5ec' : '#f8f5ec40'),transition: 'all 0.3s ease',fontSize: "9px"} }>
+              <label className='checkbox' style={{ paddingTop: 4 }}>
+                <input
+                  type='checkbox'
+                  name='aggree'
+                  defaultChecked={userAcceptPrivacyPolicy}
+                  onChange={() => { setUserAcceptPrivacyPolicy(!userAcceptPrivacyPolicy); }}
+                />
+                <CheckboxIcon />
+                <div>
                   By checking the box, you agree to&nbsp;
                   <a href={MODAL_WINDOW_PRIVACY_POLICY}
                                                  target={"_blank"}
