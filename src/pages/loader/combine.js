@@ -65,7 +65,6 @@ const combineQueries = (results) => {
     if (event) {
       event.currency_sign = '€'
     }
-    console.log(tickets);
     
     return {
       bookingExpired,

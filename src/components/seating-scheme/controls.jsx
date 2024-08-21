@@ -6,7 +6,7 @@ import { ReactComponent as ZoomIn } from 'icons/zoom-in.svg'
 import { ReactComponent as ZoomOut } from 'icons/zoom-out.svg'
 
 function Controls(props) {
-  const { zoomIn, zoomOut } = useControls()
+  const { zoomIn, zoomOut, resetTransform } = useControls()
   const transformedComponent = useTransformComponent(({ state, instance }) => {
     return <>
       <div className='scheme-zoom'>
@@ -26,7 +26,10 @@ function Controls(props) {
       <div className='scheme-reset'>
         <button
           className={classNames('scheme-control', { 'scheme-control_hidden': state.scale <= 1.2 })}
-          onClick={() => props.resetCategory()}
+          onClick={() => {
+            props.resetCategory()
+            resetTransform()
+          }}
         >
           <ResetIcon style={{ width: 23 }} />
         </button>

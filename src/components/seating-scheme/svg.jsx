@@ -1,9 +1,11 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
-import { useControls, useTransformContext } from 'react-zoom-pan-pinch'
+import { KeepScale, TransformComponent, useControls, useTransformComponent, useTransformContext } from 'react-zoom-pan-pinch'
 import Hammer from 'hammerjs'
 import { svgSeat } from 'utils/dom-scheme'
 import { createDefs, createStyles, stringToSvg } from './utils'
 import { SEAT_CLONE_CLASS } from 'const'
+import SeatingTooltip from 'components/seating-tooltip'
+import TicketsCounter from 'components/tickets-counter'
 
 const mapSeat = (node, cb, joinToSelector = '') =>
   Array.from(node.querySelectorAll(`.svg-seat${joinToSelector}`)).map(cb)
@@ -12,7 +14,7 @@ const SvgScheme = forwardRef((props, outerRef) => {
   const { src, categories, cart, counters, highlight, tickets, tooltipSeat, setTooltipSeat, toggleInCart, setCounters } = props
 
   const ref = useRef(null)
-  const { zoomToElement } = useControls()
+  const { zoomIn } = useControls()
   useImperativeHandle(outerRef, () => ref.current)
 
   const ticketsByCategory = useMemo(() => tickets.reduce((acc, ticket) => ({
@@ -130,8 +132,10 @@ const SvgScheme = forwardRef((props, outerRef) => {
     const hammer = new Hammer(svgEl)
     const handleTap = (event) => {
       if (context?.transformState?.scale && context.transformState.scale < 1.5) {
-        event.preventDefault()
-        zoomToElement(event.target)
+
+        console.log('333!!!', zoomIn)
+        
+        zoomIn()
       }
 
       const isTouch = event.pointerType === 'touch'
@@ -178,13 +182,60 @@ const SvgScheme = forwardRef((props, outerRef) => {
       hammer.off('tap', handleTap)
       hammer.destroy()
     }
-  }, [ticketsByCategory, tickets, tooltipSeat, context?.transformState?.scale])
+  }, [ticketsByCategory, tickets, tooltipSeat, zoomIn, context?.transformState?.scale])
 
+  const handleChangeMultiple = (count, tickets, cat) => {
+    const catInCart = tickets.filter(item => item.category === cat && item.inCart)
+    const diff = count - catInCart.length
+
+    if (diff > 0) {
+      const changed = tickets.filter(item => item.category === cat && !item.inCart).slice(0, diff)
+      changed.forEach(item => toggleInCart(item, 1))
+    } else {
+      const changed = catInCart.slice(0, -diff)
+      changed.forEach(item => toggleInCart(item, 0))
+    }
+  }
+  const width = ref.current?.parentNode?.clientWidth
+  const height = ref.current?.parentNode ?.clientWidth
+  const transform = ref.current?.parentNode?.style.transform
+
+  const transformedComponent = useTransformComponent(({ state, instance }) => {
+    return <KeepScale style={{ position: 'absolute', pointerEvents: 'none' }}>
+      {tickets?.length > 0 && <SeatingTooltip
+        {...tickets.find(ticket => ticket.id === tooltipSeat.ticketId)}
+        categories={categories}
+        visible={tooltipSeat.visible}
+        x={tooltipSeat.x}
+        y={tooltipSeat.y}
+        text={tooltipSeat.text}
+        hideDelay={tooltipSeat.delay ?? 500}
+        scaleFactor={context?.transformState?.scale}
+        toggleInCart={toggleInCart}
+      />}
+      
+    </KeepScale>
+  })
+  
   return (
-    <svg
-      className='scheme-svg'
-      ref={ref}
-    />
+    <>
+      <TransformComponent>
+        <svg
+          className='scheme-svg'
+          ref={ref}
+        />
+        {counters.map(({ category, ...counter }, i) => (
+          <KeepScale style={{ position: 'absolute' }}>
+            <TicketsCounter
+              key={i}
+              {...counter}
+              onChange={value => handleChangeMultiple(value, tickets, category)}
+            />
+          </KeepScale>
+        ))}
+      </TransformComponent>
+      {transformedComponent}
+    </>
   )
 })
 
