@@ -107,8 +107,8 @@
     align-items: center;
     justify-content: center;
     width: 100vw;
-    height: 100vh;
-    background: url('https: //s-karinsky.github.io/static/build/tickshow/placeholder_bg.png') no-repeat center center;
+    height: 60vh;
+    background: url('https://s-karinsky.github.io/static/build/tickshow/placeholder_bg.png') no-repeat center center;
     background-size: contain;
 
     &:has(+ .loader-content_mobile-visible) {
