@@ -11,6 +11,7 @@ const mapSeat = (node, cb, joinToSelector = '') =>
   Array.from(node.querySelectorAll(`.svg-seat${joinToSelector}`)).map(cb)
 
 const SvgScheme = forwardRef((props, outerRef) => {
+  const [wrapperSize, setWrapperSize] = useState({ width: 'auto', height: '100%' })
   const { src, categories, cart, counters, highlight, tickets, tooltipSeat, setTooltipSeat, toggleInCart, setCounters } = props
 
   const ref = useRef(null)
@@ -74,6 +75,16 @@ const SvgScheme = forwardRef((props, outerRef) => {
     createStyles(svg, categories)
 
     if (node.hasChildNodes()) node.innerHTML = ''
+    const width = Number(svg.attributes?.width?.value)
+    const height = Number(svg.attributes?.height?.value)
+    
+    const el = document.querySelector('#svg-wrapper')
+    if (width && height && el) {
+      const ratio = width / height
+      const elHeight = el.clientHeight
+      const elWidth = elHeight * ratio
+      setWrapperSize({ width: elWidth, height: '100%' })
+    }
     Array.from(svg.attributes).forEach(({ name, value }) => ['width', 'height'].includes(name) ?
       node.style[name] = 'auto' :
       node.setAttribute(name, value))
@@ -92,13 +103,16 @@ const SvgScheme = forwardRef((props, outerRef) => {
         const hasInCart = seat.isMultiple() ? seatTicket.some(ticket => ticket.inCart) : seatTicket.inCart
         seat.checked(hasInCart)
         if (!seat.isMultiple()) {
+          const svgBound = ref.current.getBBox()
           el.addEventListener('mouseover', (e) => {
             if (e.sourceCapabilities?.firesTouchEvents) return
             const elBounds = el.getBBox()
+            const left = elBounds.x + elBounds.width / 2
+            const top = elBounds.y + elBounds.height
             setTooltipSeat({
               visible: true,
-              x: elBounds.x + elBounds.width,
-              y: elBounds.y + elBounds.height,
+              x: (left / svgBound.width) * 100 + '%',
+              y: (top / svgBound.height) * 100 + '%',
               ticketId: seatTicket.id,
               text: el.getAttribute('data-text')
             })
@@ -132,9 +146,6 @@ const SvgScheme = forwardRef((props, outerRef) => {
     const hammer = new Hammer(svgEl)
     const handleTap = (event) => {
       if (context?.transformState?.scale && context.transformState.scale < 1.5) {
-
-        console.log('333!!!', zoomIn)
-        
         zoomIn()
       }
 
@@ -146,7 +157,7 @@ const SvgScheme = forwardRef((props, outerRef) => {
       const ticketsCat = ticketsByCategory?.[seatCat] || []
       const ticket = isMultiple && ticketsCat ? ticketsCat.find(item => !item.inCart) : tickets.find(t => t.id === el.id)
       const { visible, ticketId } = tooltipSeat
-
+      
       if (ticket && !el.hasAttribute('data-disabled')) {
         Array.from(document.querySelectorAll('#clone-1, #clone-2')).forEach(el => el.remove())
         if (isTouch && !isMultiple) {
@@ -160,11 +171,16 @@ const SvgScheme = forwardRef((props, outerRef) => {
             el.classList.add(SEAT_CLONE_CLASS)
             ref.current.appendChild(el)
           })
+          const svgBound = ref.current
+          const left = elBounds.x + elBounds.width / 2
+          const top = elBounds.y + elBounds.height
+          console.log(left, top);
+          
           setTooltipSeat({
             visible: true,
-            x: elBounds.x + elBounds.width,
-            y: elBounds.y + elBounds.height,
-            ticketId: ticket.id,
+            x: (left / svgBound.width) * 100 + '%',
+            y: (top / svgBound.height) * 100 + '%',
+            ticketId: el.id,
             text: el.getAttribute('data-text')
           })
         } else {
@@ -220,21 +236,37 @@ const SvgScheme = forwardRef((props, outerRef) => {
   return (
     <>
       <TransformComponent>
-        <svg
-          className='scheme-svg'
-          ref={ref}
-        />
-        {counters.map(({ category, ...counter }, i) => (
-          <KeepScale style={{ position: 'absolute' }}>
-            <TicketsCounter
-              key={i}
-              {...counter}
-              onChange={value => handleChangeMultiple(value, tickets, category)}
-            />
+        <div
+          className='scheme-wrapper'
+          id='svg-wrapper'
+          style={wrapperSize}
+        >
+          <svg
+            className='scheme-svg'
+            ref={ref}
+          />
+          {counters.map(({ category, ...counter }, i) => (
+            <KeepScale style={{ position: 'absolute', ...counter }}>
+              <TicketsCounter
+                key={i}
+                {...counter}
+                onChange={value => handleChangeMultiple(value, tickets, category)}
+              />
+            </KeepScale>
+          ))}
+          <KeepScale style={{ position: 'absolute', pointerEvents: 'none', left: tooltipSeat.x, top: tooltipSeat.y }}>
+            {tickets?.length > 0 && <SeatingTooltip
+              {...tickets.find(ticket => ticket.id === tooltipSeat.ticketId)}
+              categories={categories}
+              visible={tooltipSeat.visible}
+              text={tooltipSeat.text}
+              hideDelay={tooltipSeat.delay ?? 500}
+              scaleFactor={context?.transformState?.scale}
+              toggleInCart={toggleInCart}
+            />}
           </KeepScale>
-        ))}
+        </div>
       </TransformComponent>
-      {transformedComponent}
     </>
   )
 })
