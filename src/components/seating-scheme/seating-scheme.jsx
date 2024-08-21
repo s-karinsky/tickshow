@@ -383,7 +383,7 @@ const SeatingScheme = forwardRef((props, ref) => {
           x={tooltipSeat.x}
           y={tooltipSeat.y}
           text={tooltipSeat.text}
-          hideDelay={tooltipSeat.delay ?? 500}
+          hideDelay={tooltipSeat.delay ?? 1250}
           scaleFactor={scaleFactor}
           toggleInCart={toggleInCart}
         />}

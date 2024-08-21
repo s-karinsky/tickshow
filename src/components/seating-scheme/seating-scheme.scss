@@ -72,7 +72,7 @@
 .scheme-reset {
   position: absolute;
   z-index: 50;
-  right: 25px;
+  right: 16px;
   top: 16px;
 
   @include bp(device) {
@@ -86,13 +86,13 @@
 .scheme-reset-categories {
   position: absolute;
   z-index: 50;
-  left: 25px;
-  bottom: 15px;
+  left: 16px;
+  bottom: 16px;
 }
 
 .scheme-zoom {
   position: absolute;
-  left: 25px;
+  left: 16px;
   top: 16px;
   z-index: 50;
 
@@ -162,7 +162,7 @@
 
 .simple-impudent-logo {
   position: absolute;
-  bottom: 15px;
-  right: 25px;
+  bottom: 16px;
+  right: 16px;
   z-index: 50;
 }
