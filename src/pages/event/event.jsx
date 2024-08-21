@@ -115,7 +115,7 @@ export default function Event() {
           categories={categories}
           highlight={highlightCat || selectValue}
           selectedCategory={selectValue}
-          resetSelectedCategory={() => setSelectValue(null)}
+          resetSelectedCategory={() => console.log('reset') || setSelectValue(null)}
           cart={cartByCategory}
           tickets={tickets || EMPTY_ARRAY}
           toggleInCart={toggleInCart.mutate}
