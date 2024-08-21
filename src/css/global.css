@@ -185,9 +185,9 @@ textarea {
 .modal-bottom-container .modal-bottom-info-text {
   transition: ease .3s;
   transition-property: color;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 400;
-  font-family: 'articulat', sans-serif;
-  line-height: 14px;
+  font-family: 'Articulat CF', sans-serif;
+  line-height: 12px;
   color: #F8F5EC;
 }

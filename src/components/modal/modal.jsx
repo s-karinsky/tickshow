@@ -24,6 +24,8 @@ import axios from "axios";
 import Button from "components/button";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import cn from "classnames";
+import { ReactComponent as Spinner } from 'icons/spinner-dots.svg'
+import {ModalSpinner} from "../modal-button-spinner/modalSpinner";
 
 export const calculateTotal = (data, percentage, discount) => {
   let totalQuantity = 0;
@@ -83,10 +85,6 @@ const CartModal = ({
     if (!errorMsg) return
     timer.current = setTimeout(() => setErrorMsg(null), 10000)
   }, [errorMsg])
-
-  useEffect(() => {
-    setErrorMsg('Text about')
-  }, [])
 
   async function addPayment(e) {
     e.preventDefault()
@@ -248,7 +246,7 @@ const CartModal = ({
   }
   return (
     <>
-      <div className={cn('error-msg', { open: !!errorMsg })}>
+      <div className={cn('error-msg', { open: !!errorMsg })} style={{display: !!errorMsg ? 'flex' : 'none'}}>
         <div className="title">
           {errorMsg}
         </div>
@@ -446,10 +444,10 @@ const CartModal = ({
                 }}
               />
 
-              <label className='checkbox' style={{ paddingTop: 4 }} onMouseUp={() => {setUserAcceptPrivacyPolicy(!userAcceptPrivacyPolicy);}}>
+              <label className='checkbox' style={{ paddingTop: 4,alignItems: "baseline" }} onMouseUp={() => {setUserAcceptPrivacyPolicy(!userAcceptPrivacyPolicy);}}>
                 <input type='checkbox' name='aggree' defaultChecked={userAcceptPrivacyPolicy} />
                 <CheckboxIcon style={{color: (userAcceptPrivacyPolicy && correctUserData ? '#f8f5ec' : '#f8f5ec40'),transition: 'all 0.3s ease'}} />
-                <div style={{color: (userAcceptPrivacyPolicy && correctUserData ? '#f8f5ec' : '#f8f5ec40'),transition: 'all 0.3s ease'} }>
+                <div style={{color: (userAcceptPrivacyPolicy && correctUserData ? '#f8f5ec' : '#f8f5ec40'),transition: 'all 0.3s ease',fontSize: "9px"} }>
                   By checking the box, you agree to&nbsp;
                   <a href={MODAL_WINDOW_PRIVACY_POLICY}
                                                  target={"_blank"}
@@ -465,7 +463,9 @@ const CartModal = ({
                 loading={load}
                 disabled={!correctUserData || !userAcceptPrivacyPolicy}
               >
-                Buy tickets
+                {correctUserData && userAcceptPrivacyPolicy && load ? <ModalSpinner dots_color={"#212121"} svg_style={{ width: 20 }} /> : 'Buy tickets'}
+
+
               </Button>
             </form>
             <div className="modal-bottom-container">
@@ -475,7 +475,7 @@ const CartModal = ({
                 </svg>
               </div>
               <span className={"modal-bottom-info-text"} style={{color: '#F8F5EC'}}>
-                Double-check your order—once you proceed to payment, changes won’t be possible, and your order will be locked for 10 minutes to complete the transaction.
+                Double-check your order — once you proceed to payment, changes won't be possible, and your order will be locked for 10 minutes.
               </span>
             </div>
           </div>
