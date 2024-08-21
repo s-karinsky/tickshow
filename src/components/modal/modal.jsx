@@ -444,15 +444,10 @@ const CartModal = ({
                 }}
               />
 
-              <label className='checkbox' style={{ paddingTop: 4 }}>
-                <input
-                  type='checkbox'
-                  name='aggree'
-                  defaultChecked={userAcceptPrivacyPolicy}
-                  onChange={() => { setUserAcceptPrivacyPolicy(!userAcceptPrivacyPolicy); }}
-                />
-                <CheckboxIcon />
-                <div>
+              <label className='checkbox' style={{ paddingTop: 4,alignItems: "baseline" }} onMouseUp={() => {setUserAcceptPrivacyPolicy(!userAcceptPrivacyPolicy);}}>
+                <input type='checkbox' name='aggree' defaultChecked={userAcceptPrivacyPolicy} />
+                <CheckboxIcon style={{color: (userAcceptPrivacyPolicy && correctUserData ? '#f8f5ec' : '#f8f5ec40'),transition: 'all 0.3s ease'}} />
+                <div style={{color: (userAcceptPrivacyPolicy && correctUserData ? '#f8f5ec' : '#f8f5ec40'),transition: 'all 0.3s ease',fontSize: "9px"} }>
                   By checking the box, you agree to&nbsp;
                   <a href={MODAL_WINDOW_PRIVACY_POLICY}
                                                  target={"_blank"}
