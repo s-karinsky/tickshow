@@ -9,6 +9,7 @@
   min-width: 150px;
   overflow: hidden;
   position: relative;
+  cursor: grab;
   
   @include bp(device) {
     height: calc(100% - 75px - 150px);
@@ -26,22 +27,13 @@
     content: '';
   } */
 }
-
-.scheme-draggable {
-  touch-action: none;
-  will-change: transform;
-  transform: translate3d(0, 0, 0);
-  cursor: grab;
-}
-
 .scheme-svg {
-  touch-action: none;
   transition: ease-in-out .2s;
   transition-property: width, height;
   will-change: width, height;
   min-width: 150px;
 
-  @include bp(device) {
+  /* @include bp(device) {
     & > g > * {
       transition: ease-in-out 2s filter;
     }
@@ -53,10 +45,10 @@
       // filter: blur(2px) brightness(0.7);
       filter: url(#filter-blur) brightness(70%);
     }
-  }
+  } */
 }
 
-@keyframes blurIn {
+/* @keyframes blurIn {
   0% {
     filter: blur(2px) brightness(0.7);
   }
@@ -67,12 +59,12 @@
 
 .svg-seat-clone {
   animation: blurIn 0.3s ease-in-out;
-}
+} */
 
 .scheme-reset {
   position: absolute;
   z-index: 50;
-  right: 16px;
+  right: 25px;
   top: 16px;
 
   @include bp(device) {
@@ -86,13 +78,13 @@
 .scheme-reset-categories {
   position: absolute;
   z-index: 50;
-  left: 16px;
-  bottom: 16px;
+  left: 25px;
+  bottom: 15px;
 }
 
 .scheme-zoom {
   position: absolute;
-  left: 16px;
+  left: 25px;
   top: 16px;
   z-index: 50;
 
@@ -162,7 +154,27 @@
 
 .simple-impudent-logo {
   position: absolute;
-  bottom: 16px;
-  right: 16px;
+  bottom: 15px;
+  right: 25px;
   z-index: 50;
+}
+
+.scheme-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: #00000033;
+  backdrop-filter: blur(3px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 95;
+  transition: ease-in-out .3s opacity;
+
+  .scheme-active-seat + & {
+    opacity: 1;
+  }
+}
+
+.scheme-wrapper {
+  position: absolute;
+  height: 100%;
 }

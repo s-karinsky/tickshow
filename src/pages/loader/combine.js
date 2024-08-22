@@ -38,6 +38,13 @@ const combineQueries = (results) => {
         }
       }), {})
 
+      Object.entries(cartByCategory).reduce((acc, [key, value]) => {
+        value.items = value.items.sort((a, b) => {
+          if (a.row === b.row) return a.seat - b.seat
+          return Number(a.row) && Number(b.row) ? a.row - b.row : String(a.row).localeCompare(String(b.row))
+        })
+      }, {})
+
     const categories = [{
       value: null,
       label: 'All categories',

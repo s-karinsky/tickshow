@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { forwardRef, useEffect, useRef, useState } from 'react'
 import { cn } from '@bem-react/classname'
 import Button from 'components/button'
 import { toHaveAttribute } from '@testing-library/jest-dom/dist/matchers'
@@ -9,18 +9,18 @@ import { useIsMobile } from 'utils/hooks'
 
 const bem = cn('seating-tooltip')
 
-export default function SeatingTooltip(props) {
+const SeatingTooltip = forwardRef((props, ref) => {
   const isMobile = useIsMobile()
   const [ visible, setVisible ] = useState(props.visible)
   let timer = useRef(null)
-  const ref = useRef(null)
+  // const ref = useRef(null)
   
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const { x } = el.getBoundingClientRect()
-    el.style.transform = `translateX(${x < 0 ? `calc(-100% - x)` : '-100%'}px)`
-  }, [props])
+  // useEffect(() => {
+  //   const el = ref.current
+  //   if (!el) return
+  //   const { x } = el.getBoundingClientRect()
+  //   el.style.transform = `translateX(${x < 0 ? `calc(-100% - x)` : '-100%'}px)`
+  // }, [props])
 
   useEffect(() => {
     if (props.hideDelay) {
@@ -44,8 +44,9 @@ export default function SeatingTooltip(props) {
   
   return (
     <div
+      id='seat-tooltip'
       className={bem({ visible })}
-      style={{ left: props.x * props.scaleFactor, top: props.y * props.scaleFactor }}
+      style={{ left: props.x, top: props.y }}
       onClick={() => props.toggleInCart(props, Number(!props.inCart))}
       ref={ref}
     >
@@ -82,4 +83,6 @@ export default function SeatingTooltip(props) {
       </button>
     </div>
   )
-}
+})
+
+export default SeatingTooltip
