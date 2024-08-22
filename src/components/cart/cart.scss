@@ -115,12 +115,25 @@
     }
   }
 
+
+    &-item-data-container {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: baseline;
+    width: 80%;
+    gap: 14px;
+  }
+
   &-item {
     display: flex;
     gap: 14px;
     color: var(--color-gray-2);
     align-items: center;
     margin-top: 8px;
+    .cart-price {
+      font-size: 12px;
+      opacity: 0.3;
+    }
   }
 
   &-name {
@@ -130,13 +143,7 @@
 
   &-value {
     font-size: 14px;
-    width: 1em;
     text-align: center;
-  }
-
-  &-value+.cart-price {
-    font-size: 12px;
-    opacity: 0.3;
   }
 
   &-promo {
