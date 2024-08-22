@@ -11,7 +11,8 @@ import {
   STORAGE_KEY_REDIRECT,
   STORAGE_KEY_USER_EMAIL,
   STORAGE_KEY_USER_HASH,
-  STORAGE_KEY_USER_TOKEN
+  STORAGE_KEY_USER_TOKEN,
+  SUCCEEDED_PAGE_URL
 } from "../../const";
 import { ReactComponent as CheckboxIcon } from 'icons/checkbox.svg'
 import { updateUser, AuthUser } from "../../api/user";
@@ -25,7 +26,7 @@ import Button from "components/button";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import cn from "classnames";
 import { ReactComponent as Spinner } from 'icons/spinner-dots.svg'
-import {ModalSpinner} from "../modal-button-spinner/modalSpinner";
+import { ModalSpinner } from "../modal-button-spinner/modalSpinner";
 
 export const calculateTotal = (data, percentage, discount) => {
   let totalQuantity = 0;
@@ -141,7 +142,7 @@ const CartModal = ({
     }
     var places_in_orders = getFromLocalStorage(STORAGE_KEY_PLACES_IN_ORDERS, {})
 
-    CreateOrder(seats, DISTRIBUTE_PAGE_URL)
+    CreateOrder(seats, SUCCEEDED_PAGE_URL)
       .then(({ data } = {}) => {
         const { payment, b_id } = data
         setLoad(false)
@@ -197,7 +198,7 @@ const CartModal = ({
   const isDancefloorTypeCategory = (categoryItems) => {
     var flag = true
     categoryItems.forEach((item) => {
-      if(item.row !== "-1"){
+      if (item.row !== "-1") {
         flag = false
       }
     })
@@ -215,20 +216,20 @@ const CartModal = ({
     if (checkEmail) {
       email.style.border = "none"
     } else {
-      if(email.value.length > 0) {
+      if (email.value.length > 0) {
         email.style.border = "1px solid #B3261E"
       }
     }
 
-    if(checkPhone) {
+    if (checkPhone) {
       phone.style.border = "none"
     } else {
-      if(phone.value.length > 0) {
+      if (phone.value.length > 0) {
         phone.style.border = "1px solid #B3261E"
       }
     }
 
-    if(checkName) {
+    if (checkName) {
       name.style.border = "none"
     }
     else {
@@ -237,7 +238,7 @@ const CartModal = ({
       }
     }
 
-    if( checkName && checkEmail && checkPhone ) {
+    if (checkName && checkEmail && checkPhone) {
       setCorrectUserData(true)
     }
     else {
@@ -246,7 +247,7 @@ const CartModal = ({
   }
   return (
     <>
-      <div className={cn('error-msg', { open: !!errorMsg })} style={{display: !!errorMsg ? 'flex' : 'none'}}>
+      <div className={cn('error-msg', { open: !!errorMsg })} style={{ display: !!errorMsg ? 'flex' : 'none' }}>
         <div className="title">
           {errorMsg}
         </div>
@@ -274,56 +275,56 @@ const CartModal = ({
             <div className="w100 df aic fww gap10 tags">
               {Object.values(cartByCategory).map(({ data, items }, i) => {
                 return <>
-                  { isDancefloorTypeCategory(items) ? <div>
+                  {isDancefloorTypeCategory(items) ? <div>
+                    <label
+                      className="df aic gap8 fs12 tag"
+                      key={`label-${data?.value}`}>
+                      <div
+                        className='seats-preview'
+                        dangerouslySetInnerHTML={{
+                          __html: data?.icon,
+                        }}
+                        style={{
+                          width: 12,
+                          height: 12,
+                          color: data?.color,
+                        }}
+                      />
+                      <span style={{ alignItems: "baseline", display: "flex", verticalAlign: "middle" }}>
+                        {data?.value} <RxCross2 style={{ marginTop: "auto", marginBottom: "auto", marginLeft: "5px", marginRight: "5px" }} /> {items.length}
+                      </span>
+                    </label>
+                  </div>
+                    : items.map(item => {
+                      return (
                         <label
-                            className="df aic gap8 fs12 tag"
-                            key={`label-${data?.value}`}>
+                          className="df aic gap8 fs12 tag"
+                          key={`label-${data?.value}-${item?.category}`}>
                           <div
-                              className='seats-preview'
-                              dangerouslySetInnerHTML={{
-                                __html: data?.icon,
-                              }}
-                              style={{
-                                width: 12,
-                                height: 12,
-                                color: data?.color,
-                              }}
+                            className='seats-preview'
+                            dangerouslySetInnerHTML={{
+                              __html: data?.icon,
+                            }}
+                            style={{
+                              width: 12,
+                              height: 12,
+                              color: data?.color,
+                            }}
                           />
-                          <span style={{alignItems: "baseline",display: "flex",verticalAlign: "middle"}}>
-                      {data?.value} <RxCross2 style={{marginTop: "auto",marginBottom: "auto",marginLeft: "5px",marginRight: "5px"}}/> {items.length}
-                    </span>
-                        </label>
-                      </div>
-                      :items.map(item => {
-                        return (
-                            <label
-                                className="df aic gap8 fs12 tag"
-                                key={`label-${data?.value}-${item?.category}`}>
-                              <div
-                                  className='seats-preview'
-                                  dangerouslySetInnerHTML={{
-                                    __html: data?.icon,
-                                  }}
-                                  style={{
-                                    width: 12,
-                                    height: 12,
-                                    color: data?.color,
-                                  }}
-                              />
-                              <span>
-                                {item?.row}
-                                <div style={{
-                                  color: "#F8F5EC4D",
-                                  height: "100%",
-                                  width: "1px",
-                                  display: "inline-block",
-                                  margin:"0 6px 0 4px",
-                                }}>|
-                                </div>
-                                {item?.seat}
-                        </span>
-                            </label>)
-                      })}
+                          <span>
+                            {item?.row}
+                            <div style={{
+                              color: "#F8F5EC4D",
+                              height: "100%",
+                              width: "1px",
+                              display: "inline-block",
+                              margin: "0 6px 0 4px",
+                            }}>|
+                            </div>
+                            {item?.seat}
+                          </span>
+                        </label>)
+                    })}
 
                 </>
               })}
@@ -400,9 +401,9 @@ const CartModal = ({
                 autoComplete="off"
                 required
                 onChange={() => checkUserData()}
-                onKeyDown={ (e) => {
+                onKeyDown={(e) => {
                   if (e.key === 'Delete' || e.key === 'Backspace') {
-                    if(e.target.value.length === 1) {
+                    if (e.target.value.length === 1) {
                       setCorrectUserData(false)
                       e.target.style.border = 'none'
                     }
@@ -417,9 +418,9 @@ const CartModal = ({
                 autoComplete="off"
                 required
                 onChange={() => checkUserData()}
-                onKeyDown={ (e) => {
+                onKeyDown={(e) => {
                   if (e.key === 'Delete' || e.key === 'Backspace') {
-                    if(e.target.value.length === 1) {
+                    if (e.target.value.length === 1) {
                       setCorrectUserData(false)
                       e.target.style.border = 'none'
                     }
@@ -434,9 +435,9 @@ const CartModal = ({
                 autoComplete="off"
                 required
                 onChange={() => checkUserData()}
-                onKeyDown={ (e) => {
+                onKeyDown={(e) => {
                   if (e.key === 'Delete' || e.key === 'Backspace') {
-                    if(e.target.value.length === 1) {
+                    if (e.target.value.length === 1) {
                       setCorrectUserData(false)
                       e.target.style.border = 'none'
                     }
@@ -444,19 +445,14 @@ const CartModal = ({
                 }}
               />
 
-              <label className='checkbox' style={{ paddingTop: 4 }}>
-                <input
-                  type='checkbox'
-                  name='aggree'
-                  defaultChecked={userAcceptPrivacyPolicy}
-                  onChange={() => { setUserAcceptPrivacyPolicy(!userAcceptPrivacyPolicy); }}
-                />
-                <CheckboxIcon />
-                <div>
+              <label className='checkbox' style={{ paddingTop: 4, alignItems: "baseline" }} onMouseUp={() => { setUserAcceptPrivacyPolicy(!userAcceptPrivacyPolicy); }}>
+                <input type='checkbox' name='aggree' defaultChecked={userAcceptPrivacyPolicy} />
+                <CheckboxIcon style={{ color: (userAcceptPrivacyPolicy && correctUserData ? '#f8f5ec' : '#f8f5ec40'), transition: 'all 0.3s ease' }} />
+                <div style={{ color: (userAcceptPrivacyPolicy && correctUserData ? '#f8f5ec' : '#f8f5ec40'), transition: 'all 0.3s ease', fontSize: "9px" }}>
                   By checking the box, you agree to&nbsp;
                   <a href={MODAL_WINDOW_PRIVACY_POLICY}
-                                                 target={"_blank"}
-                                                 style={{color:"inherit",textDecoration: 'underline'}}>Uventy privacy policy</a>
+                    target={"_blank"}
+                    style={{ color: "inherit", textDecoration: 'underline' }}>Uventy privacy policy</a>
                   .
                 </div>
               </label>
@@ -464,7 +460,7 @@ const CartModal = ({
                 color='bordered'
                 size='large'
                 type='submit'
-                style={{width: '100%', textTransform: 'uppercase'}}
+                style={{ width: '100%', textTransform: 'uppercase' }}
                 loading={load}
                 disabled={!correctUserData || !userAcceptPrivacyPolicy}
               >
@@ -476,10 +472,10 @@ const CartModal = ({
             <div className="modal-bottom-container">
               <div className="svg-info-container">
                 <svg width="13" height="14" viewBox="0 0 13 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path className={"svg-info-icon-path"} d="M6.625 4.71204V7.21204M6.625 12.5557C3.5184 12.5557 1 10.0373 1 6.93066C1 3.82406 3.5184 1.30566 6.625 1.30566C9.7316 1.30566 12.25 3.82406 12.25 6.93066C12.25 10.0373 9.7316 12.5557 6.625 12.5557ZM6.65613 9.08704V9.14954L6.59387 9.14929V9.08704H6.65613Z" style={{stroke:'#F8F5EC'}} stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path className={"svg-info-icon-path"} d="M6.625 4.71204V7.21204M6.625 12.5557C3.5184 12.5557 1 10.0373 1 6.93066C1 3.82406 3.5184 1.30566 6.625 1.30566C9.7316 1.30566 12.25 3.82406 12.25 6.93066C12.25 10.0373 9.7316 12.5557 6.625 12.5557ZM6.65613 9.08704V9.14954L6.59387 9.14929V9.08704H6.65613Z" style={{ stroke: '#F8F5EC' }} stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
               </div>
-              <span className={"modal-bottom-info-text"} style={{color: '#F8F5EC'}}>
+              <span className={"modal-bottom-info-text"} style={{ color: '#F8F5EC' }}>
                 Double-check your order — once you proceed to payment, changes won't be possible, and your order will be locked for 10 minutes.
               </span>
             </div>

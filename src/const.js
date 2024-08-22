@@ -10,18 +10,18 @@ export const SEAT_CLASS_SELECTED = `${SEAT_CLASS}_selected`
 export const SEAT_CLONE_CLASS = 'svg-seat-clone'
 
 export const CURRENCY_SYMBOL_MAP = {
-  EUR: "€",
-  USD: "$",
-  GBP: "£",
-  RUB: "₽",
-  UAH: "₴",
-  BYR: "p",
-  KZT: "₸",
-  KGS: "₸",
-  CNY: "¥",
-  INR: "₹",
-  JPY: "¥",
-  TRY: "₺",
+  EUR: '€',
+  USD: '$',
+  GBP: '£',
+  RUB: '₽',
+  UAH: '₴',
+  BYR: 'p',
+  KZT: '₸',
+  KGS: '₸',
+  CNY: '¥',
+  INR: '₹',
+  JPY: '¥',
+  TRY: '₺',
 }
 
 export const STORAGE_KEY_REDIRECT = 'redirect_after_pay'
@@ -40,8 +40,10 @@ export const getPhantomUser = () => ({
   }),
 })
 
-export const DISTRIBUTE_PAGE_URL = "https://uventy.com/congratulations"
+export const DISTRIBUTE_PAGE_URL = 'https://uventy.com/congratulations'
 
-export const MODAL_WINDOW_PRIVACY_POLICY = "https://uventy.com/privacy_policy"
+export const SUCCEEDED_PAGE_URL = 'https://uventy.com/congratulations'
+
+export const MODAL_WINDOW_PRIVACY_POLICY = 'https://uventy.com/privacy_policy'
 
 export const STORAGE_KEY_PLACES_IN_ORDERS = 'places_in_orders'

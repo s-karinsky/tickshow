@@ -84,10 +84,12 @@ function Cart({ tickets, cart, categories, currency = '', toggleInCart, setCartM
               (<div className={bem('items')}>
                 {items.map(item => (
                   <div className={bem('item')} key={item.id}>
-                    <div className={bem('name')}>Row:</div>
-                    <div className={bem('value')}>{item.row}</div>
-                    <div className={bem('name')}>Seat:</div>
-                    <div className={bem('value')}>{item.seat}</div>
+                    <div className={bem("item-data-container")}>
+                      <div className={bem('name')}>Row:</div>
+                      <div className={bem('value')}>{item.row}</div>
+                      <div className={bem('name')}>Seat:</div>
+                      <div className={bem('value')}>{item.seat}</div>
+                    </div>
                     <div className={bem('price')}>{item.price} {currency}</div>
                     <button className={bem('remove')} onClick={() => toggleInCart(item, 0)}><Close style={{ width: 10 }} /></button>
                   </div>
