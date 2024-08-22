@@ -51,7 +51,8 @@
     // поверх наожения за пределами свг
     &:has(.svg-seat-clone) > g > * {
       // filter: blur(2px) brightness(0.7);
-      filter: url(#filter-blur) brightness(70%);
+      filter: url(#filter-blur);
+      opacity: 0.5;
     }
   }
 }

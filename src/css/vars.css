@@ -1,4 +1,4 @@
-:root {
+#root {
   --color-gray-2: #F8F5EC;
   --color-gray-2-alpha: #F8F5EC99;
   --color-gray-5: #6F6E6B;
@@ -18,14 +18,14 @@
 }
 
 @media (max-width: 1023px) {
-  :root {
+  #root {
     --sidebar-padding-x: 16px;
     --sidebar-padding-y: 16px;
   }
 }
 
 @media (max-width: 1279px) {
-  :root {
+  #root {
     --sidebar-width: 450px;
   }
 }

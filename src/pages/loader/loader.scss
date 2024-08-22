@@ -100,7 +100,7 @@
 .mobile-placeholder {
   display: none;
 
-  @include bp(mobile) {
+  @include bp(device) {
     display: flex;
     gap: 30px;
     flex-direction: column;

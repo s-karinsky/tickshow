@@ -82,10 +82,10 @@ const CartModal = ({
   const id = useEventId()
   const timer = useRef(null)
 
-  useEffect(() => {
+  /* useEffect(() => {
     if (!errorMsg) return
     timer.current = setTimeout(() => setErrorMsg(null), 10000)
-  }, [errorMsg])
+  }, [errorMsg]) */
 
   async function addPayment(e) {
     e.preventDefault()

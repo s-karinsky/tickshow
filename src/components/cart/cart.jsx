@@ -102,7 +102,7 @@ function Cart({ tickets, cart, categories, currency = '', toggleInCart, setCartM
       </div>
       <div className={bem('form')}>
         <div className={bem('delimiter')} />
-        <form className={bem('promo')} onSubmit={handleSubmitPromo}>
+        {/* <form className={bem('promo')} onSubmit={handleSubmitPromo}>
           <input
             type='text'
             className={bem('input', { invalid: promoCheckStatus === false })}
@@ -123,7 +123,7 @@ function Cart({ tickets, cart, categories, currency = '', toggleInCart, setCartM
           <Button className={bem('applyPromo')} disabled={!promoCode || isEmpty || sendingPromo}>
             {sendingPromo ? <Spinner style={{ width: 24 }} /> : <ArrowRight style={{ width: 9 }} />}
           </Button>
-        </form>
+        </form> */}
         {promoCheckStatus !== null && <div className={bem('status-text', { success: promoCheckStatus })}>
           {promoCheckStatus ? 'Valid' : 'Promo code is wrong!'}
         </div>}
