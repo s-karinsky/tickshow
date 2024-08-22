@@ -1,8 +1,8 @@
 import {axios} from "../utils/axios";
 
-export async function CreateOrder(seats, appUrl = window.location.origin) {
+export async function CreateOrder(seats, succeeded_url, failed_url = window.location.href) {
     var data = {
-      appUrl: appUrl,
+      appUrl: JSON.stringify({succeeded:succeeded_url,failed:failed_url}),
       data: JSON.stringify({
         b_payment_way: 2,
         b_options: {

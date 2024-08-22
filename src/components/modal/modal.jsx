@@ -11,7 +11,7 @@ import {
   STORAGE_KEY_REDIRECT,
   STORAGE_KEY_USER_EMAIL,
   STORAGE_KEY_USER_HASH,
-  STORAGE_KEY_USER_TOKEN
+  STORAGE_KEY_USER_TOKEN, SUCCEEDED_PAGE_URL
 } from "../../const";
 import { ReactComponent as CheckboxIcon } from 'icons/checkbox.svg'
 import { updateUser, AuthUser } from "../../api/user";
@@ -141,7 +141,7 @@ const CartModal = ({
     }
     var places_in_orders = getFromLocalStorage(STORAGE_KEY_PLACES_IN_ORDERS, {})
 
-    CreateOrder(seats, DISTRIBUTE_PAGE_URL)
+    CreateOrder(seats, SUCCEEDED_PAGE_URL)
       .then(({ data } = {}) => {
         const { payment, b_id } = data
         setLoad(false)

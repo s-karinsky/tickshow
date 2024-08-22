@@ -42,6 +42,8 @@ export const getPhantomUser = () => ({
 
 export const DISTRIBUTE_PAGE_URL = "https://uventy.com/congratulations"
 
+export const SUCCEEDED_PAGE_URL = "https://uventy.com/congratulations"
+
 export const MODAL_WINDOW_PRIVACY_POLICY = "https://uventy.com/privacy_policy"
 
 export const STORAGE_KEY_PLACES_IN_ORDERS = 'places_in_orders'
