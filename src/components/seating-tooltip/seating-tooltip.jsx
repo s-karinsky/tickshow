@@ -45,7 +45,7 @@ export default function SeatingTooltip(props) {
   return (
     <div
       className={bem({ visible })}
-      style={{ left: props.x * props.scaleFactor, top: props.y * props.scaleFactor }}
+      style={{ left: props.x, top: props.y }}
       onClick={() => props.toggleInCart(props, Number(!props.inCart))}
       ref={ref}
     >

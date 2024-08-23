@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react'
 import { unstable_batchedUpdates as batch } from 'react-dom'
+import Hammer from 'hammerjs'
 
 export const throttle = (f) => {
   let token = null,
@@ -89,25 +90,55 @@ const id = (x) => x
 // returns [ref, isDragging, position]
 // position doesn't update while dragging
 // position is relative to initial position
-export const useDraggableAndScalable = ({ onDrag = id } = {}) => {
+export const useDraggableAndScalable = ({ onDrag = id, disabled } = {}) => {
   const [pressed, setPressed] = useState(false)
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [scale, setScale] = useState(1)
+  const hammer = useRef()
   const ref = useRef()
   const dragTargetRef = useRef()
   const scaleTargetRef = useRef()
+  const initialSize = useRef()
+  const updateScale = scale => {
+    if (!initialSize.current && scaleTargetRef.current) {
+      initialSize.current = {
+        width: scaleTargetRef.current.clientWidth,
+        height: scaleTargetRef.current.clientHeight
+      }
+    }
+    const val = Math.min(Math.max(scale, 0.5), 4)
+    scaleTargetRef.current.style.width = initialSize.current.width * val
+    scaleTargetRef.current.style.height = initialSize.current.height * val
+    setScale(val)
+  }
   const handleMouseDown = useCallback((e) => {
     if (e.button !== 0) {
       return
     }
     setPressed(true)
   }, [])
+  const handlePinch = (e) => {
+    setPressed(false)
+    const realDistance = e.distance / scale
+    const width = scaleTargetRef.current.clientWidth + realDistance
+    const newScale = width / initialSize.width
+    console.log(e)
+    updateScale(e.scale)
+  }
+
   useEffect(() => {
     if (!ref.current) return
     const elem = ref.current
     elem.style.userSelect = 'none'
+    
+    hammer.current = new Hammer(ref.current)
+    hammer.current.get('pinch').set({ enable: true })
+    hammer.current.on('pinch', handlePinch)
+
     return () => {
       elem.style.userSelect = 'auto'
+      hammer.current.off('pinch')
+      hammer.current.destroy()
     }
   }, [])
   const subscribeMouseDown = useDomEvent('pointerdown', handleMouseDown)
@@ -168,7 +199,7 @@ export const useDraggableAndScalable = ({ onDrag = id } = {}) => {
       window.removeEventListener('blur', terminate)
     }
   }, [position, pressed, persistentOnDrag])
-  return [combinedRef, dragTargetRef, pressed, position, setPosition]
+  return [combinedRef, dragTargetRef, scaleTargetRef, pressed, position, scale, updateScale, setPosition]
 }
 
 // subscribe to element's `resize`

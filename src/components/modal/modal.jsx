@@ -93,12 +93,14 @@ const CartModal = ({
     const values = Object.fromEntries(formData.entries())
     values.Phone = values.Phone.toString().replace("+", "")
     setLoad(true)
+    const prevToken = getFromLocalStorage(STORAGE_KEY_USER_TOKEN)
+    const prevHash = getFromLocalStorage(STORAGE_KEY_USER_HASH)
     await updateUser({ u_name: values.Name, u_email: values.Email, u_phone: values.Phone })
       .then(async ({ data }) => {
         if (data.status === "error" && data.message.startsWith("busy user data:")) {
           const userData = await AuthUser(values.Email, values.Phone)
           if (userData.u_id) {
-            await moveCart(userData.u_id)
+            await moveCart(prevToken, prevHash, userData.u_id)
             setLocalStorage(STORAGE_KEY_USER_EMAIL, values.Email);
             setLocalStorage(STORAGE_KEY_USER_TOKEN, userData.token);
             setLocalStorage(STORAGE_KEY_USER_HASH, userData.u_hash);

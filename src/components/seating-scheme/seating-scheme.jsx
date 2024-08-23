@@ -22,20 +22,17 @@ const SeatingScheme = forwardRef((props, ref) => {
   const [log, setLog] = useState([])
 
   const [counters, setCounters] = useState([])
-  const [scale, setScale] = useState(1)
   const [tooltipSeat, setTooltipSeat] = useState({ visible: false })
   const { src, cart, categories, tickets, toggleInCart, highlight, selectedCategory, resetSelectedCategory } = props
   
   const zoomConfig = { min: 0.5, max: 4, step: 0.5 }
   const initial = useRef({ width: null, height: null })
-  const svgRef = useRef(null)
   const pointerDownState = useRef({ clientX: 0, clientY: 0, elementId: '', time: 0 })
 
   const ticketsByCategory = useMemo(() => tickets.reduce((acc, ticket) => ({
     ...acc,
     [ticket.category]: (acc[ticket.category] || []).concat(ticket)
   }), {}), [tickets])
-
 
   const handleDrag = useCallback(
     ({ x, y }) => ({
@@ -44,38 +41,14 @@ const SeatingScheme = forwardRef((props, ref) => {
     }),
     []
   )
-
-  useEffect(() => {
-    if (!svgRef.current) return
-    const width = svgRef.current.clientWidth
-    const height = svgRef.current.clientHeight
-    initial.current = { width, height }
-  }, [svgRef.current])
-
-
-  const zoom = (value, animation = 300) => {
-    const svg = svgRef.current
-    if (!svg) return
-    const { min, max } = zoomConfig
-    if (value < min) {
-      if (scale === min) return
-      value = min
-    } else if (value > max) {
-      if (scale === max) return
-      value = max
-    }
-    if (animation) {
-      svg.style.transition = typeof animation === 'number' ? `ease-in-out ${animation}ms transform` : animation
-    }
-    setScale(value)
-  }
-  const zoomIn = () => zoom(scale + zoomConfig.step)
-  const zoomOut = () => zoom(scale - zoomConfig.step)
-
-  const [viewportRef, draggableRef, pressed, { x, y }, setPosition] = useDraggableAndScalable({
+  const [viewportRef, draggableRef, scaleTargetRef, pressed, { x, y }, scale, setScale, setPosition] = useDraggableAndScalable({
     onDrag: handleDrag
   })
+  const [isDefaultScale, setIsDefaultScale] = useState(true)
 
+  useEffect(() => {
+
+  }, [scale])
   const handleWheel = useCallback((e) => {
     console.log(e)
     
@@ -93,11 +66,11 @@ const SeatingScheme = forwardRef((props, ref) => {
     // const handlePinch = (ev) => {
     //   if (ev.type === 'pinchstart') {
     //     initialScale = scale.current.value
-    //     svgRef.current.style.transition = 'none'
+    //     scaleTargetRef.current.style.transition = 'none'
     //   }
     //   zoom(initialScale * ev.scale)
     //   if (ev.type === 'pinchend') {
-    //     svgRef.current.style.transition = null
+    //     scaleTargetRef.current.style.transition = null
     //   }
     // }
     // hammer.on('pinchstart pinch pinchend', handlePinch)
@@ -135,7 +108,7 @@ const SeatingScheme = forwardRef((props, ref) => {
     //       clone.forEach((el, i) => {
     //         el.id = `clone-${(i + 1)}`
     //         el.classList.add(SEAT_CLONE_CLASS)
-    //         svgRef.current.appendChild(el)
+    //         scaleTargetRef.current.appendChild(el)
     //       })
     //       setTooltipSeat({
     //         visible: true,
@@ -155,16 +128,9 @@ const SeatingScheme = forwardRef((props, ref) => {
     // }
     // hammer.on('tap', handleTap)
 
-    function handleClick(e) {
-      console.log(e);
-
-    }
-
-    svgRef.current.addEventListener('click', handleClick)
     
     return () => {
       dragEl.removeEventListener('wheel', handleWheel)
-      svgRef.current.removeEventListener('click', handleClick)
       // hammer.off('pinch', handlePinch)
       // hammer.off('tap', handleTap)
       // hammer.destroy()
@@ -172,23 +138,28 @@ const SeatingScheme = forwardRef((props, ref) => {
   }, [x, y, ticketsByCategory, tickets, tooltipSeat])
 
   const showSeatTooltip = el => {
+    const { width, height, x, y } = draggableRef.current.getBoundingClientRect()
+
     const elBounds = el.getBoundingClientRect()
+    let dx = ((elBounds.x - x) + elBounds.width)
+    let dy = ((elBounds.y - y) + elBounds.height)
+
     const seat = svgSeat(el)
     setTooltipSeat({
       visible: true,
-      x: (elBounds.x + elBounds.width) * scale,
-      y: (elBounds.y + elBounds.height) * scale,
+      x: `${(dx / width) * 100}%`,
+      y: `${(dy / height) * 100}%`,
       ticketId: seat.get('ticket-id'),
       text: seat.get('text')
     })
   }
 
   const hideSeatTooltip = () => {
-    setTooltipSeat(prev => ({ visible: false, ticketId: prev.ticketId }))
+    setTooltipSeat(prev => ({ ...prev, visible: false, ticketId: prev.ticketId }))
   }
 
   useEffect(() => {
-    const node = svgRef.current
+    const node = scaleTargetRef.current
     if (!node || !src) return
     const svg = stringToSvg(src)
     // Черная галочка для мест
@@ -292,7 +263,7 @@ const SeatingScheme = forwardRef((props, ref) => {
         id = `#seat-${ticket.category}`
       }
       
-      const el = svgRef.current.querySelector(id)
+      const el = scaleTargetRef.current.querySelector(id)
       if (!el) return
       
       const checked = isMultiple ? tickets.some(t => t.category === ticket.category && t.inCart) : ticket.inCart
@@ -301,8 +272,9 @@ const SeatingScheme = forwardRef((props, ref) => {
   }, [tickets])
 
   useEffect(() => {
-    const cats = svgRef.current.querySelectorAll('.svg-seat[data-category]:not([data-row]):not([data-seat])')
-    const svgBound = svgRef.current.getBBox()
+    const cats = scaleTargetRef.current.querySelectorAll('.svg-seat[data-category]:not([data-row]):not([data-seat])')
+    const svgBound = scaleTargetRef.current.getBBox()
+    const { x, y } = draggableRef.current.getBoundingClientRect()
     const counters = Array.from(cats).map(el => {
       const seat = svgSeat(el)
       const category = seat.get('category')
@@ -315,8 +287,8 @@ const SeatingScheme = forwardRef((props, ref) => {
       const max = ticketsByCategory[category]?.length || 0
       return {
         category,
-        left: Math.round((left / svgBound.width) * 100) + '%',
-        top: Math.round((top / svgBound.height) * 100) + '%',
+        left: ((left / svgBound.width) * 100) + '%',
+        top: ((top / svgBound.height) * 100) + '%',
         max,
         value,
         visible
@@ -347,13 +319,13 @@ const SeatingScheme = forwardRef((props, ref) => {
        <div className='scheme-zoom'>
         <button
           className={classNames('scheme-control')}
-          onClick={zoomOut}
+          onClick={() => setScale(scale - 0.5)}
         >
           <ZoomOut style={{ width: 17 }} />
         </button>
         <button
           className={classNames('scheme-control')}
-          onClick={zoomIn}
+          onClick={() => setScale(scale + 0.5)}
         >
           <ZoomIn style={{ width: 17 }} />
         </button>
@@ -386,7 +358,9 @@ const SeatingScheme = forwardRef((props, ref) => {
         <TicketLogo width="54" height="13" />
       </div>
       <div
-        className='scheme-draggable'
+        className={classNames('scheme-draggable', {
+          'scheme-draggable_base': isDefaultScale
+        })}
         ref={draggableRef}
       >
         {tickets?.length > 0 && <SeatingTooltip
@@ -397,23 +371,23 @@ const SeatingScheme = forwardRef((props, ref) => {
           y={tooltipSeat.y}
           text={tooltipSeat.text}
           hideDelay={tooltipSeat.delay ?? 1250}
-          scaleFactor={/* scaleFactor */1}
+          scaleFactor={scale}
           toggleInCart={toggleInCart}
         />}
-        {/* {counters.map(({ category, ...counter }, i) => (
+        {counters.map(({ category, ...counter }, i) => (
           <TicketsCounter
             key={i}
             {...counter}
             onChange={value => handleChangeMultiple(value, tickets, category)}
           />
-        ))} */}
+        ))}
         <svg
           className='scheme-svg'
-          ref={svgRef}
-          style={{
-            width: `100 * ${scale}%`,
-            height: `100 * ${scale}%`,
-            transform: `scale(${scale})`
+          ref={scaleTargetRef}
+          onTransitionEnd={() => {
+          console.log('end', scale);
+          
+            setIsDefaultScale(scale === 1)
           }}
         />
       </div>
