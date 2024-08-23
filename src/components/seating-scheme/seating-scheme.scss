@@ -31,7 +31,13 @@
   touch-action: none;
   will-change: transform;
   transform: translate3d(0, 0, 0);
-  cursor: grab;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  box-sizing: border-box;
 }
 
 .scheme-svg {
@@ -39,7 +45,8 @@
   transition: ease-in-out .2s;
   transition-property: width, height;
   will-change: width, height;
-  min-width: 150px;
+  max-width: 100%;
+  max-height: 100%;
 
   @include bp(device) {
     & > g > * {
