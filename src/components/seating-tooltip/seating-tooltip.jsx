@@ -23,6 +23,8 @@ export default function SeatingTooltip(props) {
   }, [props])
 
   useEffect(() => {
+    console.log(props)
+    
     if (props.hideDelay) {
       if (!props.visible) {
         timer.current = setTimeout(() => setVisible(false), props.hideDelay)
@@ -33,7 +35,7 @@ export default function SeatingTooltip(props) {
     } else {
       setVisible(props.visible)
     }
-  }, [props.visible])
+  }, [props.visible, props.hideDelay])
 
   if (props.scaleFactor && props.scaleFactor < 1) {
     return null
@@ -48,6 +50,8 @@ export default function SeatingTooltip(props) {
       style={{ left: props.x, top: props.y }}
       onClick={() => props.toggleInCart(props, Number(!props.inCart))}
       ref={ref}
+      data-visible={visible}
+      data-ticket={props.ticketId}
     >
       <div className={bem('head')}>
         <div className={bem('price')}>

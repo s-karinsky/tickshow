@@ -59,7 +59,7 @@
   width: auto;
   height: 100%;
 
-  @include bp(device) {
+  /* @include bp(device) {
     & > g > * {
       transition: ease-in-out 2s filter;
     }
@@ -71,6 +71,22 @@
       // filter: blur(2px) brightness(0.7);
       filter: url(#filter-blur);
       opacity: 0.5;
+    }
+  } */
+}
+
+.scheme-overlay {
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(3px);
+  background-color: #00000033;
+  pointer-events: none;
+  opacity: 0;
+  transition: ease-in-out .2s opacity;
+
+  @include bp(device) {
+    &_visible {
+      opacity: 1;
     }
   }
 }

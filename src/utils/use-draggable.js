@@ -2,10 +2,24 @@ import React, { useRef, useState, useEffect, useCallback } from 'react'
 import { unstable_batchedUpdates as batch } from 'react-dom'
 import Hammer from 'hammerjs'
 
-const minScale = 0.5
-const maxScale = 4
-const scaleStep = 0.5
+// Log events flag
+let logEvents = false;
 
+// Logging/debugging functions
+function enableLog(ev) {
+  logEvents = !logEvents;
+}
+
+function log(prefix, value) {
+  if (!logEvents) return;
+  const o = document.getElementsByTagName("output")[0];
+  o.innerHTML += `${prefix}: ${value}<br>`;
+}
+
+function clearLog(event) {
+  const o = document.getElementsByTagName("output")[0];
+  o.textContent = "";
+}
 export const throttle = (f) => {
   let token = null
   let lastArgs = null
@@ -88,18 +102,28 @@ const usePersistentCallback = (f) => {
 }
 
 // persistent reference to identity function
-const id = (x) => x
+const emptyFn = (x) => x
 
 // make element draggable
 // returns [ref, isDragging, position]
 // position doesn't update while dragging
 // position is relative to initial position
-export const useDraggableAndScalable = ({ onDrag = id, onScale = id, disabled } = {}) => {
+export const useDraggableAndScalable = ({
+  onDrag = emptyFn,
+  onScale = emptyFn,
+  disabled,
+  scale: scaleOptions = {}
+} = {}) => {
+  const minScale = scaleOptions.min || 0.5
+  const maxScale = scaleOptions.max || 6
+  const scaleStep = scaleOptions.step || 0.5
+
   const viewportBounds = useRef()
   const draggableBounds = useRef()
   const [pressed, setPressed] = useState(false)
   const [position, setPositionState] = useState({ x: 0, y: 0 })
   const [scale, setScaleState] = useState(1)
+  const [pinching, setPinching] = useState(false)
   const hammer = useRef()
   const ref = useRef()
   const dragTargetRef = useRef()
@@ -149,15 +173,16 @@ export const useDraggableAndScalable = ({ onDrag = id, onScale = id, disabled } 
     }
     viewportBounds.current = ref.current.getBoundingClientRect()
     draggableBounds.current = dragTargetRef.current.getBoundingClientRect()
-
     setPressed(true)
   }, [])
   const handlePinch = (e) => {
-    setPressed(false)
-    const realDistance = e.distance / scale
-    const width = scaleTargetRef.current.clientWidth + realDistance
-    const newScale = width / initialSize.width
-    setScale(e.scale)
+    /* if (e.type === 'pinchstart') {
+      scaleTargetRef.current.style.transition = 'none'
+    } else if (e.type === 'pinchend') {
+      scaleTargetRef.current.style.transition = null
+    } */
+    const newScale = Math.max(minScale, Math.min(scale * (e.scale + 0.15), maxScale));
+    setScale(newScale)
   }
 
   useEffect(() => {
@@ -167,7 +192,10 @@ export const useDraggableAndScalable = ({ onDrag = id, onScale = id, disabled } 
     
     hammer.current = new Hammer(ref.current)
     hammer.current.get('pinch').set({ enable: true })
-    hammer.current.on('pinch', handlePinch)
+    hammer.current.on('pinchstart pinch pinchend', handlePinch)
+
+    viewportBounds.current = ref.current.getBoundingClientRect()
+    draggableBounds.current = dragTargetRef.current.getBoundingClientRect()
 
     return () => {
       elem.style.userSelect = 'auto'
@@ -223,6 +251,8 @@ export const useDraggableAndScalable = ({ onDrag = id, onScale = id, disabled } 
     let delta = position
     let lastPosition = position
     const handleMouseMove = throttle(({ movementX, movementY }) => {
+      log('isp', pinching)
+      if (pinching) return
       const { x, y } = delta
       
       const { x: dx, y: dy } = toValidPosition({ x: x + movementX, y: y + movementY }, draggableBounds.current, viewportBounds.current)

@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Hammer from 'hammerjs'
 import classNames from 'classnames'
-import { useDimensions } from 'utils/hooks'
+import { useDimensions, useIsMobile } from 'utils/hooks'
 import SeatingTooltip from 'components/seating-tooltip'
 import Button from 'components/button'
 import { ReactComponent as ResetIcon } from 'icons/reset.svg'
@@ -9,7 +9,7 @@ import { ReactComponent as TicketLogo } from 'icons/ticket_logo.svg'
 import { ReactComponent as ZoomIn } from 'icons/zoom-in.svg'
 import { ReactComponent as ZoomOut } from 'icons/zoom-out.svg'
 import { svgSeat } from 'utils/dom-scheme'
-import { SEAT_CLONE_CLASS } from 'const'
+import { SEAT_CLASS, SEAT_CLONE_CLASS } from 'const'
 import TicketsCounter from 'components/tickets-counter/tickets-counter'
 import { useDraggableAndScalable } from 'utils/use-draggable'
 import { createDefs, createStyles, getCursorOffsetToElementCenter, stringToSvg } from './utils'
@@ -23,10 +23,8 @@ const RUBBER_SIZE = 30
 const SeatingScheme = forwardRef((props, ref) => {
   const [counters, setCounters] = useState([])
   const [tooltipSeat, setTooltipSeat] = useState({ visible: false })
+  const [showOverlay, setShowOverlay] = useState(false)
   const { src, cart, categories, tickets, toggleInCart, highlight, selectedCategory, resetSelectedCategory } = props
-  
-  const pointerDownState = useRef({ clientX: 0, clientY: 0, elementId: '', time: 0 })
-
   const ticketsByCategory = useMemo(() => tickets.reduce((acc, ticket) => ({
     ...acc,
     [ticket.category]: (acc[ticket.category] || []).concat(ticket)
@@ -38,12 +36,17 @@ const SeatingScheme = forwardRef((props, ref) => {
     },
     []
   )
+  const isMobile = window.innerWidth < 1024
+  const scaleOptions = isMobile ? {
+    min: 2,
+    max: 8
+  } : undefined
+  
   const [viewportRef, draggableRef, scaleTargetRef, pressed, { x, y }, scale, setScale, setPosition] = useDraggableAndScalable({
-    onDrag: handleDrag
+    onDrag: handleDrag,
+    scale: scaleOptions
   })
   const [isDefaultScale, setIsDefaultScale] = useState(true)
-
-
   const showSeatTooltip = el => {
     const { width, height, x, y } = draggableRef.current.getBoundingClientRect()
 
@@ -57,16 +60,45 @@ const SeatingScheme = forwardRef((props, ref) => {
       x: `${(dx / width) * 100}%`,
       y: `${(dy / height) * 100}%`,
       ticketId: seat.get('ticket-id'),
-      text: seat.get('text')
+      text: seat.get('text'),
+      delay: null
     })
+    setShowOverlay(true)
   }
 
-  const hideSeatTooltip = () => setTooltipSeat(prev => ({ ...prev, visible: false, ticketId: prev.ticketId }))
+  const hideSeatTooltip = (delay) => {
+    setTooltipSeat(prev => ({ ...prev, delay, visible: false }))
+    setShowOverlay(false)
+  }
 
+  function handleTap(e) {
+    const el = e.target
+    if (!el.matches(`.${SEAT_CLASS}`) || el.hasAttribute('data-disabled')) {
+      hideSeatTooltip(0)
+      return
+    }
+    const seat = svgSeat(el)
+    const ticketId = seat.get('ticket-id')
+    const tooltipEl = document.querySelector(`div[data-visible="true"][data-ticket="${ticketId}"]`)
+    if (!tooltipEl) {
+      showSeatTooltip(el)
+      return
+    }
+    const seatCat = seat ? seat.get('category') : ''
+    const ticketsCat = ticketsByCategory?.[seatCat] || []
+    const ticket = seat.isMultiple() && ticketsCat ? ticketsCat.find(item => !item.inCart) : tickets.find(t => t.id === el.id)
+
+    if (ticket) {
+      toggleInCart(ticket)
+      hideSeatTooltip(0)
+    }
+  }
 
   useEffect(() => {
     const node = scaleTargetRef.current
     if (!node || !src) return
+    const hammer = new Hammer(node)
+    hammer.on('tap', handleTap)
     const svg = stringToSvg(src)
     // Черная галочка для мест
     createDefs(svg, ['path', { x: 0, y: 0, d: 'M 1.5 3.5 L 3 5 L 6 2', className: 'seat-check', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', id: 'checked-seat-path' }])
@@ -96,37 +128,6 @@ const SeatingScheme = forwardRef((props, ref) => {
       hideSeatTooltip()
     }
 
-    function handlePointerDown(e) {
-      if (e.button !== 0) return
-      pointerDownState.current = {
-        clientX: e.clientX,
-        clientY: e.clientY,
-        elementId: e.currentTarget.id,
-        time: Date.now()
-      }
-    }
-
-    function handlePointerUp(e) {
-      const initialState = pointerDownState.current
-      const el = e.target
-      if (
-        Math.abs(e.clientX - initialState.clientX) < 5 &&
-        Math.abs(e.clientY - initialState.clientY) < 5 &&
-        el.id === initialState.elementId /* &&
-        Date.now() - initialState.time < 500 */
-      ) {
-        /* if (!tooltipSeat.visible) {
-          showSeatTooltip(el)
-          return
-        } */
-        const seat = svgSeat(el)
-        const seatCat = seat ? seat.get('category') : ''
-        const ticketsCat = ticketsByCategory?.[seatCat] || []
-        const ticket = seat.isMultiple() && ticketsCat ? ticketsCat.find(item => !item.inCart) : tickets.find(t => t.id === el.id)
-        
-        if (ticket) toggleInCart(ticket)
-      }
-    }
     const unsubscibe = []
 
     Array.from(node.querySelectorAll('.svg-seat')).forEach(el => {
@@ -145,18 +146,15 @@ const SeatingScheme = forwardRef((props, ref) => {
         seat.set('ticket-id', seatTicket.id)
         el.addEventListener('mouseover', handleMouseOver)
         el.addEventListener('mouseout', handleMouseOut)
-        el.addEventListener('pointerdown', handlePointerDown)
-        window.addEventListener('pointerup', handlePointerUp)
 
         unsubscibe.push(() => {
           el.removeEventListener('mouseover', handleMouseOver)
           el.removeEventListener('mouseout', handleMouseOut)
-          el.removeEventListener('pointerdown', handlePointerDown)
-          window.removeEventListener('pointerup', handlePointerUp)
         })
       }
     })
     return () => {
+      hammer.off('tap')
       unsubscibe.forEach(fn => fn())
     }
   }, [src])
@@ -269,8 +267,8 @@ const SeatingScheme = forwardRef((props, ref) => {
         })}
         ref={draggableRef}
       >
+        <div className={classNames('scheme-overlay', { ['scheme-overlay_visible']: showOverlay })} />
         {tickets?.length > 0 && <SeatingTooltip
-          {...tickets.find(ticket => ticket.id === tooltipSeat.ticketId)}
           categories={categories}
           visible={tooltipSeat.visible}
           x={tooltipSeat.x}
@@ -278,7 +276,9 @@ const SeatingScheme = forwardRef((props, ref) => {
           text={tooltipSeat.text}
           hideDelay={tooltipSeat.delay ?? 1250}
           scaleFactor={scale}
+          ticketId={tooltipSeat.ticketId}
           toggleInCart={toggleInCart}
+          {...tickets.find(ticket => ticket.id === tooltipSeat.ticketId)}
         />}
         {counters.map(({ category, ...counter }, i) => (
           <TicketsCounter
@@ -295,7 +295,7 @@ const SeatingScheme = forwardRef((props, ref) => {
           }}
         />
       </div>
-      <output style={{ position: 'fixed', left: 0, top: 0, padding:5, backgorund:'#000', color: '#fff', maxHeight: 200, overflow:'auto', fontSize: '0.7em', padding: 10}}></output>
+      <output style={{ position: 'fixed', left: 0, top: 0, padding:5, backgorund:'#000', zIndex: 50000, color: '#fff', maxHeight: 200, overflow:'auto', fontSize: '0.7em', padding: 10}}></output>
     </div>
   )
 })
