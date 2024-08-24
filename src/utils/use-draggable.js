@@ -2,9 +2,13 @@ import React, { useRef, useState, useEffect, useCallback } from 'react'
 import { unstable_batchedUpdates as batch } from 'react-dom'
 import Hammer from 'hammerjs'
 
+const minScale = 0.5
+const maxScale = 4
+const scaleStep = 0.5
+
 export const throttle = (f) => {
-  let token = null,
-    lastArgs = null
+  let token = null
+  let lastArgs = null
   const invoke = () => {
     f(...lastArgs)
     token = null
@@ -90,31 +94,62 @@ const id = (x) => x
 // returns [ref, isDragging, position]
 // position doesn't update while dragging
 // position is relative to initial position
-export const useDraggableAndScalable = ({ onDrag = id, disabled } = {}) => {
+export const useDraggableAndScalable = ({ onDrag = id, onScale = id, disabled } = {}) => {
+  const viewportBounds = useRef()
+  const draggableBounds = useRef()
   const [pressed, setPressed] = useState(false)
-  const [position, setPosition] = useState({ x: 0, y: 0 })
-  const [scale, setScale] = useState(1)
+  const [position, setPositionState] = useState({ x: 0, y: 0 })
+  const [scale, setScaleState] = useState(1)
   const hammer = useRef()
   const ref = useRef()
   const dragTargetRef = useRef()
   const scaleTargetRef = useRef()
   const initialSize = useRef()
-  const updateScale = scale => {
-    if (!initialSize.current && scaleTargetRef.current) {
+
+  const setPosition = (nextPos, transition) => {
+    function handleTransitionEnd() {
+      this.style.transition = null
+      this.removeEventListener('transitionend', handleTransitionEnd)
+    }
+
+    if (transition) {
+      dragTargetRef.current.style.transition = 'ease-in-out 0.2s transform'
+      dragTargetRef.current.addEventListener('transitionend', handleTransitionEnd)
+    }
+
+    setPositionState(nextPos)
+  }
+
+  const setScale = nextScale => {
+    const el = scaleTargetRef.current
+    if (typeof nextScale === 'function') {
+      const val = nextScale(scale)
+      return setScale(val)
+    }
+    if (!initialSize.current && el) {
       initialSize.current = {
-        width: scaleTargetRef.current.clientWidth,
-        height: scaleTargetRef.current.clientHeight
+        width: el.clientWidth,
+        height: el.clientHeight
       }
     }
-    const val = Math.min(Math.max(scale, 0.5), 4)
-    scaleTargetRef.current.style.width = initialSize.current.width * val
-    scaleTargetRef.current.style.height = initialSize.current.height * val
-    setScale(val)
+    const val = Math.min(Math.max(nextScale, minScale), maxScale)
+    const width = initialSize.current.width * val
+    const height = initialSize.current.height * val
+    const dragBounds = { ...draggableBounds.current, width, height }
+    const pos = toValidPosition(position, dragBounds, viewportBounds.current)
+    setPosition(pos, true)
+    applyTransform(pos)
+    el.style.width = width
+    el.style.height = height
+    setScaleState(val)
   }
   const handleMouseDown = useCallback((e) => {
     if (e.button !== 0) {
       return
     }
+    viewportBounds.current = ref.current.getBoundingClientRect()
+    draggableBounds.current = dragTargetRef.current.getBoundingClientRect()
+
     setPressed(true)
   }, [])
   const handlePinch = (e) => {
@@ -122,8 +157,7 @@ export const useDraggableAndScalable = ({ onDrag = id, disabled } = {}) => {
     const realDistance = e.distance / scale
     const width = scaleTargetRef.current.clientWidth + realDistance
     const newScale = width / initialSize.width
-    console.log(e)
-    updateScale(e.scale)
+    setScale(e.scale)
   }
 
   useEffect(() => {
@@ -145,6 +179,38 @@ export const useDraggableAndScalable = ({ onDrag = id, disabled } = {}) => {
   const ref2 = useRefEffect(subscribeMouseDown)
   const combinedRef = useCombinedRef(ref, ref2)
   const persistentOnDrag = usePersistentCallback(onDrag)
+
+  useEffect(() => {
+    function handleWheel(e) {
+      if (e.ctrlKey) {
+        e.preventDefault()
+        const delta = e.deltaY > 0 ? -scaleStep : scaleStep
+        setScale(scale + delta)
+      }
+    }
+    window.addEventListener('wheel', handleWheel, { passive: false })
+    return () => window.removeEventListener('wheel', handleWheel)
+  }, [scale])
+
+  function toValidPosition({ x, y }, dragBounds, viewBounds) {
+    const { width: dw, height: dh, left: dl, top: dt } = dragBounds
+    const { width: vw, height: vh, left: vl, top: vt } = viewBounds
+    const limitX = dw - vw > 0 ? 100 * 2 * scale : 0
+    const limitY = dh - vh > 0 ? 100 * 2 * scale : 0
+
+    const dx = Math.max(-limitX, Math.min(x, limitX))
+    const dy = Math.max(-limitY, Math.min(y, limitY))
+    return { x: dx, y: dy }
+  }
+
+  function applyTransform(lastPosition) {
+    if (!ref.current || !dragTargetRef.current) {
+      return
+    }
+    let { x, y } = lastPosition
+    dragTargetRef.current.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`
+  }
+
   useEffect(() => {
     const elem = ref.current
     if (elem) {
@@ -154,20 +220,15 @@ export const useDraggableAndScalable = ({ onDrag = id, disabled } = {}) => {
       return
     }
     elem.style.cursor = 'grabbing'
-    let delta = position,
-      lastPosition = position
-    const applyTransform = () => {
-      if (!ref.current || !dragTargetRef.current) {
-        return
-      }
-      const { x, y } = lastPosition
-      dragTargetRef.current.style.transform = `translate(${x}px, ${y}px)`
-    }
+    let delta = position
+    let lastPosition = position
     const handleMouseMove = throttle(({ movementX, movementY }) => {
       const { x, y } = delta
-      delta = { x: x + movementX, y: y + movementY }
+      
+      const { x: dx, y: dy } = toValidPosition({ x: x + movementX, y: y + movementY }, draggableBounds.current, viewportBounds.current)
+      delta = { x: dx, y: dy }
       lastPosition = persistentOnDrag(delta)
-      applyTransform()
+      applyTransform(lastPosition)
     })
     const handleMouseUp = (e) => {
       handleMouseMove(e)
@@ -178,7 +239,7 @@ export const useDraggableAndScalable = ({ onDrag = id, disabled } = {}) => {
     }
     const terminate = () => {
       lastPosition = position
-      applyTransform()
+      applyTransform(lastPosition)
       setPressed(false)
     }
     const handleKeyDown = (e) => {
@@ -198,8 +259,8 @@ export const useDraggableAndScalable = ({ onDrag = id, disabled } = {}) => {
       document.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('blur', terminate)
     }
-  }, [position, pressed, persistentOnDrag])
-  return [combinedRef, dragTargetRef, scaleTargetRef, pressed, position, scale, updateScale, setPosition]
+  }, [position, scale, pressed, persistentOnDrag])
+  return [combinedRef, dragTargetRef, scaleTargetRef, pressed, position, scale, setScale, setPosition]
 }
 
 // subscribe to element's `resize`

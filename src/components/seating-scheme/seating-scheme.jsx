@@ -18,15 +18,13 @@ import './seating-scheme.scss'
 const mapSeat = (node, cb, joinToSelector = '') =>
   Array.from(node.querySelectorAll(`.svg-seat${joinToSelector}`)).map(cb)
 
-const SeatingScheme = forwardRef((props, ref) => {
-  const [log, setLog] = useState([])
+const RUBBER_SIZE = 30
 
+const SeatingScheme = forwardRef((props, ref) => {
   const [counters, setCounters] = useState([])
   const [tooltipSeat, setTooltipSeat] = useState({ visible: false })
   const { src, cart, categories, tickets, toggleInCart, highlight, selectedCategory, resetSelectedCategory } = props
   
-  const zoomConfig = { min: 0.5, max: 4, step: 0.5 }
-  const initial = useRef({ width: null, height: null })
   const pointerDownState = useRef({ clientX: 0, clientY: 0, elementId: '', time: 0 })
 
   const ticketsByCategory = useMemo(() => tickets.reduce((acc, ticket) => ({
@@ -35,10 +33,9 @@ const SeatingScheme = forwardRef((props, ref) => {
   }), {}), [tickets])
 
   const handleDrag = useCallback(
-    ({ x, y }) => ({
-      x,//: Math.max(0, Math.min(x, size.current.x - squareSize)),
-      y//: Math.max(0, Math.min(y, size.current.y - squareSize))
-    }),
+    ({ x, y }) => {
+      return { x, y }
+    },
     []
   )
   const [viewportRef, draggableRef, scaleTargetRef, pressed, { x, y }, scale, setScale, setPosition] = useDraggableAndScalable({
@@ -46,96 +43,6 @@ const SeatingScheme = forwardRef((props, ref) => {
   })
   const [isDefaultScale, setIsDefaultScale] = useState(true)
 
-  useEffect(() => {
-
-  }, [scale])
-  const handleWheel = useCallback((e) => {
-    console.log(e)
-    
-  }, [])
-
-  useEffect(() => {
-    const dragEl = viewportRef.current
-    if (!dragEl) return
-    //const hammer = new Hammer(dragEl)
-
-    /* Зум пальцами и колесиком */
-    let initialScale
-    dragEl.addEventListener('wheel', handleWheel)
-    // hammer.get('pinch').set({ enable: true })
-    // const handlePinch = (ev) => {
-    //   if (ev.type === 'pinchstart') {
-    //     initialScale = scale.current.value
-    //     scaleTargetRef.current.style.transition = 'none'
-    //   }
-    //   zoom(initialScale * ev.scale)
-    //   if (ev.type === 'pinchend') {
-    //     scaleTargetRef.current.style.transition = null
-    //   }
-    // }
-    // hammer.on('pinchstart pinch pinchend', handlePinch)
-
-    // const handleTap = (event) => {
-    //   console.log(event);
-      
-    //   if (scale < 1) {
-    //     event.preventDefault()
-    //     const offset = getCursorOffsetToElementCenter(viewportRef.current, event.srcEvent)
-    //     const dx = (x + offset.x) / scale * 2
-    //     const dy = (y + offset.y) / scale * 2
-    //     setScale(1)
-    //     setPosition({ x, y })
-    //   }
-
-    //   const isTouch = event.pointerType === 'touch'
-    //   const el = event.target
-    //   const seat = svgSeat.from(el)
-    //   const isMultiple = seat && seat.isMultiple()
-    //   const seatCat = seat ? seat.get('category') : ''
-    //   const ticketsCat = ticketsByCategory?.[seatCat] || []
-      
-    //   const ticket = isMultiple && ticketsCat ? ticketsCat.find(item => !item.inCart) : tickets.find(t => t.id === el.id)
-    //   const { visible, ticketId } = tooltipSeat
-
-    //   if (ticket && !el.hasAttribute('data-disabled')) {
-    //     Array.from(document.querySelectorAll('#clone-1, #clone-2')).forEach(el => el.remove())
-    //     if (isTouch && !isMultiple) {
-    //       // Копируем текущее место для вывода копии поверх блюра
-    //       const clone = [el.cloneNode()]
-    //       // Если у элемента есть галочка, то копируем и ее
-    //       if (el.nextElementSibling.tagName?.toLowerCase() === 'use') clone.push(el.nextElementSibling.cloneNode())
-    //       const elBounds = el.getBBox()
-    //       clone.forEach((el, i) => {
-    //         el.id = `clone-${(i + 1)}`
-    //         el.classList.add(SEAT_CLONE_CLASS)
-    //         scaleTargetRef.current.appendChild(el)
-    //       })
-    //       setTooltipSeat({
-    //         visible: true,
-    //         x: elBounds.x + elBounds.width,
-    //         y: elBounds.y + elBounds.height,
-    //         ticketId: ticket.id,
-    //         text: el.getAttribute('data-text')
-    //       })
-    //     } else {
-    //       toggleInCart(ticket)
-    //     }
-    //   } else {
-    //     const delay = el.matches('.seating-tooltip') || el.closest('.seating-tooltip') ? 500 : 0
-    //     setTooltipSeat(prev => ({ visible: false, ticketId: prev.ticketId, delay }))
-    //     document.querySelectorAll('#clone-1, #clone-2').forEach(el => el.remove())
-    //   }
-    // }
-    // hammer.on('tap', handleTap)
-
-    
-    return () => {
-      dragEl.removeEventListener('wheel', handleWheel)
-      // hammer.off('pinch', handlePinch)
-      // hammer.off('tap', handleTap)
-      // hammer.destroy()
-    }
-  }, [x, y, ticketsByCategory, tickets, tooltipSeat])
 
   const showSeatTooltip = el => {
     const { width, height, x, y } = draggableRef.current.getBoundingClientRect()
@@ -154,9 +61,8 @@ const SeatingScheme = forwardRef((props, ref) => {
     })
   }
 
-  const hideSeatTooltip = () => {
-    setTooltipSeat(prev => ({ ...prev, visible: false, ticketId: prev.ticketId }))
-  }
+  const hideSeatTooltip = () => setTooltipSeat(prev => ({ ...prev, visible: false, ticketId: prev.ticketId }))
+
 
   useEffect(() => {
     const node = scaleTargetRef.current
@@ -384,9 +290,7 @@ const SeatingScheme = forwardRef((props, ref) => {
         <svg
           className='scheme-svg'
           ref={scaleTargetRef}
-          onTransitionEnd={() => {
-          console.log('end', scale);
-          
+          onTransitionEnd={() => {          
             setIsDefaultScale(scale === 1)
           }}
         />
